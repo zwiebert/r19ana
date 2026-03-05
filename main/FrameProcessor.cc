@@ -12,6 +12,5 @@ void FrameProcessor::feedBytes(const std::vector<uint8_t>& data)
         // optionally notify about new frame
     }
     std::string hex  = xr25.toString();
-    std::string text = R19Frame(xr25).getDataAsText();
-    if (callback) callback(hex, text);
+    if (callback) callback(hex, R19Frame(xr25));
 }

@@ -11,7 +11,7 @@
 * then receive data.
 *
 ****************************************************************************/
-
+#include "bt_classic/spp_acceptor.hh"
 #include <stdint.h>
 #include <string.h>
 #include <stdbool.h>
@@ -27,7 +27,7 @@
 #include "esp_gap_bt_api.h"
 #include "esp_bt_device.h"
 #include "esp_spp_api.h"
-#include "spp_task.h"
+#include "spp_task.hh"
 
 #include "time.h"
 #include "sys/time.h"
@@ -41,8 +41,10 @@
 static const char local_device_name[] = CONFIG_EXAMPLE_LOCAL_DEVICE_NAME;
 static const esp_spp_sec_t sec_mask = ESP_SPP_SEC_AUTHENTICATE;
 static const esp_spp_role_t role_slave = ESP_SPP_ROLE_SLAVE;
+static spp_read_cb_t our_rcb = 0;
+static spp_write_cb_t our_wcb = 0;
 
-#define SPP_DATA_LEN 100
+#define SPP_DATA_LEN 200
 
 static char *bda2str(uint8_t * bda, char *str, size_t size)
 {
@@ -63,7 +65,7 @@ static void spp_read_handle(void * param)
     int fd = (int)param;
     uint8_t *spp_data = NULL;
 
-    spp_data = malloc(SPP_DATA_LEN);
+    spp_data = (uint8_t *)malloc(SPP_DATA_LEN);
     if (!spp_data) {
         ESP_LOGE(SPP_TAG, "malloc spp_data failed, fd:%d", fd);
         goto done;
@@ -90,11 +92,58 @@ done:
     }
     spp_wr_task_shut_down();
 }
+static void spp_write_handle(void * param)
+{
+    int size = 0;
+    int fd = (int)param;
+    uint8_t *spp_data = NULL;
+    uint16_t i = 0;
+
+    spp_data = (uint8_t *)malloc(SPP_DATA_LEN);
+    if (!spp_data) {
+        ESP_LOGE(SPP_TAG, "malloc spp_data failed, fd:%d", fd);
+        goto done;
+    }
+    for (;;) {
+        int len = 0;
+        if (!our_wcb)
+          goto done;
+        if ((len = our_wcb((char *)spp_data, SPP_DATA_LEN)) <= 0) {
+            vTaskDelay(1000 / portTICK_PERIOD_MS);
+            ESP_LOGI(SPP_TAG, "spp write callback returns empty");
+            continue;
+        }
+    for (;;) {
+        /*
+         * The write function is blocked until all the target length of data has been sent to the lower layer
+         * successfully an error occurs.
+         */
+        //ESP_LOGW(SPP_TAG, "try to write: fd=%d len=%d", fd, len);
+        size = write(fd, spp_data, len);
+        if (size == -1) {
+            goto done;
+        } else if ( size == 0) {
+            ESP_LOGI(SPP_TAG, "spp write returns 0");
+            /*write fail due to ringbuf is full, retry after 500 ms*/
+            vTaskDelay(500 / portTICK_PERIOD_MS);
+        } else {
+            ESP_LOGI(SPP_TAG, "spp write ok: fd = %d  data_len = %d", fd, size);
+            vTaskDelay(10 / portTICK_PERIOD_MS);
+            break;
+        }
+    }
+}
+done:
+    ESP_LOGE(SPP_TAG, "spp write task terminated");
+    free(spp_data);
+    spp_wr_task_shut_down();
+}
+
 
 static void esp_spp_cb(uint16_t e, void *p)
 {
-    esp_spp_cb_event_t event = e;
-    esp_spp_cb_param_t *param = p;
+    esp_spp_cb_event_t event = (esp_spp_cb_event_t)e;
+    esp_spp_cb_param_t *param = (esp_spp_cb_param_t *)p;
     char bda_str[18] = {0};
 
     switch (event) {
@@ -134,7 +183,10 @@ static void esp_spp_cb(uint16_t e, void *p)
         ESP_LOGI(SPP_TAG, "ESP_SPP_SRV_OPEN_EVT status:%d handle:%"PRIu32", rem_bda:[%s]", param->srv_open.status,
                  param->srv_open.handle, bda2str(param->srv_open.rem_bda, bda_str, sizeof(bda_str)));
         if (param->srv_open.status == ESP_SPP_SUCCESS) {
+            if (our_rcb)
             spp_wr_task_start_up(spp_read_handle, param->srv_open.fd);
+            if (our_wcb)
+            spp_wr_task_start_up(spp_write_handle, param->srv_open.fd);
         }
         break;
     case ESP_SPP_VFS_REGISTER_EVT:
@@ -211,8 +263,11 @@ void esp_bt_gap_cb(esp_bt_gap_cb_event_t event, esp_bt_gap_cb_param_t *param)
     return;
 }
 
-void spp_main(void)
+void spp_main(spp_read_cb_t rcb, spp_write_cb_t wcb)
 {
+    our_rcb = rcb;
+    our_wcb = wcb;
+
     char bda_str[18] = {0};
     esp_err_t ret = nvs_flash_init();
     if (ret == ESP_ERR_NVS_NO_FREE_PAGES || ret == ESP_ERR_NVS_NEW_VERSION_FOUND) {
