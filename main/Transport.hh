@@ -7,7 +7,7 @@
 
 class Transport {
 public:
-    using ReadCallback = std::function<void(const std::vector<uint8_t>&)>;
+    using ReadCallback = std::function<void(std::uint8_t *data, std::size_t data_len)>;
 
     virtual ~Transport() = default;
     virtual void start(ReadCallback cb) = 0;

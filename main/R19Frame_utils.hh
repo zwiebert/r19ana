@@ -27,79 +27,79 @@ inline int r19_frame_print(char* dst, size_t dst_siz, const R19Frame& d,
     if (ct >= 0 && view_mask.test(bit++)) {
       auto p = std::min(dst_max, dst + ct);
       auto l = std::max(ssize_t(0), dst_size - ct);
-      ct += snprintf(p, l, "%u: rpm=%d\r\n", bit, d.EngineSpeed_RPM);
+      ct += snprintf(p, l, "%u: Engine Speed (RPM)=%d\r\n", bit, d.get_engine_speed_RPM());
     }
 
     if (ct >= 0 && view_mask.test(bit++)) {
       auto p = std::min(dst_max, dst + ct);
       auto l = std::max(ssize_t(0), dst_size - ct);
-      ct += snprintf(p, l, "%u: map=%d mBar\r\n", bit, d.MAP_mBar);
+      ct += snprintf(p, l, "%u: Manifold Absolute Pressure (mBar)=%d\r\n", bit, d.get_manifold_absolute_pressure_mBar());
     }
 
     if (ct >= 0 && view_mask.test(bit++)) {
       auto p = std::min(dst_max, dst + ct);
       auto l = std::max(ssize_t(0), dst_size - ct);
-      ct += snprintf(p, l, "%u: IAT=%d °C\r\n", bit, d.IAT_Celsius);
+      ct += snprintf(p, l, "%u: Intake Air Temperature (°C)=%d\r\n", bit, d.get_intake_air_temperature_Celsius());
     }
 
     if (ct >= 0 && view_mask.test(bit++)) {
       auto p = std::min(dst_max, dst + ct);
       auto l = std::max(ssize_t(0), dst_size - ct);
-      ct += snprintf(p, l, "%u: ECT=%d °C\r\n", bit, d.ECT_Celsius);
+      ct += snprintf(p, l, "%u: Engine Coolant Temperature (°C)=%d\r\n", bit, d.get_engine_coolant_temperature_Celsius());
     }
 
     if (ct >= 0 && view_mask.test(bit++)) {
       auto p = std::min(dst_max, dst + ct);
       auto l = std::max(ssize_t(0), dst_size - ct);
-      ct += snprintf(p, l, "%u: O2=%d mV\r\n", bit, d.O2_Sensor_mV);
+      ct += snprintf(p, l, "%u: O2 Sensor (mV)=%d\r\n", bit, d.get_oxygen_sensor_voltage_mV());
     }
 
     if (ct >= 0 && view_mask.test(bit++)) {
       auto p = std::min(dst_max, dst + ct);
       auto l = std::max(ssize_t(0), dst_size - ct);
-      ct += snprintf(p, l, "%u: AP=%d mBar\r\n", bit, d.AP_mBar);
+      ct += snprintf(p, l, "%u: Atmospheric Pressure (mBar)=%d\r\n", bit, d.get_atmospheric_pressure_mBar());
     }
 
     if (ct >= 0 && view_mask.test(bit++)) {
       auto p = std::min(dst_max, dst + ct);
       auto l = std::max(ssize_t(0), dst_size - ct);
-      ct += snprintf(p, l, "%u: Batt=%0.1f V\r\n", bit, d.BatteryVoltage_V);
+      ct += snprintf(p, l, "%u: Battery Voltage (V)=%0.1f\r\n", bit, d.get_battery_voltage_V());
     }
 
     if (ct >= 0 && view_mask.test(bit++)) {
       auto p = std::min(dst_max, dst + ct);
       auto l = std::max(ssize_t(0), dst_size - ct);
-      ct += snprintf(p, l, "%u: ID=%0.2f ms\r\n", bit, d.ID_msec);
+      ct += snprintf(p, l, "%u: Injection Duration (ms)=%0.2f\r\n", bit, d.get_injection_duration_ms());
     }
 
     if (ct >= 0 && view_mask.test(bit++)) {
       auto p = std::min(dst_max, dst + ct);
       auto l = std::max(ssize_t(0), dst_size - ct);
-      ct += snprintf(p, l, "%u: TFO=%s\r\n", bit, btoa(d.isThrottleOpen));
+      ct += snprintf(p, l, "%u: Throttle Fully Open=%s\r\n", bit, btoa(d.is_throttle_fully_open()));
     }
 
     if (ct >= 0 && view_mask.test(bit++)) {
       auto p = std::min(dst_max, dst + ct);
       auto l = std::max(ssize_t(0), dst_size - ct);
-      ct += snprintf(p, l, "%u: TC=%s\r\n", bit, btoa(d.isThrottleClosed));
+      ct += snprintf(p, l, "%u: Throttle Fully Closed=%s\r\n", bit, btoa(d.is_throttle_fully_closed()));
     }
 
     if (ct >= 0 && view_mask.test(bit++)) {
       auto p = std::min(dst_max, dst + ct);
       auto l = std::max(ssize_t(0), dst_size - ct);
-      ct += snprintf(p, l, "%u: EGR/EVap=%s\r\n", bit, btoa(d.isAGR_AKF));
+      ct += snprintf(p, l, "%u: EGR/EVap active=%s\r\n", bit, btoa(d.is_vacuum_provided_to_egr_valve()));
     }
 
     if (ct >= 0 && view_mask.test(bit++)) {
       auto p = std::min(dst_max, dst + ct);
       auto l = std::max(ssize_t(0), dst_size - ct);
-      ct += snprintf(p, l, "%u: IdleCorr=%d\r\n", bit, d.IdleSpeedCorr);
+      ct += snprintf(p, l, "%u: Idle Speed Correction=%d\r\n", bit, d.get_idle_speed_correction());
     }
 
     if (ct >= 0 && view_mask.test(bit++)) {
       auto p = std::min(dst_max, dst + ct);
       auto l = std::max(ssize_t(0), dst_size - ct);
-      ct += snprintf(p, l, "%u: Knock=%d\r\n", bit, d.EngineKnocking);
+      ct += snprintf(p, l, "%u: Engine Knocking=%d\r\n", bit, d.get_engine_knocking());
     }
 
     if (ct >= 0) {
@@ -130,8 +130,8 @@ inline r19frame_mask_t r19_frame_members_cmp(const R19Frame& c, const R19Frame& 
     ++bit, changed_mask.set(bit, (c.ECT_Celsius != d.ECT_Celsius));
     ++bit, changed_mask.set(bit, (c.O2_Sensor_mV != d.O2_Sensor_mV));
     ++bit, changed_mask.set(bit, (c.AP_mBar != d.AP_mBar));
-    ++bit, changed_mask.set(bit, (c.BatteryVoltage_V != d.BatteryVoltage_V));
-    ++bit, changed_mask.set(bit, (c.ID_msec != d.ID_msec));
+    ++bit, changed_mask.set(bit, (c.BatteryVoltage_mV != d.BatteryVoltage_mV));
+    ++bit, changed_mask.set(bit, (c.ID_usec != d.ID_usec));
     ++bit, changed_mask.set(bit, (c.isThrottleOpen != d.isThrottleOpen));
     ++bit, changed_mask.set(bit, (c.isThrottleClosed != d.isThrottleClosed));
     ++bit, changed_mask.set(bit, (c.isAGR_AKF != d.isAGR_AKF));

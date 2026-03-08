@@ -123,6 +123,13 @@ bool XR25Frame::append(const std::vector<uint8_t>& data, int nmb)
     return adjustHead();
 }
 
+bool XR25Frame::append(const std::uint8_t *data, size_t data_len)
+{
+    for (unsigned i = 0; i < data_len; ++i) add(data[i]);
+    return adjustHead();
+}
+
+
 std::vector<uint8_t> XR25Frame::hexStringToByteArray(const std::string& s)
 {
     std::string str;

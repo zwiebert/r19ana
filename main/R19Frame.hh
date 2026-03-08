@@ -1,21 +1,56 @@
-#ifndef R19FRAME_H
-#define R19FRAME_H
+#pragma once
 
 #include <string>
 
 class XR25Frame;  // forward declaration
 
 class R19Frame {
+  public:
+  int get_engine_speed_RPM()const { return EngineSpeed_RPM; }
+  int get_manifold_absolute_pressure_mBar()const { return MAP_mBar; }
+  int get_intake_air_temperature_Celsius()const { return IAT_Celsius; }
+  int get_engine_coolant_temperature_Celsius()const { return ECT_Celsius; }
+  int get_oxygen_sensor_voltage_mV () const { return O2_Sensor_mV; }
+  int get_atmospheric_pressure_mBar() const { return AP_mBar; }
+  int get_battery_voltage_mV() const { return BatteryVoltage_mV; }
+  float get_battery_voltage_V() const { return BatteryVoltage_mV / 1000.0f; }
+  float get_injection_duration_ms() const { return ID_usec * 0.001f; }
+  int get_injection_duration_us() const { return int(ID_usec * 1000.0f); }
+  int get_idle_speed_correction() const { return IdleSpeedCorr; }
+  int get_engine_knocking() const { return EngineKnocking; }
+
+  bool is_throttle_fully_open() const { return isThrottleOpen; }
+  bool is_throttle_fully_closed() const { return isThrottleClosed; }
+  bool is_vacuum_provided_to_egr_valve() const { return isAGR_AKF; }
+  bool is_evap_canister_open_to_intake() const { return isAGR_AKF; }
+
  public:
   int FrameNumber = 0;
+
+  public:
+  enum class Bit : unsigned {
+    EngineSpeed_RPM,
+    MAP_mBar,
+    IAT_Celsius = 2,
+    ECT_Celsius = 3,
+    O2_Sensor_mV = 4,
+    AP_mBar = 5,
+    BatteryVoltage_mV = 6,
+    ID_usec = 7,
+    isThrottleOpen = 8,
+    isThrottleClosed = 9,
+    isAGR_AKF = 10,
+    IdleSpeedCorr = 11,
+    EngineKnocking = 12
+  };
   int EngineSpeed_RPM = 0;
   int MAP_mBar = 0;
   int IAT_Celsius = 0;
   int ECT_Celsius = 0;
   int O2_Sensor_mV = 0;
   int AP_mBar = 0;
-  float BatteryVoltage_V = 0.0f;
-  float ID_msec = 0.0f;
+  int BatteryVoltage_mV = 0;
+  int ID_usec = 0;
   bool isThrottleOpen = false;
   bool isThrottleClosed = false;
   bool isAGR_AKF = false;
@@ -29,5 +64,3 @@ class R19Frame {
 
   std::string getDataAsText() const;
 };
-
-#endif  // R19FRAME_H

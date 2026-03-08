@@ -24,13 +24,10 @@ R19Frame::R19Frame(const XR25Frame& data) {
         static_cast<int>(data.getIntByIndex(7 + idx_add) * 0.625f - 40.0f);
     O2_Sensor_mV = static_cast<int>(data.getIntByIndex(10 + idx_add) * 4);
     AP_mBar = 1090 - data.getIntByIndex(21 + idx_add);
-    BatteryVoltage_V = data.getIntByIndex(9 + idx_add) * 0.0312f + 8.0f;
-    {
-      uint32_t num = (data.getIntByIndex(13 + idx_add) |
-                      (data.getIntByIndex(14 + idx_add) << 8)) &
-                     0xffff;
-      ID_msec = (num == 0) ? 0.0f : (num * 0.002f) - 0.5f;
-    }
+    BatteryVoltage_mV = int(1000.0f * (data.getIntByIndex(9 + idx_add) * 0.0312f + 8.0f));
+    ID_usec = 2 * ((data.getIntByIndex(13 + idx_add) |
+                    (data.getIntByIndex(14 + idx_add) << 8)) &
+                   0xffff) - 500;
     isThrottleOpen = (data.getByteByIndex(5 - 1) & 0x10) == 0;
     isThrottleClosed = (data.getByteByIndex(5 - 1) & 0x08) == 0;
     EngineKnocking = data.getIntByIndex(13 + idx_add);
@@ -50,28 +47,31 @@ std::string R19Frame::getDataAsText() const {
     oss << "Motor aus. Frames: " << FrameNumber << "\n\n\n";
   }
 
-  oss << "DK-Leerlauf: " << (isThrottleClosed ? "Y" : "N") << "\n"
-      << "DK-Vollgas: " << (isThrottleOpen ? "Y" : "N") << "\n"
-      << "AKF/AGR: " << (isAGR_AKF ? "Y" : "N") << "\n\n";
+  oss << "DK-Leerlauf: " << (is_throttle_fully_closed() ? "Y" : "N") << "\n"
+      << "DK-Vollgas: " << (is_throttle_fully_open() ? "Y" : "N") << "\n"
+      << "AKF/AGR: " << (is_vacuum_provided_to_egr_valve() ? "Y" : "N")
+      << "\n\n";
 
-  oss << "MAP: " << MAP_mBar << " mBar\n"
-      << "Kühlwasser: " << ECT_Celsius << " °C\n"
-      << "Ansauggemisch: " << IAT_Celsius << " °C\n";
+  oss << "MAP: " << get_manifold_absolute_pressure_mBar() << " mBar\n"
+      << "Kühlwasser: " << get_engine_coolant_temperature_Celsius() << " °C\n"
+      << "Ansauggemisch: " << get_intake_air_temperature_Celsius() << " °C\n";
 
   oss << std::fixed << std::setprecision(1);
-  oss << "Batterie: " << BatteryVoltage_V << " V\n";
+  oss << "Batterie: " << get_battery_voltage_mV() << " V\n";
   oss << std::setprecision(0);
-  oss << "Lambda: " << O2_Sensor_mV << " mV ("
-      << (O2_Sensor_mV < 100 ? "mager" : (O2_Sensor_mV > 600 ? "fett" : "1"))
+  oss << "Lambda: " << get_oxygen_sensor_voltage_mV() << " mV ("
+      << (get_oxygen_sensor_voltage_mV() < 100
+              ? "mager"
+              : (get_oxygen_sensor_voltage_mV() > 600 ? "fett" : "1"))
       << ")\n"
-      << "Drehzahl: " << EngineSpeed_RPM << " rpm\n"
-      << "Außendruck: " << AP_mBar << " mBar\n";
+      << "Drehzahl: " << get_engine_speed_RPM() << " rpm\n"
+      << "Außendruck: " << get_atmospheric_pressure_mBar() << " mBar\n";
 
   oss << std::fixed << std::setprecision(2);
-  oss << "Spritzdauer: " << ID_msec << " ms\n\n";
+  oss << "Spritzdauer: " << get_injection_duration_ms() << " ms\n\n";
 
-  oss << "Motorklopfen: " << EngineKnocking << "\n"
-      << "Leerlaufsteller: " << IdleSpeedCorr << "\n";
+  oss << "Motorklopfen: " << get_engine_knocking() << "\n"
+      << "Leerlaufsteller: " << get_idle_speed_correction() << "\n";
 
   return oss.str();
 }

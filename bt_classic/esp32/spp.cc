@@ -48,7 +48,7 @@ static spp_write_cb_t our_wcb;
 static spp::status_t spp_write_status;
 static spp::status_t spp_read_status;
 
-#define SPP_DATA_LEN 200
+#define SPP_DATA_LEN 1024
 
 static char* bda2str(uint8_t* bda, char* str, size_t size) {
   if (bda == NULL || str == NULL || size < 18) {
@@ -139,6 +139,12 @@ static void spp_write_handle(void* param) {
       vTaskDelay(1000 / portTICK_PERIOD_MS);
       continue;
     }
+    if (len > SPP_DATA_LEN) {
+      ESP_LOGE(SPP_TAG, "Buffer too small: spp write callback returns data len %d exceed "
+                         "SPP_DATA_LEN %d",
+               len, SPP_DATA_LEN);
+      continue;
+    } 
     spp_write_status.reset(spp::JUST_CONNECTED);
     for (;;) {
       /*

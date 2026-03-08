@@ -13,6 +13,7 @@ public:
 
     explicit FrameProcessor(UpdateCallback cb);
     void feedBytes(const std::vector<uint8_t>& data);
+    void feedBytes(const uint8_t * data, std::size_t data_len);
 
 private:
     XR25Frame xr25;
