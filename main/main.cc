@@ -11,6 +11,8 @@
 #include "UartTransport.hh"
 #include "bt_classic/spp_acceptor.hh"
 
+#define SPP2
+
 R19Frame R19_frame;
 constexpr unsigned FORCE_IVAL_S = 60;
 
@@ -26,41 +28,14 @@ std::vector<uint8_t> hexStringToByteArray(const std::string& hex) {
   return bytes;
 }
 
-int spp_write_r19_frame(char* dst, size_t dst_siz, const R19Frame& d,
-                        r19frame_mask_t mask = ~0UL, bool force = false) {
-  ssize_t dst_size = ssize_t(dst_siz);
-  static R19Frame c;        // copy of last written frame
-  static time_t last_time;  // last time when data was successfully written
-  int ct = 0;
-
-  const bool hide_unchanged = !force && true;
-  const r19frame_mask_t view_mask =
-      hide_unchanged ? (r19_frame_members_cmp(c, d) & mask)
-      : (last_time + FORCE_IVAL_S < time(0)) ? ~0UL
-                                             : mask;
-
-  if (view_mask.any()) {
-    ct = r19_frame_print(dst, dst_size, d, view_mask);
-
-    if (ct >= dst_size || ct < 0)
-      return ct;  // ERROR: data was not fully written (e.g. buffer too small)
-
-    // all done. update our local state variables
-    c = R19_frame;
-    last_time = time(0);
-  }
-
-  return ct;
-}
-
 r19frame_mask_t Mask = ~0LU;
 bool Force;
 
 int spp_write_cb(char* dst, size_t dst_size, spp::status_t& status) {
   int ret = 0;
 
-  ret = spp_write_r19_frame(dst, dst_size, R19_frame, Mask,
-                            status.test(spp::JUST_CONNECTED) || Force);
+  ret = write_r19_frame(dst, dst_size, R19_frame, Mask,
+                        status.test(spp::JUST_CONNECTED) || Force);
   Force = false;
   if (0 < ret && ret < dst_size) return ret;
 
@@ -128,9 +103,8 @@ extern "C" int app_main() {
 
     constexpr size_t buf_size = 1024;
     auto buf = new char[buf_size];
-    auto len = spp_write_r19_frame(buf, buf_size, r19_frame);
-    if  (len < buf_size)
-       std::cout.write(buf, len);
+    auto len = write_r19_frame(buf, buf_size, r19_frame, ~0UL, true);
+    if (len < buf_size) std::cout.write(buf, len);
 #endif
   });
 
@@ -142,9 +116,29 @@ extern "C" int app_main() {
   processor.feedBytes(hexStringToByteArray("0073ffff0100006b3004048079811288"));
   processor.feedBytes(hexStringToByteArray("ff00107710437d79b8198c5fc408050c"));
 #endif
-
+#ifdef SPP2
+  spp2_main();
+  uint8_t buf[] = "Hello World!";
+  char dummy;
+  for (;; std::this_thread::sleep_for(std::chrono::milliseconds(50))) {
+    if (!spp_is_connected()) continue;
+    auto buf_len = r19_frame_print(&dummy, 0, R19_frame, ~0UL);
+    auto ptr = (uint8_t*)malloc(buf_len + 1);
+    if (ptr) {
+      bool succ = true;
+      auto len = r19_frame_print((char*)ptr, buf_len + 1, R19_frame, ~0UL);
+      if (len > 0 || len == buf_len) {
+        if ((succ = spp_tx_enqueue(ptr, len, true))) {
+          continue;
+        }
+      }
+      std::cout << "failure: len=" << len << " buf_len=" << buf_len << " succ=" << succ << "\n";
+      free(ptr);
+    }
+  }
+#else
   spp_main(spp_read_cb, spp_write_cb);
-
+#endif
   UartTransport uart;
   uart.start([&processor](auto data, auto data_len) {
     processor.feedBytes(data, data_len);

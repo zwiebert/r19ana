@@ -1,0 +1,20 @@
+{
+  "C_Cpp.intelliSenseEngine": "default",
+  "idf.openOcdConfigs": [
+    "/home/bertw/esp/ft2232.cfg",
+    "target/esp32.cfg"
+  ],
+  "idf.port": "/dev/ttyUSB0",
+  "idf.currentSetup": "/home/bertw/.espressif/v6.0-beta2/esp-idf",
+  "idf.customExtraVars": {
+    "IDF_TARGET": "esp32"
+  },
+  "clangd.path": "/home/bertw/.espressif/tools/esp-clang/esp-19.1.2_20250312/esp-clang/bin/clangd",
+  "clangd.arguments": [
+    "--background-index",
+    "--query-driver=**",
+    "--compile-commands-dir=/home/bertw/proj/xr25/r19xr25-esp32/build"
+  ],
+  "idf.flashType": "JTAG",
+  "idf.monitorPort": "/dev/ttyUSB2"
+}
