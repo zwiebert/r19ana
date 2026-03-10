@@ -36,7 +36,8 @@
 #define SPP_SHOW_DATA 0
 #define SPP_SHOW_SPEED 1
 #define SPP_SHOW_MODE SPP_SHOW_DATA /*Choose show mode: show data or speed*/
-#define SPP_TX_QUEUE_LEN 10
+constexpr size_t SPP_TX_QUEUE_LEN = 10;
+constexpr size_t SPP_RX_QUEUE_LEN = 10;
 
 struct spp_msg_t {
   uint8_t* data;
@@ -48,6 +49,8 @@ spp_msg_t spp_msg_out;
 ssize_t spp_msg_out_bytes_left;  // bytes of spp_msg_out.data left to send.
 bool tx_thread_kill;
 
+static QueueHandle_t spp_rx_queue = NULL;
+
 static const char local_device_name[] = CONFIG_EXAMPLE_LOCAL_DEVICE_NAME;
 static const esp_spp_mode_t esp_spp_mode = ESP_SPP_MODE_CB;
 static const bool esp_spp_enable_l2cap_ertm = true;
@@ -55,10 +58,11 @@ static const bool esp_spp_enable_l2cap_ertm = true;
 static const esp_spp_sec_t sec_mask = ESP_SPP_SEC_AUTHENTICATE;
 static const esp_spp_role_t role_slave = ESP_SPP_ROLE_SLAVE;
 
-// Define a bit to represent "Ready to Send"
-#define SPP_READY_TO_WRITE_BIT BIT0
-#define SPP_TX_QUEUE_NOT_EMPTY BIT1
-#define SPP_TX_QUEUE_NOT_FULL BIT2
+constexpr auto SPP_READY_TO_WRITE_BIT = BIT0;
+constexpr auto SPP_TX_QUEUE_NOT_EMPTY = BIT1;
+constexpr auto SPP_TX_QUEUE_NOT_FULL = BIT2;
+constexpr auto SPP_RX_QUEUE_NOT_EMPTY = BIT3;
+constexpr auto SPP_RX_QUEUE_NOT_FULL = BIT4;
 static EventGroupHandle_t spp_event_group;
 static uint32_t spp_handle = 0;
 
@@ -135,7 +139,20 @@ static void esp_spp_cb(esp_spp_cb_event_t event, esp_spp_cb_param_t* param) {
     case ESP_SPP_CL_INIT_EVT:
       D(ESP_LOGI(SPP_TAG, "ESP_SPP_CL_INIT_EVT"));
       break;
-    case ESP_SPP_DATA_IND_EVT:
+    case ESP_SPP_DATA_IND_EVT: {
+      spp_msg_t msg = {(uint8_t*)malloc(param->data_ind.len + 1),
+                       param->data_ind.len};
+      if (!msg.data) break;
+      memcpy(msg.data, param->data_ind.data, msg.len);
+      msg.data[msg.len] = 0;
+      if (xEventGroupGetBits(spp_event_group) & SPP_RX_QUEUE_NOT_FULL) {
+        if (pdTRUE == xQueueSend(spp_rx_queue, (void*)&msg, TickType_t(10))) {
+          xEventGroupSetBits(spp_event_group, SPP_RX_QUEUE_NOT_EMPTY);
+        } else {
+          xEventGroupSetBits(spp_event_group, SPP_RX_QUEUE_NOT_EMPTY);
+          xEventGroupClearBits(spp_event_group, SPP_RX_QUEUE_NOT_FULL);
+        }
+      }
       /*
        * We only show the data in which the data length is less than 128 here.
        * If you want to print the data and the data rate is high, it is strongly
@@ -144,12 +161,13 @@ static void esp_spp_cb(esp_spp_cb_event_t event, esp_spp_cb_param_t* param) {
        * much time, it may stuck the Bluetooth stack and also have a effect on
        * the throughput!
        */
-      ESP_LOGI(SPP_TAG, "ESP_SPP_DATA_IND_EVT len:%d handle:%" PRIu32,
-               param->data_ind.len, param->data_ind.handle);
+      D(ESP_LOGI(SPP_TAG, "ESP_SPP_DATA_IND_EVT len:%d handle:%" PRIu32,
+                 param->data_ind.len, param->data_ind.handle));
       if (param->data_ind.len < 128) {
         D(ESP_LOG_BUFFER_HEX("", param->data_ind.data, param->data_ind.len));
       }
       break;
+    }
     case ESP_SPP_CONG_EVT:
       // Explicit congestion status change
       if (param->cong.cong) {
@@ -353,6 +371,7 @@ void spp2_main(void) {
 
   spp_tx_queue = xQueueCreate(SPP_TX_QUEUE_LEN, sizeof(spp_msg_t));
   spp_event_group = xEventGroupCreate();
+  spp_tx_queue = xQueueCreate(SPP_RX_QUEUE_LEN, sizeof(spp_msg_t));
 
   auto cfg = esp_pthread_get_default_config();
   esp_pthread_set_cfg(&cfg);
