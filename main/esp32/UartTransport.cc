@@ -48,24 +48,24 @@ using namespace std::chrono;
 #define ECHO_TEST_RTS (UART_PIN_NO_CHANGE)
 #define ECHO_TEST_CTS (UART_PIN_NO_CHANGE)
 
-#define ECHO_UART_PORT_NUM (m_uart_port)
+#define ECHO_UART_PORT_NUM (CONFIG_EXAMPLE_UART_PORT_NUM)
 #define ECHO_UART_BAUD_RATE (CONFIG_EXAMPLE_UART_BAUD_RATE)
 #define ECHO_TASK_STACK_SIZE (CONFIG_EXAMPLE_TASK_STACK_SIZE)
 
 static const char* TAG = "UART TEST";
 
-#define BUF_SIZE (1024)
-UartTransport::~UartTransport() {
-  stop();
-}
+#define BUF_SIZE (512)
+UartTransport::~UartTransport() { stop(); }
 
-UartTransport::UartTransport()
-    : m_uart_port(uart_port_t(CONFIG_EXAMPLE_UART_PORT_NUM)),
-      m_uart_config({
-          .baud_rate = ECHO_UART_BAUD_RATE,
-          .data_bits = UART_DATA_8_BITS,
-          .parity = UART_PARITY_DISABLE,
-          .stop_bits = UART_STOP_BITS_1,
+UartTransport::UartTransport(const UartTransportArgs&& a)
+    : m_uart_port(uart_port_t(a.uart_port_num)),
+      m_rx_gpio(a.rx_gpio),
+      m_tx_gpio(a.tx_gpio),
+      m_uart_config(uart_config_t{
+          .baud_rate = a.bps,
+          .data_bits = a.data_bits,
+          .parity = a.parity,
+          .stop_bits = a.stop_bits,
           .flow_ctrl = UART_HW_FLOWCTRL_DISABLE,
           .rx_flow_ctrl_thresh = 0,
           .source_clk = UART_SCLK_DEFAULT,
@@ -73,16 +73,16 @@ UartTransport::UartTransport()
       }) {}
 
 void UartTransport::worker_thread(ReadCallback cb) {
-      ESP_LOGI(TAG, "%s: read uart from thread", __func__);
+  ESP_LOGI(TAG, "%s: read uart from thread", __func__);
   while (!m_worker_thread_terminate_flag) {
     auto data = m_buf;
     // Read data from the UART
-    int len = uart_read_bytes(ECHO_UART_PORT_NUM, data, (BUF_SIZE - 1),
-                              10000 / portTICK_PERIOD_MS);
+    int len = uart_read_bytes(m_uart_port, data, (BUF_SIZE - 1),
+                              25 / portTICK_PERIOD_MS);
     if (len) {
+    ESP_LOGI("uart2", "read len: %d", len);
       data[len] = '\0';
       cb(data, len);
-      ESP_LOGI(TAG, "Recv str: %s", (char*)data);
     }
   }
 }
@@ -99,11 +99,11 @@ void UartTransport::start(ReadCallback cb) {
   intr_alloc_flags = ESP_INTR_FLAG_IRAM;
 #endif
 
-  ESP_ERROR_CHECK(uart_driver_install(ECHO_UART_PORT_NUM, BUF_SIZE * 2, 0, 0,
-                                      NULL, intr_alloc_flags));
-  ESP_ERROR_CHECK(uart_param_config(ECHO_UART_PORT_NUM, &m_uart_config));
-  ESP_ERROR_CHECK(uart_set_pin(ECHO_UART_PORT_NUM, ECHO_TEST_TXD, ECHO_TEST_RXD,
-                               ECHO_TEST_RTS, ECHO_TEST_CTS));
+  ESP_ERROR_CHECK(uart_driver_install(m_uart_port, BUF_SIZE * 2, 0, 0, NULL,
+                                      intr_alloc_flags));
+  ESP_ERROR_CHECK(uart_param_config(m_uart_port, &m_uart_config));
+  ESP_ERROR_CHECK(
+      uart_set_pin(m_uart_port, m_tx_gpio, m_rx_gpio, m_rts_gpio, m_cts_gpio));
 
   // Configure a temporary buffer for the incoming data
   m_buf = (uint8_t*)malloc(BUF_SIZE);
@@ -111,116 +111,10 @@ void UartTransport::start(ReadCallback cb) {
   // Create a thread using default values that can run on any core
   auto cfg = esp_pthread_get_default_config();
   esp_pthread_set_cfg(&cfg);
+  cfg.pin_to_core = 1;
   m_worker_thread = std::thread(&UartTransport::worker_thread, this, cb);
 }
 
-/* pthread/std::thread example
-
-   This example code is in the Public Domain (or CC0 licensed, at your option.)
-
-   Unless required by applicable law or agreed to in writing, this
-   software is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR
-   CONDITIONS OF ANY KIND, either express or implied.
-*/
-
-#include <esp_log.h>
-#include <esp_pthread.h>
-#include <freertos/FreeRTOS.h>
-#include <freertos/task.h>
-
-#include <chrono>
-#include <iostream>
-#include <memory>
-#include <sstream>
-#include <string>
-#include <thread>
-
-using namespace std::chrono;
-
-const auto sleep_time = seconds{5};
-
-void print_thread_info(const char* extra = nullptr) {
-  std::stringstream ss;
-  if (extra) {
-    ss << extra;
-  }
-  ss << "Core id: " << xPortGetCoreID()
-     << ", prio: " << uxTaskPriorityGet(nullptr)
-     << ", minimum free stack: " << uxTaskGetStackHighWaterMark(nullptr)
-     << " bytes.";
-  ESP_LOGI(pcTaskGetName(nullptr), "%s", ss.str().c_str());
-}
-
-void thread_func_inherited() {
-  while (true) {
-    print_thread_info(
-        "This is the INHERITING thread with the same parameters as our parent, "
-        "including name. ");
-    std::this_thread::sleep_for(sleep_time);
-  }
-}
-
-void spawn_another_thread() {
-  // Create a new thread, it will inherit our configuration
-  std::thread inherits(thread_func_inherited);
-
-  while (true) {
-    print_thread_info();
-    std::this_thread::sleep_for(sleep_time);
-  }
-}
-
-void thread_func_any_core() {
-  while (true) {
-    print_thread_info(
-        "This thread (with the default name) may run on any core.");
-    std::this_thread::sleep_for(sleep_time);
-  }
-}
-
-void thread_func() {
-  while (true) {
-    print_thread_info();
-    std::this_thread::sleep_for(sleep_time);
-  }
-}
-
-esp_pthread_cfg_t create_config(const char* name, int core_id, int stack,
-                                int prio) {
-  auto cfg = esp_pthread_get_default_config();
-  cfg.thread_name = name;
-  cfg.pin_to_core = core_id;
-  cfg.stack_size = stack;
-  cfg.prio = prio;
-  return cfg;
-}
-
-extern "C" void pthread_main(void) {
-  // Create a thread using default values that can run on any core
-  auto cfg = esp_pthread_get_default_config();
-  esp_pthread_set_cfg(&cfg);
-  std::thread any_core(thread_func_any_core);
-
-  // Create a thread on core 0 that spawns another thread, they will both have
-  // the same name etc.
-  cfg = create_config("Thread 1", 0, 3 * 1024, 5);
-  cfg.inherit_cfg = true;
-  esp_pthread_set_cfg(&cfg);
-  std::thread thread_1(spawn_another_thread);
-
-  // Create a thread on core 1.
-  cfg = create_config("Thread 2", 1, 3 * 1024, 5);
-  esp_pthread_set_cfg(&cfg);
-  std::thread thread_2(thread_func);
-
-  // Let the main task do something too
-  while (true) {
-    std::stringstream ss;
-    ss << "core id: " << xPortGetCoreID()
-       << ", prio: " << uxTaskPriorityGet(nullptr)
-       << ", minimum free stack: " << uxTaskGetStackHighWaterMark(nullptr)
-       << " bytes.";
-    ESP_LOGI(pcTaskGetName(nullptr), "%s", ss.str().c_str());
-    std::this_thread::sleep_for(sleep_time);
-  }
+int UartTransport::write(const u_int8_t* data, size_t data_len) {
+  return uart_write_bytes(m_uart_port, (const char*)data, data_len);
 }

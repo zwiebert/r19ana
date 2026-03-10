@@ -108,7 +108,7 @@ extern "C" int app_main() {
 #endif
   });
 
-#if 1
+#if 0
   // feed some data to the frame processor for testing
   processor.feedBytes(hexStringToByteArray("ff00107710447d79bf1aa45fc608080c"));
   processor.feedBytes(hexStringToByteArray("0073ffff0100006b3004048079811288"));
@@ -116,6 +116,16 @@ extern "C" int app_main() {
   processor.feedBytes(hexStringToByteArray("0073ffff0100006b3004048079811288"));
   processor.feedBytes(hexStringToByteArray("ff00107710437d79b8198c5fc408050c"));
 #endif
+
+  UartTransport uart2(UartTransportArgs{
+      .bps = 9600, .uart_port_num = 2, .rx_gpio = 16, .tx_gpio = 17});
+  uart2.start([&processor](auto data, auto data_len) {
+    ESP_LOGI("uart2", "read len: %u", data_len);
+    processor.feedBytes(data, data_len);
+  });
+
+  void mock_uart_fun();
+  auto mock_uart_thread = std::thread(mock_uart_fun);
 
   spp2_main();
   char* dst = 0;
@@ -139,15 +149,38 @@ extern "C" int app_main() {
       }
     }
   }
-  UartTransport uart;
-  uart.start([&processor](auto data, auto data_len) {
-    processor.feedBytes(data, data_len);
-  });
-
-  for (;; std::this_thread::sleep_for(std::chrono::seconds(5))) {
-  }
 
   return 0;
 }
 
 int main() { return app_main(); }
+
+void mock_uart_fun() {
+  UartTransport uart1(UartTransportArgs{
+      .bps = 9600, .uart_port_num = 1, .rx_gpio = 18, .tx_gpio = 19});
+  uart1.start([](uint8_t* data, size_t data_len) {});
+  auto v0 = hexStringToByteArray("ff00107710447d79bf1aa45fc608080c");
+  auto v1 = hexStringToByteArray("0073ffff0100006b3004048079811288");
+  auto v2 = hexStringToByteArray("ff00107710437d79ba19705fc608040c");
+  auto v3 = hexStringToByteArray("0073ffff0100006b3004048079811288");
+  auto v4 = hexStringToByteArray("ff00107710437d79b8198c5fc408050c");
+
+  for (;; std::this_thread::sleep_for(std::chrono::seconds(1))) {
+    constexpr int pms = 100;
+    auto res = uart1.write(&v0[0], v0.size());
+    ESP_LOGI("uart1", "write len: %u", res);
+    std::this_thread::sleep_for(std::chrono::milliseconds(pms));
+    res = uart1.write(&v1[0], v1.size());
+    ESP_LOGI("uart1", "write len: %u", res);
+    std::this_thread::sleep_for(std::chrono::milliseconds(pms));
+    res = uart1.write(&v2[0], v2.size());
+    ESP_LOGI("uart1", "write len: %u", res);
+    std::this_thread::sleep_for(std::chrono::milliseconds(pms));
+    res = uart1.write(&v3[0], v3.size());
+    ESP_LOGI("uart1", "write len: %u", res);
+    std::this_thread::sleep_for(std::chrono::milliseconds(pms));
+    res = uart1.write(&v4[0], v4.size());
+    ESP_LOGI("uart1", "write len: %u", res);
+    std::this_thread::sleep_for(std::chrono::milliseconds(pms));
+  }
+}

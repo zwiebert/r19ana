@@ -16,5 +16,5 @@
     "--compile-commands-dir=/home/bertw/proj/xr25/r19xr25-esp32/build"
   ],
   "idf.flashType": "JTAG",
-  "idf.monitorPort": "/dev/ttyUSB2"
+  "idf.monitorPort": "/dev/ttyUSB0"
 }
