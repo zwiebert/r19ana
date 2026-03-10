@@ -46,17 +46,6 @@ int r19_alloc_and_print(char*& dst, r19frame_mask_t mask = ~0UL) {
   return -1;
 }
 
-int spp_write_cb(char* dst, size_t dst_size, spp::status_t& status) {
-  int ret = 0;
-
-  ret = write_r19_frame(dst, dst_size, R19_frame, Mask,
-                        status.test(spp::JUST_CONNECTED) || Force);
-  Force = false;
-  if (0 < ret && ret < dst_size) return ret;
-
-  return ret;
-}
-
 struct CliCmd {
   const char* name = 0;
   bool (*handler)(struct CliCmd& cli_cmd) = 0;
@@ -84,23 +73,25 @@ const std::array<CliCmd, 1> cmds = {
        r19frame_mask_t mask;
        for (char *str = cmd.args, *save_ptr = nullptr, *tok;
             (tok = strtok_r(str, ", ", &save_ptr)); str = nullptr) {
-         mask.set(strtoul(tok, nullptr, 10) - 1);
+         auto n = strtoul(tok, nullptr, 10);
+         if (n == 0) {
+           if (strstr(tok, "0")) mask = ~0UL;
+         } else
+           mask.set(n - 1);
        }
        Mask = mask;
        Force = true;
-
-       cmd.reply("We made it to the filter handler... yippie\r\n");
 
        return true;
      }},
 };
 
-bool spp_read_cb(char* src) {
+bool cli_parse_and_execute_cmdline(char* src) {
   for (auto cmd : cmds) {
-    if (cmd.execute(src)) return true;
+    if (cmd.execute(src)) {
+      return true;
+    }
   }
-  // we are here, because no command handler matched
-  spp_tx_enqueue("Thanks for your input, friend :)\r\n");
   return false;
 }
 
@@ -134,7 +125,12 @@ extern "C" int app_main() {
     uint8_t* data_in;
     size_t data_in_len;
     if (spp_rx_dequeue(data_in, data_in_len)) {
-      spp_read_cb((char*)data_in);
+      if (cli_parse_and_execute_cmdline((char*)data_in)) {
+        free(data_in);
+      } else {
+        spp_tx_enqueue("error: unknown commandline\r\n");
+        std::this_thread::sleep_for(std::chrono::seconds(2));
+      }
     }
 
     if (auto dst_len = r19_alloc_and_print(dst, Mask); dst_len > 0) {
