@@ -31,6 +31,21 @@ std::vector<uint8_t> hexStringToByteArray(const std::string& hex) {
 r19frame_mask_t Mask = ~0LU;
 bool Force;
 
+int r19_alloc_and_print(char*& dst, r19frame_mask_t mask = ~0UL) {
+  char dummy;
+  if (auto buf_len = r19_frame_print(&dummy, 0, R19_frame, mask); buf_len > 0) {
+    if (auto ptr = (char*)malloc(buf_len + 1); ptr) {
+      bool succ = true;
+      if (auto len = r19_frame_print(ptr, buf_len + 1, R19_frame, mask)) {
+        dst = ptr;
+        return len;
+      }
+      free(ptr);
+    }
+  }
+  return -1;
+}
+
 int spp_write_cb(char* dst, size_t dst_size, spp::status_t& status) {
   int ret = 0;
 
@@ -46,17 +61,15 @@ struct CliCmd {
   const char* name = 0;
   bool (*handler)(struct CliCmd& cli_cmd) = 0;
   char* args = 0;
-  char* dst = 0;
-  size_t dst_size = 0;
+  using reply_fun_t = bool (*)(const char*);
+  reply_fun_t reply = [](const char* msg) -> bool {
+    return spp_tx_enqueue(msg);
+  };
 
-  bool execute(char* cmd_line_buf, size_t buf_size) {
+  bool execute(char* cmd_line_buf) {
     if (strstr(cmd_line_buf, name) != cmd_line_buf) return false;
     args = cmd_line_buf + strlen(name);
-    dst = cmd_line_buf;
-    dst_size = buf_size;  ///< in: size of buf, out: length of reply data/string
     if (handler) return handler(*this);
-
-    dst_size = 0;
     return true;
   }
 };
@@ -76,23 +89,19 @@ const std::array<CliCmd, 1> cmds = {
        Mask = mask;
        Force = true;
 
-       cmd.dst_size =
-           snprintf(cmd.dst, cmd.dst_size,
-                    "We made it to the filter handler... yippie\r\n");
+       cmd.reply("We made it to the filter handler... yippie\r\n");
+
        return true;
      }},
 };
 
-std::size_t spp_read_cb(char* src_dst, std::size_t src_len,
-                        std::size_t dst_size, spp::status_t& status) {
-  printf("spp-in: %.*s", src_len, src_dst);
-
+bool spp_read_cb(char* src) {
   for (auto cmd : cmds) {
-    if (cmd.execute(src_dst, dst_size)) return cmd.dst_size;
+    if (cmd.execute(src)) return true;
   }
-
   // we are here, because no command handler matched
-  return snprintf(src_dst, dst_size, "Thanks for your input, friend :)\r\n");
+  spp_tx_enqueue("Thanks for your input, friend :)\r\n");
+  return false;
 }
 
 extern "C" int app_main() {
@@ -116,29 +125,24 @@ extern "C" int app_main() {
   processor.feedBytes(hexStringToByteArray("0073ffff0100006b3004048079811288"));
   processor.feedBytes(hexStringToByteArray("ff00107710437d79b8198c5fc408050c"));
 #endif
-#ifdef SPP2
+
   spp2_main();
-  uint8_t buf[] = "Hello World!";
-  char dummy;
+  char* dst = 0;
   for (;; std::this_thread::sleep_for(std::chrono::milliseconds(50))) {
     if (!spp_is_connected()) continue;
-    auto buf_len = r19_frame_print(&dummy, 0, R19_frame, ~0UL);
-    auto ptr = (uint8_t*)malloc(buf_len + 1);
-    if (ptr) {
-      bool succ = true;
-      auto len = r19_frame_print((char*)ptr, buf_len + 1, R19_frame, ~0UL);
-      if (len > 0 || len == buf_len) {
-        if ((succ = spp_tx_enqueue(ptr, len, true))) {
-          continue;
-        }
+
+    uint8_t* data_in;
+    size_t data_in_len;
+    if (spp_rx_dequeue(data_in, data_in_len)) {
+      spp_read_cb((char*)data_in);
+    }
+
+    if (auto dst_len = r19_alloc_and_print(dst, Mask); dst_len > 0) {
+      if (spp_tx_enqueue((uint8_t*)dst, dst_len, true)) {
+        continue;
       }
-      std::cout << "failure: len=" << len << " buf_len=" << buf_len << " succ=" << succ << "\n";
-      free(ptr);
     }
   }
-#else
-  spp_main(spp_read_cb, spp_write_cb);
-#endif
   UartTransport uart;
   uart.start([&processor](auto data, auto data_len) {
     processor.feedBytes(data, data_len);

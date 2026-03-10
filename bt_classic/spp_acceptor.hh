@@ -42,7 +42,17 @@ void spp2_main();
 /// @brief       Add new data to transmitter queue.
 /// @param data  data to send. it must be allocated with malloc. free() will be called on it after msg is sent
 /// @param len   byte length of data
-/// @return      success (fails if queue is full)
+/// @param block if true, wait until data becomes available
+/// @return      success (fails if queue is full and not blocking)
 bool spp_tx_enqueue(uint8_t *data, size_t len, bool block = false); 
+bool spp_tx_enqueue(const char *data, bool block = false); 
+
+
+/// @brief       Get data from receiver queue
+/// @param data  reference to received data. call free() on it, when you are done.
+/// @param len   byte length of data
+/// @param block if true, wait until data becomes available
+/// @return      success (fails if queue is empty and not blocking)
+bool spp_rx_dequeue(uint8_t*& data, size_t& len, bool block = false);
 
 bool spp_is_connected();

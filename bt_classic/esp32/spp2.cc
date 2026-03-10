@@ -77,10 +77,13 @@ static void clean_up() {
   free(spp_msg_out.data);
   spp_msg_out = spp_msg_t{};
   spp_msg_out_bytes_left = 0;
-  xEventGroupClearBits(spp_event_group,
-                       SPP_READY_TO_WRITE_BIT | SPP_TX_QUEUE_NOT_EMPTY);
-  xEventGroupSetBits(spp_event_group, SPP_TX_QUEUE_NOT_FULL);
+  xEventGroupClearBits(spp_event_group, SPP_READY_TO_WRITE_BIT |
+                                            SPP_TX_QUEUE_NOT_EMPTY |
+                                            SPP_RX_QUEUE_NOT_EMPTY);
+  xEventGroupSetBits(spp_event_group,
+                     SPP_TX_QUEUE_NOT_FULL | SPP_RX_QUEUE_NOT_FULL);
   xQueueReset(spp_tx_queue);
+  xQueueReset(spp_rx_queue);
   spp_handle = 0;
 }
 
@@ -136,16 +139,18 @@ static void esp_spp_cb(esp_spp_cb_event_t event, esp_spp_cb_param_t* param) {
                    param->start.status));
       }
       break;
+
     case ESP_SPP_CL_INIT_EVT:
       D(ESP_LOGI(SPP_TAG, "ESP_SPP_CL_INIT_EVT"));
       break;
+
     case ESP_SPP_DATA_IND_EVT: {
-      spp_msg_t msg = {(uint8_t*)malloc(param->data_ind.len + 1),
-                       param->data_ind.len};
-      if (!msg.data) break;
-      memcpy(msg.data, param->data_ind.data, msg.len);
-      msg.data[msg.len] = 0;
       if (xEventGroupGetBits(spp_event_group) & SPP_RX_QUEUE_NOT_FULL) {
+        spp_msg_t msg = {(uint8_t*)malloc(param->data_ind.len + 1),
+                         param->data_ind.len};
+        if (!msg.data) break;
+        memcpy(msg.data, param->data_ind.data, msg.len);
+        msg.data[msg.len] = 0;
         if (pdTRUE == xQueueSend(spp_rx_queue, (void*)&msg, TickType_t(10))) {
           xEventGroupSetBits(spp_event_group, SPP_RX_QUEUE_NOT_EMPTY);
         } else {
@@ -371,11 +376,27 @@ void spp2_main(void) {
 
   spp_tx_queue = xQueueCreate(SPP_TX_QUEUE_LEN, sizeof(spp_msg_t));
   spp_event_group = xEventGroupCreate();
-  spp_tx_queue = xQueueCreate(SPP_RX_QUEUE_LEN, sizeof(spp_msg_t));
+  spp_rx_queue = xQueueCreate(SPP_RX_QUEUE_LEN, sizeof(spp_msg_t));
 
   auto cfg = esp_pthread_get_default_config();
   esp_pthread_set_cfg(&cfg);
   spp_tx_thread = std::thread(spp_tx_thread_fun);
+}
+
+bool spp_rx_dequeue(uint8_t*& data, size_t& len, bool block) {
+  spp_msg_t spp_msg_in = {};
+  do {
+    if (xQueueReceive(spp_rx_queue, (void*)&spp_msg_in,
+                      block ? portMAX_DELAY : TickType_t(10)) == pdFALSE) {
+      xEventGroupClearBits(spp_event_group, SPP_RX_QUEUE_NOT_EMPTY);
+      continue;
+    }
+
+    data = spp_msg_in.data;
+    len = spp_msg_in.len;
+    return true;
+  } while (block);
+  return false;
 }
 
 bool spp_tx_enqueue(uint8_t* data, size_t len, bool block) {
@@ -441,3 +462,12 @@ void spp_tx_thread_fun() {
 }
 
 bool spp_is_connected() { return !!spp_handle; }
+
+bool spp_tx_enqueue(const char* data, bool block) {
+  auto data_len = strlen(data);
+  if (uint8_t* ptr = (uint8_t*)malloc(data_len)) {
+    memcpy(ptr, data, data_len);
+    return spp_tx_enqueue(ptr, data_len, block);
+  }
+  return false;
+}
