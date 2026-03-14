@@ -20,7 +20,7 @@ R19Frame::R19Frame(const XR25Frame& data) {
     O2_Sensor_mV = int(data[7] * 4);
     AP_mBar = 1090 - data[18];
     BatteryVoltage_mV = int(1000.0f * (data[6] * 0.0312f + 8.0f));
-    ID_usec = 2 * ((data[12] | (data[11] << 8)) & 0xffff) - 500;
+    ID_usec = 2 * ((data[12] | (data[11] << 8)) & 0xffff);
     isThrottleOpen = (data[2] & 0x10) == 0;
     isThrottleClosed = (data[2] & 0x08) == 0;
     EngineKnocking = data[10];

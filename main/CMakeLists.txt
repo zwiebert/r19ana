@@ -6,6 +6,7 @@ set(srcs_host "../bt_classic/host/mock.cc")
 if(COMMAND idf_component_register)
 idf_component_register(SRCS ${srcs} ${srcs_esp32}
                     REQUIRES bt nvs_flash vfs esp_driver_uart esp_driver_gpio pthread
+                    EMBED_FILES data/r19data.bin
                     INCLUDE_DIRS "." ".." "esp32")
 else()
 project("r19xr25-esp32")

@@ -178,6 +178,7 @@ extern "C" int app_main() {
 int main() { return app_main(); }
 
 #ifdef ESP_PLATFORM
+#if 0
 void mock_uart_fun() {
   UartTransport uart1(UartTransportArgs{
       .bps = 65000, .uart_port_num = 1, .rx_gpio = 18, .tx_gpio = 19});
@@ -207,4 +208,21 @@ void mock_uart_fun() {
     std::this_thread::sleep_for(std::chrono::milliseconds(pms));
   }
 }
+#else
+extern const uint8_t r19data_bin_start[] asm("_binary_r19data_bin_start");
+extern const uint8_t r19data_bin_end[] asm("_binary_r19data_bin_end");
+void mock_uart_fun() {
+  UartTransport uart1(UartTransportArgs{
+      .bps = 65000, .uart_port_num = 1, .rx_gpio = 18, .tx_gpio = 19});
+  uart1.start([](uint8_t* data, size_t data_len) {});
+
+  size_t data_size = r19data_bin_end - r19data_bin_start;
+  for (;;) {
+    for (int i = 0; i < data_size; i += 40) {
+      auto res = uart1.write(r19data_bin_start + i, 40);
+      std::this_thread::sleep_for(std::chrono::milliseconds(50));
+    }
+  }
+}
+#endif
 #endif

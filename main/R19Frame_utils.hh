@@ -24,6 +24,12 @@ inline int r19_frame_print(char* dst, size_t dst_siz, const R19Frame& d,
     unsigned bit = 0;
     auto dst_max = dst + dst_size - 1;
 
+    if (ct >= 0) {
+      auto p = std::min(dst_max, dst + ct);
+      auto l = std::max(ssize_t(0), dst_size - ct);
+      ct += snprintf(p, l, "Frame-Number: %d\r\n", d.FrameNumber);
+    }
+
     if (ct >= 0 && view_mask.test(bit++)) {
       auto p = std::min(dst_max, dst + ct);
       auto l = std::max(ssize_t(0), dst_size - ct);
@@ -156,7 +162,8 @@ inline r19frame_mask_t r19_frame_members_cmp(const R19Frame& c,
     ++bit, changed_mask.set(bit, (c.isThrottleOpen != d.isThrottleOpen));
     ++bit, changed_mask.set(bit, (c.isThrottleClosed != d.isThrottleClosed));
     ++bit, changed_mask.set(bit, (c.isAGR_AKF != d.isAGR_AKF));
-    ++bit, changed_mask.set(bit, (c.isO2_sensor_closed_loop != d.isO2_sensor_closed_loop));
+    ++bit, changed_mask.set(
+               bit, (c.isO2_sensor_closed_loop != d.isO2_sensor_closed_loop));
     ++bit, changed_mask.set(bit, (c.IdleSpeedCorr != d.IdleSpeedCorr));
     ++bit, changed_mask.set(bit, (c.EngineKnocking != d.EngineKnocking));
   }
@@ -166,7 +173,7 @@ inline r19frame_mask_t r19_frame_members_cmp(const R19Frame& c,
 int write_r19_frame(char* dst, size_t dst_siz, const R19Frame& d,
                     r19frame_mask_t mask = ~0UL, bool force = false) {
   ssize_t dst_size = ssize_t(dst_siz);
-  static R19Frame c;        // copy of last written frame
+  static R19Frame c;  // copy of last written frame
   int ct = 0;
 
   const bool hide_unchanged = !force && true;
