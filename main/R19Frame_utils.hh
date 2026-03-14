@@ -104,6 +104,13 @@ inline int r19_frame_print(char* dst, size_t dst_siz, const R19Frame& d,
     if (ct >= 0 && view_mask.test(bit++)) {
       auto p = std::min(dst_max, dst + ct);
       auto l = std::max(ssize_t(0), dst_size - ct);
+      ct += snprintf(p, l, "%u: O2 sensor loop=%s\r\n", bit,
+                     d.is_o2_sensor_loop_closed() ? "closed" : "open");
+    }
+
+    if (ct >= 0 && view_mask.test(bit++)) {
+      auto p = std::min(dst_max, dst + ct);
+      auto l = std::max(ssize_t(0), dst_size - ct);
       ct += snprintf(p, l, "%u: Idle Speed Correction=%d\r\n", bit,
                      d.get_idle_speed_correction());
     }
@@ -149,6 +156,7 @@ inline r19frame_mask_t r19_frame_members_cmp(const R19Frame& c,
     ++bit, changed_mask.set(bit, (c.isThrottleOpen != d.isThrottleOpen));
     ++bit, changed_mask.set(bit, (c.isThrottleClosed != d.isThrottleClosed));
     ++bit, changed_mask.set(bit, (c.isAGR_AKF != d.isAGR_AKF));
+    ++bit, changed_mask.set(bit, (c.isO2_sensor_closed_loop != d.isO2_sensor_closed_loop));
     ++bit, changed_mask.set(bit, (c.IdleSpeedCorr != d.IdleSpeedCorr));
     ++bit, changed_mask.set(bit, (c.EngineKnocking != d.EngineKnocking));
   }

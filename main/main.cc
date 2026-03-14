@@ -33,12 +33,16 @@ bool Force;
 
 int r19_alloc_and_print(char*& dst, r19frame_mask_t mask = ~0UL) {
   char dummy;
+  const char prepend_txt[] = "\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\r----Live Data----\r\n";// "\x1B[2J";
+  const char append_txt[] = "-----------\r\n";// "\x1B[2J";
+
   if (auto buf_len = r19_frame_print(&dummy, 0, R19_frame, mask); buf_len > 0) {
-    if (auto ptr = (char*)malloc(buf_len + 1); ptr) {
-      bool succ = true;
-      if (auto len = r19_frame_print(ptr, buf_len + 1, R19_frame, mask)) {
+    if (auto ptr = (char*)malloc(buf_len + 1 + sizeof prepend_txt + sizeof append_txt); ptr) {
+      memcpy(ptr, prepend_txt, sizeof prepend_txt);
+      if (auto len = r19_frame_print(ptr + sizeof prepend_txt, buf_len + 1, R19_frame, mask)) {
+        memcpy(ptr + sizeof prepend_txt + len, append_txt, sizeof append_txt);
         dst = ptr;
-        return len;
+        return len + sizeof prepend_txt + sizeof append_txt ;
       }
       free(ptr);
     }
@@ -118,7 +122,7 @@ extern "C" int app_main() {
 #endif
 
   UartTransport uart2(UartTransportArgs{
-      .bps = 9600, .uart_port_num = 2, .rx_gpio = 16, .tx_gpio = 17});
+      .bps = 65000, .uart_port_num = 2, .rx_gpio = 16, .tx_gpio = 17});
   uart2.start([&processor](auto data, auto data_len) {
     ESP_LOGI("uart2", "read len: %u", data_len);
     processor.feedBytes(data, data_len);
@@ -157,7 +161,7 @@ int main() { return app_main(); }
 
 void mock_uart_fun() {
   UartTransport uart1(UartTransportArgs{
-      .bps = 9600, .uart_port_num = 1, .rx_gpio = 18, .tx_gpio = 19});
+      .bps = 65000, .uart_port_num = 1, .rx_gpio = 18, .tx_gpio = 19});
   uart1.start([](uint8_t* data, size_t data_len) {});
   auto v0 = hexStringToByteArray("ff00107710447d79bf1aa45fc608080c");
   auto v1 = hexStringToByteArray("0073ffff0100006b3004048079811288");

@@ -25,7 +25,7 @@ public:
     int     getIntByIndex(int idx) const;
     int     getDampedIntByIndex(int idx) const;
 
-    void add(uint8_t b);
+    bool add(uint8_t b);
     bool append(const std::vector<uint8_t>& data);
     bool append(const std::vector<uint8_t>& data, int nmb);
     bool append(const std::uint8_t *data, size_t data_len);
@@ -37,12 +37,20 @@ public:
 
     bool test();
 
+    uint8_t operator[] (int idx) const {
+        return m_frame[idx - 2];
+    }
+
 private:
     std::array<uint8_t, BUF_SIZE> buffer;
     std::array<uint8_t, FRAME_SIZE> dampbuf;
     int tail = 0;
     int head = BUF_SIZE - 2;
     int frameCounter = 0;
+private:
+    std::array<uint8_t, FRAME_SIZE> m_frame;
+    int m_idx = 0;
+    bool m_last_byte_was_ff = false;
 };
 
 #endif // XR25FRAME_H

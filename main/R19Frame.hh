@@ -23,26 +23,12 @@ class R19Frame {
   bool is_throttle_fully_closed() const { return isThrottleClosed; }
   bool is_vacuum_provided_to_egr_valve() const { return isAGR_AKF; }
   bool is_evap_canister_open_to_intake() const { return isAGR_AKF; }
+  bool is_o2_sensor_loop_closed() const { return isO2_sensor_closed_loop; }
 
  public:
   int FrameNumber = 0;
 
   public:
-  enum class Bit : unsigned {
-    EngineSpeed_RPM,
-    MAP_mBar,
-    IAT_Celsius = 2,
-    ECT_Celsius = 3,
-    O2_Sensor_mV = 4,
-    AP_mBar = 5,
-    BatteryVoltage_mV = 6,
-    ID_usec = 7,
-    isThrottleOpen = 8,
-    isThrottleClosed = 9,
-    isAGR_AKF = 10,
-    IdleSpeedCorr = 11,
-    EngineKnocking = 12
-  };
   int EngineSpeed_RPM = 0;
   int MAP_mBar = 0;
   int IAT_Celsius = 0;
@@ -54,8 +40,11 @@ class R19Frame {
   bool isThrottleOpen = false;
   bool isThrottleClosed = false;
   bool isAGR_AKF = false;
+  bool isO2_sensor_closed_loop = false;
   int IdleSpeedCorr = 0;
   int EngineKnocking = 0;
+  int EngineKnockingDelay = 0;
+  
 
   explicit R19Frame(const XR25Frame& data);
   R19Frame() = default;
