@@ -91,6 +91,7 @@ void UartTransport::stop() {
   m_worker_thread.join();
   free(m_buf);
   m_buf = 0;
+  ESP_ERROR_CHECK(uart_driver_delete(m_uart_port));
 }
 
 void UartTransport::start(ReadCallback cb) {

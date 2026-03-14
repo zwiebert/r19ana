@@ -57,7 +57,7 @@ int r19_alloc_and_print(char*& dst, r19frame_mask_t mask = ~0UL) {
 }
 
 struct CliCmd {
-  const char* name = 0;
+  const char* name = "";
   bool (*handler)(struct CliCmd& cli_cmd) = 0;
   char* args = 0;
   using reply_fun_t = bool (*)(const char*);
@@ -78,16 +78,16 @@ struct CliCmd {
   }
 };
 
-const std::array<CliCmd, 1> cmds = {
-    {"filter ",
-     [](CliCmd& cmd) -> bool {
+const std::array<CliCmd, 4> cmds = {{
+    {.name = "filter ",
+     .handler = [](CliCmd& cmd) -> bool {
        // command line was like: "filter 1,2,3,8,12".
        // cmd.args is now "1,2,3,8,12"
        // we need to convert this into a bitset<32> with only bits 0,1,2,7,11
        // are set to true.
        r19frame_mask_t mask;
        for (char *str = cmd.args, *save_ptr = nullptr, *tok;
-            (tok = strtok_r(str, ", ", &save_ptr)); str = nullptr) {
+            (tok = strtok_r(str, ", \r\n", &save_ptr)); str = nullptr) {
          auto n = strtoul(tok, nullptr, 10);
          if (n == 0) {
            if (strstr(tok, "0")) mask = ~0UL;
@@ -99,7 +99,33 @@ const std::array<CliCmd, 1> cmds = {
 
        return true;
      }},
-};
+
+#ifdef ESP_PLATFORM
+    {.name = "mock-loop",
+     .handler = [](CliCmd& cmd) -> bool {
+       static std::thread mock_uart_thread;
+       static bool keep_running;
+
+       for (char *str = cmd.args, *save_ptr = nullptr, *tok;
+            (tok = strtok_r(str, ", \r\n", &save_ptr)); str = nullptr) {
+         if (strcmp(tok, "on") == 0) {
+           void mock_uart_fun(bool& keep_running);
+           keep_running = true;
+           mock_uart_thread =
+               std::thread(mock_uart_fun, std::ref(keep_running));
+           return true;
+         } else if (strcmp(tok, "off") == 0) {
+           keep_running = false;
+           mock_uart_thread.join();
+           return true;
+         } else {
+           return false;  // unknown argument
+         }
+       }
+       return false;
+     }},
+#endif
+}};
 
 bool cli_parse_and_execute_cmdline(char* src) {
   for (auto cmd : cmds) {
@@ -145,12 +171,9 @@ extern "C" int app_main() {
     processor.feedBytes(data, data_len);
   });
 
-  void mock_uart_fun();
-  auto mock_uart_thread = std::thread(mock_uart_fun);
-
   spp2_main();
   char* dst = 0;
-  for (;; std::this_thread::sleep_for(std::chrono::milliseconds(50))) {
+  for (;; std::this_thread::sleep_for(std::chrono::milliseconds(10))) {
     if (!spp_is_connected()) continue;
 
     uint8_t* data_in;
@@ -178,51 +201,22 @@ extern "C" int app_main() {
 int main() { return app_main(); }
 
 #ifdef ESP_PLATFORM
-#if 0
-void mock_uart_fun() {
-  UartTransport uart1(UartTransportArgs{
-      .bps = 65000, .uart_port_num = 1, .rx_gpio = 18, .tx_gpio = 19});
-  uart1.start([](uint8_t* data, size_t data_len) {});
-  auto v0 = hexStringToByteArray("ff00107710447d79bf1aa45fc608080c");
-  auto v1 = hexStringToByteArray("0073ffff0100006b3004048079811288");
-  auto v2 = hexStringToByteArray("ff00107710437d79ba19705fc608040c");
-  auto v3 = hexStringToByteArray("0073ffff0100006b3004048079811288");
-  auto v4 = hexStringToByteArray("ff00107710437d79b8198c5fc408050c");
+void mock_uart_fun(bool& keep_running) {
+  extern const uint8_t r19data_bin_start[] asm("_binary_r19data_bin_start");
+  extern const uint8_t r19data_bin_end[] asm("_binary_r19data_bin_end");
+  const uint8_t* data = r19data_bin_start;
+  const size_t data_size = r19data_bin_end - r19data_bin_start;
+  const int chunk = 40;
 
-  for (;; std::this_thread::sleep_for(std::chrono::seconds(1))) {
-    constexpr int pms = 100;
-    auto res = uart1.write(&v0[0], v0.size());
-    ESP_LOGI("uart1", "write len: %u", res);
-    std::this_thread::sleep_for(std::chrono::milliseconds(pms));
-    res = uart1.write(&v1[0], v1.size());
-    ESP_LOGI("uart1", "write len: %u", res);
-    std::this_thread::sleep_for(std::chrono::milliseconds(pms));
-    res = uart1.write(&v2[0], v2.size());
-    ESP_LOGI("uart1", "write len: %u", res);
-    std::this_thread::sleep_for(std::chrono::milliseconds(pms));
-    res = uart1.write(&v3[0], v3.size());
-    ESP_LOGI("uart1", "write len: %u", res);
-    std::this_thread::sleep_for(std::chrono::milliseconds(pms));
-    res = uart1.write(&v4[0], v4.size());
-    ESP_LOGI("uart1", "write len: %u", res);
-    std::this_thread::sleep_for(std::chrono::milliseconds(pms));
-  }
-}
-#else
-extern const uint8_t r19data_bin_start[] asm("_binary_r19data_bin_start");
-extern const uint8_t r19data_bin_end[] asm("_binary_r19data_bin_end");
-void mock_uart_fun() {
   UartTransport uart1(UartTransportArgs{
       .bps = 65000, .uart_port_num = 1, .rx_gpio = 18, .tx_gpio = 19});
   uart1.start([](uint8_t* data, size_t data_len) {});
 
-  size_t data_size = r19data_bin_end - r19data_bin_start;
-  for (;;) {
-    for (int i = 0; i < data_size; i += 40) {
-      auto res = uart1.write(r19data_bin_start + i, 40);
+  while (keep_running) {
+    for (int i = 0; i < data_size - chunk && keep_running; i += chunk) {
+      auto res = uart1.write(data + i, chunk);
       std::this_thread::sleep_for(std::chrono::milliseconds(50));
     }
   }
 }
-#endif
 #endif
