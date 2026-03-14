@@ -8,22 +8,9 @@
 
 class XR25Frame {
 public:
-    static constexpr int BUF_SIZE   = 500;
-    static constexpr int FRAME_SIZE = 32;
-    static const std::array<uint8_t,4> FRAME_START_ID;
+    static constexpr int FRAME_SIZE = 30;
 
     XR25Frame();
-
-    void dampbufFill();
-    std::string dampbufAsString() const;
-
-    int distance() const;
-    int find(const std::vector<uint8_t>& data) const;
-    bool adjustHead();
-
-    uint8_t getByteByIndex(int idx) const;
-    int     getIntByIndex(int idx) const;
-    int     getDampedIntByIndex(int idx) const;
 
     bool add(uint8_t b);
     bool append(const std::vector<uint8_t>& data);
@@ -38,17 +25,13 @@ public:
     bool test();
 
     uint8_t operator[] (int idx) const {
-        return m_frame[idx - 2];
+        return m_frame[idx];
     }
 
 private:
-    std::array<uint8_t, BUF_SIZE> buffer;
-    std::array<uint8_t, FRAME_SIZE> dampbuf;
-    int tail = 0;
-    int head = BUF_SIZE - 2;
     int frameCounter = 0;
 private:
-    std::array<uint8_t, FRAME_SIZE> m_frame;
+    std::array<uint8_t, FRAME_SIZE> m_frame = {};
     int m_idx = 0;
     bool m_last_byte_was_ff = false;
 };

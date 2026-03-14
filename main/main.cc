@@ -3,6 +3,7 @@
 #include <string.h>
 
 #include <chrono>
+#include <fstream>
 #include <iostream>
 #include <thread>
 
@@ -33,16 +34,21 @@ bool Force;
 
 int r19_alloc_and_print(char*& dst, r19frame_mask_t mask = ~0UL) {
   char dummy;
-  const char prepend_txt[] = "\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\r----Live Data----\r\n";// "\x1B[2J";
-  const char append_txt[] = "-----------\r\n";// "\x1B[2J";
+  const char prepend_txt[] =
+      "\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\r----"
+      "Live Data----\r\n";                      // "\x1B[2J";
+  const char append_txt[] = "-----------\r\n";  // "\x1B[2J";
 
   if (auto buf_len = r19_frame_print(&dummy, 0, R19_frame, mask); buf_len > 0) {
-    if (auto ptr = (char*)malloc(buf_len + 1 + sizeof prepend_txt + sizeof append_txt); ptr) {
+    if (auto ptr =
+            (char*)malloc(buf_len + 1 + sizeof prepend_txt + sizeof append_txt);
+        ptr) {
       memcpy(ptr, prepend_txt, sizeof prepend_txt);
-      if (auto len = r19_frame_print(ptr + sizeof prepend_txt, buf_len + 1, R19_frame, mask)) {
+      if (auto len = r19_frame_print(ptr + sizeof prepend_txt, buf_len + 1,
+                                     R19_frame, mask)) {
         memcpy(ptr + sizeof prepend_txt + len, append_txt, sizeof append_txt);
         dst = ptr;
-        return len + sizeof prepend_txt + sizeof append_txt ;
+        return len + sizeof prepend_txt + sizeof append_txt;
       }
       free(ptr);
     }
@@ -56,7 +62,12 @@ struct CliCmd {
   char* args = 0;
   using reply_fun_t = bool (*)(const char*);
   reply_fun_t reply = [](const char* msg) -> bool {
+#ifdef ESP_PLATFORM
     return spp_tx_enqueue(msg);
+#else
+    std::cout << msg << "\n";
+    return true;
+#endif
   };
 
   bool execute(char* cmd_line_buf) {
@@ -104,7 +115,8 @@ extern "C" int app_main() {
     R19_frame = r19_frame;  // store latest frame for later use
 #ifndef ESP_PLATFORM
     std::cout << "HEX: " << hex << "\n";
-
+    std::cout << "bit:  0  1  2  3  4  5  6  7  8  9 10 11 12 13 14 15 16 17 "
+                 "18 19 20 21 22 23 24 25 26 27 28 29\n";
     constexpr size_t buf_size = 1024;
     auto buf = new char[buf_size];
     auto len = write_r19_frame(buf, buf_size, r19_frame, ~0UL, true);
@@ -112,15 +124,20 @@ extern "C" int app_main() {
 #endif
   });
 
-#if 0
-  // feed some data to the frame processor for testing
-  processor.feedBytes(hexStringToByteArray("ff00107710447d79bf1aa45fc608080c"));
-  processor.feedBytes(hexStringToByteArray("0073ffff0100006b3004048079811288"));
-  processor.feedBytes(hexStringToByteArray("ff00107710437d79ba19705fc608040c"));
-  processor.feedBytes(hexStringToByteArray("0073ffff0100006b3004048079811288"));
-  processor.feedBytes(hexStringToByteArray("ff00107710437d79b8198c5fc408050c"));
-#endif
+#ifndef ESP_PLATFORM
+  if (std::ifstream is("data/r19data.bin", std::ifstream::binary); is) {
+    char buf[16];
+    do {
+      is.read(buf, sizeof buf);
+      if (is) {
+        processor.feedBytes((uint8_t*)buf, sizeof buf);
+      }
 
+    } while (is);
+  } else
+    processor.test();
+#endif
+#ifdef ESP_PLATFORM
   UartTransport uart2(UartTransportArgs{
       .bps = 65000, .uart_port_num = 2, .rx_gpio = 16, .tx_gpio = 17});
   uart2.start([&processor](auto data, auto data_len) {
@@ -154,11 +171,13 @@ extern "C" int app_main() {
     }
   }
 
+#endif
   return 0;
 }
 
 int main() { return app_main(); }
 
+#ifdef ESP_PLATFORM
 void mock_uart_fun() {
   UartTransport uart1(UartTransportArgs{
       .bps = 65000, .uart_port_num = 1, .rx_gpio = 18, .tx_gpio = 19});
@@ -188,3 +207,4 @@ void mock_uart_fun() {
     std::this_thread::sleep_for(std::chrono::milliseconds(pms));
   }
 }
+#endif

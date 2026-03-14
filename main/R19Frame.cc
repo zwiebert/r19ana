@@ -10,26 +10,26 @@ R19Frame::R19Frame(const XR25Frame& data) {
 
   {
     {
-      uint32_t num = ((data[10]) | (data[11] << 8)) & 0xffff;
+      uint32_t num = ((data[8]) | (data[9] << 8)) & 0xffff;
       EngineSpeed_RPM = (num == 0) ? 0 : int(30000000L / num);
     }
-    MAP_mBar = int(data[5] * 3.697f + 103.0f);
-    IAT_Celsius = int(data[7] * 0.625f - 40.0f);
-    ECT_Celsius = int(data[6] * 0.625f - 40.0f);
+    MAP_mBar = int(data[3] * 3.697f + 103.0f);
+    IAT_Celsius = int(data[5] * 0.625f - 40.0f);
+    ECT_Celsius = int(data[4] * 0.625f - 40.0f);
 
-    O2_Sensor_mV = int(data[9] * 4);
-    AP_mBar = 1090 - data[20];
-    BatteryVoltage_mV = int(1000.0f * (data[8] * 0.0312f + 8.0f));
-    ID_usec = 2 * ((data[12] | (data[13] << 8)) & 0xffff) - 500;
-    isThrottleOpen = (data[4] & 0x10) == 0;
-    isThrottleClosed = (data[4] & 0x08) == 0;
-    EngineKnocking = data[12];
-    // EngineKnockingDelay = data.getIntByIndex(27 + idx_add);
-    // IdleSpeedCorr = data.getIntByIndex(14 + idx_add);
+    O2_Sensor_mV = int(data[7] * 4);
+    AP_mBar = 1090 - data[18];
+    BatteryVoltage_mV = int(1000.0f * (data[6] * 0.0312f + 8.0f));
+    ID_usec = 2 * ((data[12] | (data[11] << 8)) & 0xffff) - 500;
+    isThrottleOpen = (data[2] & 0x10) == 0;
+    isThrottleClosed = (data[2] & 0x08) == 0;
+    EngineKnocking = data[10];
+    // EngineKnockingDelay = data.getIntByIndex(25 + idx_add);
+    // IdleSpeedCorr = data.getIntByIndex(12 + idx_add);
   }
 
-    isAGR_AKF = !!(data[20] & 0x20);
-    isO2_sensor_closed_loop = !!(data[20] & 0x08);
+    isAGR_AKF = !!(data[18] & 0x20);
+    isO2_sensor_closed_loop = !!(data[18] & 0x08);
 }
 
 std::string R19Frame::getDataAsText() const {
