@@ -14,6 +14,8 @@ bool XR25Frame::add(uint8_t b) {
 
   if (b == 0x00 && m_last_byte_was_ff) {
     m_idx = 0;
+    m_complete_frame = m_frame;
+    m_complete_frame_counter = frameCounter;
     m_last_byte_was_ff = false;
     ++frameCounter;
     return true;
