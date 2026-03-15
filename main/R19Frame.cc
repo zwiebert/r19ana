@@ -11,31 +11,41 @@ R19Frame::R19Frame(const XR25Frame& data) {
   {
     {
       uint32_t num = ((data[8]) | (data[9] << 8)) & 0xffff;
-      EngineSpeed_RPM = (num == 0) ? 0 : int(30000000L / num);
+      m_ia[cs_RPM] = (num == 0) ? 0 : int(30000000L / num);
     }
-    MAP_mBar = int(data[3] * 3.697f + 103.0f);
-    IAT_Celsius = int(data[5] * 0.625f - 40.0f);
-    ECT_Celsius = int(data[4] * 0.625f - 40.0f);
+    #if 0
+    m_ia[map_mBar] = int(data[3] * 3.697f + 103.0f);
 
-    O2_Sensor_mV = int(data[7] * 4);
-    AP_mBar = 1090 - data[18];
-    BatteryVoltage_mV = int(1000.0f * (data[6] * 0.0312f + 8.0f));
-    ID_usec = 2 * ((data[12] | (data[11] << 8)) & 0xffff);
-    isThrottleOpen = (data[2] & 0x10) == 0;
-    isThrottleClosed = (data[2] & 0x08) == 0;
-    EngineKnocking = data[10];
+    m_ia[o2_mV] = int(data[7] * 4);
+    m_ia[ap_mBar] = 1090 - data[18];
+
+    #else
+    m_ia[map_mBar] = int(data[3] * 4);
+
+    m_ia[o2_mV] = int(data[7] * 6);
+    m_ia[ap_mBar] = (~data[18] & 0xff) * 4;
+    #endif
+
+    m_ia[batt_mV] = int(1000.0f * (data[6] * 0.0312f + 8.0f));
+    m_ia[inj_dur_us] = 2 * ((data[12] | (data[11] << 8)) & 0xffff);
+    m_ia[iat_dC] = int(data[5] * 0.625f - 40.0f);
+    m_ia[ect_dC] = int(data[4] * 0.625f - 40.0f);
+
+    m_ba[thro_idle] = (data[2] & 0x10) == 0;
+    m_ba[thro_full_pow] = (data[2] & 0x08) == 0;
+    m_ia[engine_knock] = data[10];
     // EngineKnockingDelay = data.getIntByIndex(25 + idx_add);
     // IdleSpeedCorr = data.getIntByIndex(12 + idx_add);
   }
 
-    isAGR_AKF = !!(data[18] & 0x20);
-    isO2_sensor_closed_loop = !!(data[18] & 0x08);
+    m_ba[egr_enabled] = !!(data[18] & 0x20);
+    m_ba[o2_closed_loop] = !!(data[18] & 0x08);
 }
 
 std::string R19Frame::getDataAsText() const {
   std::ostringstream oss;
 
-  if (EngineSpeed_RPM == 0) {
+  if (get_engine_speed_RPM() == 0) {
     oss << "Motor aus. Frames: " << FrameNumber << "\n\n\n";
   }
 

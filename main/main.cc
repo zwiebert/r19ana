@@ -215,7 +215,7 @@ void mock_uart_fun(bool& keep_running) {
   while (keep_running) {
     for (int i = 0; i < data_size - chunk && keep_running; i += chunk) {
       auto res = uart1.write(data + i, chunk);
-      std::this_thread::sleep_for(std::chrono::milliseconds(50));
+      std::this_thread::sleep_for(std::chrono::milliseconds(10));
     }
   }
 }

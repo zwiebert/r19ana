@@ -1,51 +1,66 @@
 #pragma once
 
+#include <array>
 #include <string>
 
 class XR25Frame;  // forward declaration
 
 class R19Frame {
-  public:
-  int get_engine_speed_RPM()const { return EngineSpeed_RPM; }
-  int get_manifold_absolute_pressure_mBar()const { return MAP_mBar; }
-  int get_intake_air_temperature_Celsius()const { return IAT_Celsius; }
-  int get_engine_coolant_temperature_Celsius()const { return ECT_Celsius; }
-  int get_oxygen_sensor_voltage_mV () const { return O2_Sensor_mV; }
-  int get_atmospheric_pressure_mBar() const { return AP_mBar; }
-  int get_battery_voltage_mV() const { return BatteryVoltage_mV; }
-  float get_battery_voltage_V() const { return BatteryVoltage_mV / 1000.0f; }
-  float get_injection_duration_ms() const { return ID_usec * 0.001f; }
-  int get_injection_duration_us() const { return int(ID_usec * 1000.0f); }
-  int get_idle_speed_correction() const { return IdleSpeedCorr; }
-  int get_engine_knocking() const { return EngineKnocking; }
-
-  bool is_throttle_fully_open() const { return isThrottleOpen; }
-  bool is_throttle_fully_closed() const { return isThrottleClosed; }
-  bool is_vacuum_provided_to_egr_valve() const { return isAGR_AKF; }
-  bool is_evap_canister_open_to_intake() const { return isAGR_AKF; }
-  bool is_o2_sensor_loop_closed() const { return isO2_sensor_closed_loop; }
-
  public:
+  int get_frame_count() const { return FrameNumber; }
+
+  int get_engine_speed_RPM() const { return m_ia[cs_RPM]; }
+  int get_manifold_absolute_pressure_mBar() const { return m_ia[map_mBar]; }
+  int get_intake_air_temperature_Celsius() const { return m_ia[iat_dC]; }
+  int get_engine_coolant_temperature_Celsius() const { return m_ia[ect_dC]; }
+  int get_oxygen_sensor_voltage_mV() const { return m_ia[o2_mV]; }
+  int get_atmospheric_pressure_mBar() const { return m_ia[ap_mBar]; }
+  int get_battery_voltage_mV() const { return m_ia[batt_mV]; }
+  int get_injection_duration_us() const { return int(m_ia[inj_dur_us]); }
+  int get_idle_speed_correction() const { return m_ia[idle_speed_corr]; }
+  int get_engine_knocking() const { return m_ia[engine_knock]; }
+
+  float get_battery_voltage_V() const { return m_ia[batt_mV] * 0.001f; }
+  float get_injection_duration_ms() const { return m_ia[inj_dur_us] * 0.001f; }
+
+  bool is_throttle_fully_open() const { return m_ba[thro_idle]; }
+  bool is_throttle_fully_closed() const { return m_ba[thro_full_pow]; }
+  bool is_vacuum_provided_to_egr_valve() const { return m_ba[egr_enabled]; }
+  bool is_evap_canister_open_to_intake() const { return m_ba[egr_enabled]; }
+  bool is_oxygen_sensor_loop_closed() const { return m_ba[o2_closed_loop]; }
+
+ private:
   int FrameNumber = 0;
 
-  public:
-  int EngineSpeed_RPM = 0;
-  int MAP_mBar = 0;
-  int IAT_Celsius = 0;
-  int ECT_Celsius = 0;
-  int O2_Sensor_mV = 0;
-  int AP_mBar = 0;
-  int BatteryVoltage_mV = 0;
-  int ID_usec = 0;
-  bool isThrottleOpen = false;
-  bool isThrottleClosed = false;
-  bool isAGR_AKF = false;
-  bool isO2_sensor_closed_loop = false;
-  int IdleSpeedCorr = 0;
-  int EngineKnocking = 0;
-  int EngineKnockingDelay = 0;
-  
+ private:
+  enum : uint8_t {
+    cs_RPM,
+    map_mBar,
+    iat_dC,
+    ect_dC,
+    o2_mV,
+    ap_mBar,
+    batt_mV,
+    inj_dur_us,
+    idle_speed_corr,
+    engine_knock,
+    //
+    int_arr_size
+  };
+  enum : uint8_t {
+    thro_idle,
+    thro_full_pow,
+    egr_enabled,
+    o2_closed_loop,
+    //
+    bool_arr_size
+  };
 
+ private:
+  std::array<int, int_arr_size> m_ia = {{}};
+  std::array<bool, bool_arr_size> m_ba = {{}};
+
+ public:
   explicit R19Frame(const XR25Frame& data);
   R19Frame() = default;
   bool operator==(const R19Frame&) const = default;
