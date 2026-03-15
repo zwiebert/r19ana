@@ -49,10 +49,7 @@ class R19Frame {
 #endif
   }
 
-
-  int get_battery_voltage_mV() const {
-    return int(data[6]) * 32 + 8;
-  }
+  int get_battery_voltage_mV() const { return int(data[6]) * 32 + 8; }
 
   float get_battery_voltage_V() const {
     return get_battery_voltage_mV() * 0.001f;
@@ -87,7 +84,7 @@ class R19Frame {
   int FrameNumber = 0;
 
  public:
-  explicit R19Frame(const XR25Frame& xr25_frame)
+  R19Frame(const XR25Frame& xr25_frame)
       : data(xr25_frame.get_frame_data()),
         FrameNumber(xr25_frame.getFrameCounter()) {};
   R19Frame() = default;

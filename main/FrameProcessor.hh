@@ -10,8 +10,7 @@
 
 class FrameProcessor {
  public:
-  using UpdateCallback =
-      std::function<void(const std::string& hex, R19Frame&& r19_frame)>;
+  using UpdateCallback = std::function<void(const XR25Frame& frame)>;
 
   explicit FrameProcessor(UpdateCallback cb);
   void feedBytes(const std::vector<uint8_t>& data);

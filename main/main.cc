@@ -17,18 +17,6 @@
 R19Frame R19_frame;
 constexpr unsigned FORCE_IVAL_S = 60;
 
-std::vector<uint8_t> hexStringToByteArray(const std::string& hex) {
-  std::vector<uint8_t> bytes;
-
-  for (unsigned int i = 0; i < hex.length(); i += 2) {
-    std::string byteString = hex.substr(i, 2);
-    uint8_t byte = (uint8_t)strtol(byteString.c_str(), NULL, 16);
-    bytes.push_back(byte);
-  }
-
-  return bytes;
-}
-
 r19frame_mask_t Mask = ~0LU;
 bool Force;
 
@@ -136,34 +124,20 @@ bool cli_parse_and_execute_cmdline(char* src) {
   return false;
 }
 
-extern "C" int app_main() {
-  FrameProcessor processor([](const std::string& hex, R19Frame&& r19_frame) {
-    R19_frame = r19_frame;  // store latest frame for later use
-#ifndef ESP_PLATFORM
-    std::cout << "HEX: " << hex << "\n";
-    std::cout << "bit:  0  1  2  3  4  5  6  7  8  9 10 11 12 13 14 15 16 17 "
-                 "18 19 20 21 22 23 24 25 26 27 28 29\n";
-    constexpr size_t buf_size = 1024;
-    auto buf = new char[buf_size];
-    auto len = write_r19_frame(buf, buf_size, r19_frame, ~0UL, true);
-    if (len < buf_size) std::cout.write(buf, len);
-#endif
-  });
+void test_print_frame(const XR25Frame& frame) {
+  std::cout << "HEX: " << frame.toString() << "\n";
+  std::cout << "bit:  0  1  2  3  4  5  6  7  8  9 10 11 12 13 14 15 16 17 "
+               "18 19 20 21 22 23 24 25 26 27 28 29\n";
+  constexpr size_t buf_size = 1024;
+  auto buf = new char[buf_size];
+  auto len = write_r19_frame(buf, buf_size, R19Frame(frame), ~0UL, true);
+  if (len < buf_size) std::cout.write(buf, len);
+}
 
-#ifndef ESP_PLATFORM
-  if (std::ifstream is("data/r19data.bin", std::ifstream::binary); is) {
-    char buf[16];
-    do {
-      is.read(buf, sizeof buf);
-      if (is) {
-        processor.feedBytes((uint8_t*)buf, sizeof buf);
-      }
-
-    } while (is);
-  } else
-    processor.test();
-#endif
 #ifdef ESP_PLATFORM
+extern "C" int app_main() {
+  FrameProcessor processor([](const XR25Frame& frame) { R19_frame = frame; });
+
   UartTransport uart2(UartTransportArgs{
       .bps = 65000, .uart_port_num = 2, .rx_gpio = 16, .tx_gpio = 17});
   uart2.start([&processor](auto data, auto data_len) {
@@ -194,11 +168,10 @@ extern "C" int app_main() {
     }
   }
 
-#endif
   return 0;
 }
 
-int main() { return app_main(); }
+#endif
 
 #ifdef ESP_PLATFORM
 void mock_uart_fun(bool& keep_running) {
@@ -220,3 +193,21 @@ void mock_uart_fun(bool& keep_running) {
   }
 }
 #endif
+
+int main() {
+  FrameProcessor processor(
+      [](const XR25Frame& frame) { test_print_frame(frame); });
+
+  if (std::ifstream is("data/r19data.bin", std::ifstream::binary); is) {
+    char buf[16];
+    do {
+      is.read(buf, sizeof buf);
+      if (is) {
+        processor.feedBytes((uint8_t*)buf, sizeof buf);
+      }
+
+    } while (is);
+  } else
+    processor.test();
+  return 0;
+}

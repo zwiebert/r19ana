@@ -9,8 +9,7 @@ void FrameProcessor::feedBytes(const uint8_t* data, std::size_t data_len) {
   }
   if (old_frame_number < xr25.get_frame_counter()) {
     old_frame_number = xr25.get_frame_counter();
-    std::string hex = xr25.toString();
-    if (callback) callback(hex, R19Frame(xr25));
+    if (callback) callback(xr25);
   }
 }
 
