@@ -20,6 +20,7 @@ class FrameProcessor {
   void test() { xr25.test(); }
 
  private:
+  int old_frame_number = 0;
   XR25Frame xr25;
   UpdateCallback callback;
 };

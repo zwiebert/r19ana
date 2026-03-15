@@ -49,12 +49,13 @@ class R19Frame {
 #endif
   }
 
-  float get_battery_voltage_V() const {
-    return float((data[6] * 0.0312f + 8.0f));
-  }
 
   int get_battery_voltage_mV() const {
-    return int(1000.0f * get_battery_voltage_V());
+    return int(data[6]) * 32 + 8;
+  }
+
+  float get_battery_voltage_V() const {
+    return get_battery_voltage_mV() * 0.001f;
   }
 
   int get_injection_duration_us() const {
