@@ -107,7 +107,7 @@ inline int r19_frame_print(char* dst, size_t dst_siz, const R19Frame& d,
     if (view_mask.test(bit++) && ct >= 0) {
       auto p = std::min(dst_max, dst + ct);
       auto l = std::max(ssize_t(0), dst_size - ct);
-      ct += snprintf(p, l, "%2u: %4.2f V Battery\r\n", bit,
+      ct += snprintf(p, l, "%2u:   %2.1f V Battery\r\n", bit,
                      d.get_battery_voltage_V());
     }
 
@@ -142,7 +142,7 @@ inline int r19_frame_print(char* dst, size_t dst_siz, const R19Frame& d,
     if (view_mask.test(bit++) && ct >= 0) {
       auto p = std::min(dst_max, dst + ct);
       auto l = std::max(ssize_t(0), dst_size - ct);
-      ct += snprintf(p, l, "%2u: %4.2f us Injection Duration\r\n", bit,
+      ct += snprintf(p, l, "%2u:  %3.2f ms Injection Duration\r\n", bit,
                      d.get_injection_duration_ms());
     }
 
@@ -162,14 +162,14 @@ inline int r19_frame_print(char* dst, size_t dst_siz, const R19Frame& d,
     if (view_mask.test(bit++) && ct >= 0) {
       auto p = std::min(dst_max, dst + ct);
       auto l = std::max(ssize_t(0), dst_size - ct);
-      ct += snprintf(p, l, "%u:   [%s] Throttle Full-Power\r\n", bit,
+      ct += snprintf(p, l, "%u:    [%s] Throttle Full-Power\r\n", bit,
                      btoa(d.is_throttle_fully_open()));
     }
 
     if (view_mask.test(bit++) && ct >= 0) {
       auto p = std::min(dst_max, dst + ct);
       auto l = std::max(ssize_t(0), dst_size - ct);
-      ct += snprintf(p, l, "%u:   [%s] Throttle Idle\r\n", bit,
+      ct += snprintf(p, l, "%u:    [%s] Throttle Idle\r\n", bit,
                      btoa(d.is_throttle_fully_closed()));
     }
 
@@ -177,14 +177,14 @@ inline int r19_frame_print(char* dst, size_t dst_siz, const R19Frame& d,
     if (view_mask.test(bit++) && ct >= 0) {
       auto p = std::min(dst_max, dst + ct);
       auto l = std::max(ssize_t(0), dst_size - ct);
-      ct += snprintf(p, l, "%u:   [%s] EGR+EVap enabled\r\n", bit,
+      ct += snprintf(p, l, "%u:    [%s] EGR+EVap enabled\r\n", bit,
                      btoa(d.is_vacuum_provided_to_egr_valve()));
     }
 
     if (view_mask.test(bit++) && ct >= 0) {
       auto p = std::min(dst_max, dst + ct);
       auto l = std::max(ssize_t(0), dst_size - ct);
-      ct += snprintf(p, l, "%u:   [%s] O2 sensor loop\r\n", bit,
+      ct += snprintf(p, l, "%u:    [%s] O2 sensor loop\r\n", bit,
                      btoa(d.is_oxygen_sensor_loop_closed()));
     }
 #endif
@@ -194,7 +194,7 @@ inline int r19_frame_print(char* dst, size_t dst_siz, const R19Frame& d,
     if (view_mask.test(bit++) && ct >= 0) {
       auto p = std::min(dst_max, dst + ct);
       auto l = std::max(ssize_t(0), dst_size - ct);
-      ct += snprintf(p, l, "%u:   [%s] Fuel-Pump\r\n", bit, btoa(d[23] & 0x10));
+      ct += snprintf(p, l, "%u:    [%s] Fuel-Pump\r\n", bit, btoa(d[23] & 0x10));
     }
 
     /////////////////////////////////////////////////////
@@ -227,18 +227,18 @@ inline int r19_frame_print(char* dst, size_t dst_siz, const R19Frame& d,
     if (view_mask.test(bit++) && ct >= 0) {
       auto p = std::min(dst_max, dst + ct);
       auto l = std::max(ssize_t(0), dst_size - ct);
-      ct += snprintf(p, l, "%2u: %4.2f Throttle (22)\r\n", bit, d[22] / 2.25);
+      ct += snprintf(p, l, "%2u:  %4.2f Throttle (22)\r\n", bit, d[22] / 2.25);
     }
     if (view_mask.test(bit++) && ct >= 0) {
       auto p = std::min(dst_max, dst + ct);
       auto l = std::max(ssize_t(0), dst_size - ct);
-      ct += snprintf(p, l, "%2u:%02x%02x%02x Fault-Flags (27,19,18)\r\n", bit,
+      ct += snprintf(p, l, "%2u: %02x%02x%02x Fault-Flags (27,19,18)\r\n", bit,
                      d[27], d[19], d[18]);
     }
     if (view_mask.test(bit++) && ct >= 0) {
       auto p = std::min(dst_max, dst + ct);
       auto l = std::max(ssize_t(0), dst_size - ct);
-      ct += snprintf(p, l, "%2u:    %02x Fault-Fugitive (26)\r\n", bit, d[26]);
+      ct += snprintf(p, l, "%2u:     %02x Fault-Fugitive (26)\r\n", bit, d[26]);
     }
     //  unknown: 17, 23, 24, 25, 29, 30, 31
     if (view_mask.test(bit++) && ct >= 0) {

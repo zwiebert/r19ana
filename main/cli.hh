@@ -1,0 +1,85 @@
+#pragma once
+
+#include <string.h>
+
+#include <chrono>
+#include <thread>
+#include <iostream>
+
+#include "main.hh"
+#include "R19Frame.hh"
+#include "R19Frame_utils.hh"
+#include "Transport.hh"
+
+
+struct CliCmd {
+  const char* name = "";
+  bool (*handler)(struct CliCmd& cli_cmd) = 0;
+  char* args = 0;
+  using reply_fun_t = bool (*)(const char*);
+  reply_fun_t reply = [](const char* msg) -> bool {
+#ifdef ESP_PLATFORM
+    return term_transport.write((const uint8_t*)msg, strlen(msg));
+#else
+    std::cout << msg << "\n";
+    return true;
+#endif
+  };
+
+  bool execute(char* cmd_line_buf) {
+    if (*cmd_line_buf && strstr(cmd_line_buf, name) != cmd_line_buf)
+      return false;
+    args = cmd_line_buf + strlen(name);
+    if (handler) return handler(*this);
+    return true;
+  }
+};
+
+CliCmd cmds[] = {
+    {.name = "filter ",
+     .handler = [](CliCmd& cmd) -> bool {
+       // command line was like: "filter 1,2,3,8,12".
+       // cmd.args is now "1,2,3,8,12"
+       // we need to convert this into a bitset<32> with only bits 0,1,2,7,11
+       // are set to true.
+       r19frame_mask_t mask;
+       for (char *str = cmd.args, *save_ptr = nullptr, *tok;
+            (tok = strtok_r(str, ", \r\n", &save_ptr)); str = nullptr) {
+         auto n = strtoul(tok, nullptr, 10);
+         if (n == 0) {
+           if (strstr(tok, "0")) mask = ~0UL;
+         } else
+           mask.set(n - 1);
+       }
+       Mask = mask;
+       return true;
+     }},
+
+#ifdef ESP_PLATFORM
+    {.name = "mock-loop",
+     .handler = [](CliCmd& cmd) -> bool {
+       static std::thread mock_uart_thread;
+       static bool keep_running;
+
+       for (char *str = cmd.args, *save_ptr = nullptr, *tok;
+            (tok = strtok_r(str, ", \r\n", &save_ptr)); str = nullptr) {
+         if (strcmp(tok, "on") == 0) {
+           void mock_uart_fun(bool& keep_running);
+           if (keep_running) return false;
+           keep_running = true;
+           mock_uart_thread =
+               std::thread(mock_uart_fun, std::ref(keep_running));
+           return true;
+         } else if (strcmp(tok, "off") == 0) {
+           if (!keep_running) return false;
+           keep_running = false;
+           mock_uart_thread.join();
+           return true;
+         } else {
+           return false;  // unknown argument
+         }
+       }
+       return false;
+     }},
+#endif
+};
