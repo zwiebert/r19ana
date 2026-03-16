@@ -55,8 +55,8 @@ bool cli_parse_and_execute_cmdline(char* src) {
 int r19_alloc_and_print(char*& dst, const R19Frame& R19_frame,
                         r19frame_mask_t mask = ~0UL) {
   char dummy;
-  const char prepend_txt[] = "\r\n";     // "\x1B[2J";
-  const char append_txt[] = "";  // "\x1B[2J";
+  const char prepend_txt[] = "\r\n";  // "\x1B[2J";
+  const char append_txt[] = "";       // "\x1B[2J";
 
   if (auto buf_len = r19_frame_print(&dummy, 0, R19_frame, mask); buf_len > 0) {
     if (auto ptr =
@@ -87,7 +87,8 @@ void test_print_frame(const XR25Frame& frame) {
 #ifdef ESP_PLATFORM
 extern "C" int app_main() {
   // processor calls back when it has completed a frame from the chunks of bytes
-  // it got from x25_transport
+  // it got from x25_transport. processor has a dedicated thread for doing the
+  // callback. its ok to block it.
   FrameProcessor processor([](const XR25Frame& frame) {
     R19_frame = frame;
     if (!spp_is_connected()) return;

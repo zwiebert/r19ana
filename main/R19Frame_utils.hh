@@ -65,7 +65,7 @@ inline int r19_frame_print(char* dst, size_t dst_siz, const R19Frame& d,
     if (view_mask.test(bit++) && ct >= 0) {
       auto p = std::min(dst_max, dst + ct);
       auto l = std::max(ssize_t(0), dst_size - ct);
-      ct += snprintf(p, l, "%2u: %6d Frame-Count #####\r\n", bit,
+      ct += snprintf(p, l, "%02u: %6d Frame-Count #####\r\n", bit,
                      d.get_frame_count());
     }
 
@@ -73,89 +73,89 @@ inline int r19_frame_print(char* dst, size_t dst_siz, const R19Frame& d,
     if (view_mask.test(bit++) && ct >= 0) {
       auto p = std::min(dst_max, dst + ct);
       auto l = std::max(ssize_t(0), dst_size - ct);
-      ct += snprintf(p, l, "%2u:[02-07] %.*s\r\n", bit, 17, frame_hex + 18 * 0);
+      ct += snprintf(p, l, "%02u:[02-07] %.*s\r\n", bit, 17, frame_hex + 18 * 0);
     }
     if (view_mask.test(bit++) && ct >= 0) {
       auto p = std::min(dst_max, dst + ct);
       auto l = std::max(ssize_t(0), dst_size - ct);
       ct +=
-          snprintf(p, l, "%2u:[08-13] %.*s \r\n", bit, 17, frame_hex + 18 * 1);
+          snprintf(p, l, "%02u:[08-13] %.*s \r\n", bit, 17, frame_hex + 18 * 1);
     }
     if (view_mask.test(bit++) && ct >= 0) {
       auto p = std::min(dst_max, dst + ct);
       auto l = std::max(ssize_t(0), dst_size - ct);
-      ct += snprintf(p, l, "%2u:[14-19] %.*s\r\n", bit, 17, frame_hex + 18 * 2);
+      ct += snprintf(p, l, "%02u:[14-19] %.*s\r\n", bit, 17, frame_hex + 18 * 2);
     }
     if (view_mask.test(bit++) && ct >= 0) {
       auto p = std::min(dst_max, dst + ct);
       auto l = std::max(ssize_t(0), dst_size - ct);
-      ct += snprintf(p, l, "%2u:[20-25] %.*s\r\n", bit, 17, frame_hex + 18 * 3);
+      ct += snprintf(p, l, "%02u:[20-25] %.*s\r\n", bit, 17, frame_hex + 18 * 3);
     }
     if (view_mask.test(bit++) && ct >= 0) {
       auto p = std::min(dst_max, dst + ct);
       auto l = std::max(ssize_t(0), dst_size - ct);
-      ct += snprintf(p, l, "%2u:[26-31] %.*s\r\n", bit, 17, frame_hex + 18 * 4);
+      ct += snprintf(p, l, "%02u:[26-31] %.*s\r\n", bit, 17, frame_hex + 18 * 4);
     }
 
     if (view_mask.test(bit++) && ct >= 0) {
       auto p = std::min(dst_max, dst + ct);
       auto l = std::max(ssize_t(0), dst_size - ct);
-      ct += snprintf(p, l, "%2u: %6d rpm Crankshaft\r\n", bit,
+      ct += snprintf(p, l, "%02u: %6d rpm Crankshaft\r\n", bit,
                      d.get_engine_speed_RPM());
     }
 
     if (view_mask.test(bit++) && ct >= 0) {
       auto p = std::min(dst_max, dst + ct);
       auto l = std::max(ssize_t(0), dst_size - ct);
-      ct += snprintf(p, l, "%2u:   %2.1f V Battery\r\n", bit,
+      ct += snprintf(p, l, "%02u:   %2.1f V Battery\r\n", bit,
                      d.get_battery_voltage_V());
     }
 
     if (view_mask.test(bit++) && ct >= 0) {
       auto p = std::min(dst_max, dst + ct);
       auto l = std::max(ssize_t(0), dst_size - ct);
-      ct += snprintf(p, l, "%2u: %6d mBar Atmosphere\r\n", bit,
+      ct += snprintf(p, l, "%02u: %6d mBar Atmosphere\r\n", bit,
                      d.get_atmospheric_pressure_mBar());
     }
 
     if (view_mask.test(bit++) && ct >= 0) {
       auto p = std::min(dst_max, dst + ct);
       auto l = std::max(ssize_t(0), dst_size - ct);
-      ct += snprintf(p, l, "%2u: %6d mBar Manifold\r\n", bit,
+      ct += snprintf(p, l, "%02u: %6d mBar Manifold\r\n", bit,
                      d.get_manifold_absolute_pressure_mBar());
     }
 
     if (view_mask.test(bit++) && ct >= 0) {
       auto p = std::min(dst_max, dst + ct);
       auto l = std::max(ssize_t(0), dst_size - ct);
-      ct += snprintf(p, l, "%2u: %6d °C Intake Air\r\n", bit,
+      ct += snprintf(p, l, "%02u: %6d °C Intake Air\r\n", bit,
                      d.get_intake_air_temperature_Celsius());
     }
 
     if (view_mask.test(bit++) && ct >= 0) {
       auto p = std::min(dst_max, dst + ct);
       auto l = std::max(ssize_t(0), dst_size - ct);
-      ct += snprintf(p, l, "%2u: %6d °C Coolant\r\n", bit,
+      ct += snprintf(p, l, "%02u: %6d °C Coolant\r\n", bit,
                      d.get_engine_coolant_temperature_Celsius());
     }
 
     if (view_mask.test(bit++) && ct >= 0) {
       auto p = std::min(dst_max, dst + ct);
       auto l = std::max(ssize_t(0), dst_size - ct);
-      ct += snprintf(p, l, "%2u:  %3.2f ms Injection Duration\r\n", bit,
+      ct += snprintf(p, l, "%02u:  %3.2f ms Injection Duration\r\n", bit,
                      d.get_injection_duration_ms());
     }
 
     if (view_mask.test(bit++) && ct >= 0) {
       auto p = std::min(dst_max, dst + ct);
       auto l = std::max(ssize_t(0), dst_size - ct);
-      ct += snprintf(p, l, "%2u: %6d mV O2 Sensor\r\n", bit,
+      ct += snprintf(p, l, "%02u: %6d mV O2 Sensor\r\n", bit,
                      d.get_oxygen_sensor_voltage_mV());
     }
     if (view_mask.test(bit++) && ct >= 0) {
       auto p = std::min(dst_max, dst + ct);
       auto l = std::max(ssize_t(0), dst_size - ct);
-      ct += snprintf(p, l, "%2u: %6d Engine-Knock\r\n", bit,
+      ct += snprintf(p, l, "%02u: %6d Engine-Knock\r\n", bit,
                      d.get_engine_knocking());
     }
 
@@ -202,13 +202,13 @@ inline int r19_frame_print(char* dst, size_t dst_siz, const R19Frame& d,
     if (view_mask.test(bit++) && ct >= 0) {
       auto p = std::min(dst_max, dst + ct);
       auto l = std::max(ssize_t(0), dst_size - ct);
-      ct += snprintf(p, l, "%2u: %6d Advance (15)\r\n", bit, d[15]);
+      ct += snprintf(p, l, "%02u: %6d Advance (15)\r\n", bit, d[15]);
     }
 
     if (view_mask.test(bit++) && ct >= 0) {
       auto p = std::min(dst_max, dst + ct);
       auto l = std::max(ssize_t(0), dst_size - ct);
-      ct += snprintf(p, l, "%2u: %6d Idle-Regulation\r\n", bit,
+      ct += snprintf(p, l, "%02u: %6d Idle-Regulation\r\n", bit,
                      d.get_idle_regulation());
     }
 
@@ -216,52 +216,60 @@ inline int r19_frame_print(char* dst, size_t dst_siz, const R19Frame& d,
       auto p = std::min(dst_max, dst + ct);
       auto l = std::max(ssize_t(0), dst_size - ct);
       ct +=
-          snprintf(p, l, "%2u: %6d Idle-Period\r\n", bit, d.get_idle_period());
+          snprintf(p, l, "%02u: %6d Idle-Period\r\n", bit, d.get_idle_period());
     }
 
     if (view_mask.test(bit++) && ct >= 0) {
       auto p = std::min(dst_max, dst + ct);
       auto l = std::max(ssize_t(0), dst_size - ct);
-      ct += snprintf(p, l, "%2u: %6d Knock-Delay (28)\r\n", bit, d[28]);
+      ct += snprintf(p, l, "%02u: %6d Knock-Delay (28)\r\n", bit, d[28]);
     }
 
     if (view_mask.test(bit++) && ct >= 0) {
       auto p = std::min(dst_max, dst + ct);
       auto l = std::max(ssize_t(0), dst_size - ct);
-      ct += snprintf(p, l, "%2u:  %4.2f Throttle (22)\r\n", bit, d[22] / 2.25);
+      ct += snprintf(p, l, "%02u:  %4.2f Throttle (22)\r\n", bit, d[22] / 2.25);
     }
     if (view_mask.test(bit++) && ct >= 0) {
       auto p = std::min(dst_max, dst + ct);
       auto l = std::max(ssize_t(0), dst_size - ct);
-      ct += snprintf(p, l, "%2u: %02x%02x%02x Fault-Flags (27,19,18)\r\n", bit,
+      ct += snprintf(p, l, "%02u: %02x%02x%02x Fault-Flags (27,19,18)\r\n", bit,
                      d[27], d[19], d[18]);
     }
     if (view_mask.test(bit++) && ct >= 0) {
       auto p = std::min(dst_max, dst + ct);
       auto l = std::max(ssize_t(0), dst_size - ct);
-      ct += snprintf(p, l, "%2u:     %02x Fault-Fugitive (26)\r\n", bit, d[26]);
+      ct += snprintf(p, l, "%02u:     %02x Fault-Fugitive (26)\r\n", bit, d[26]);
     }
     //  unknown: 17, 23, 24, 25, 29, 30, 31
     if (view_mask.test(bit++) && ct >= 0) {
       auto p = std::min(dst_max, dst + ct);
       auto l = std::max(ssize_t(0), dst_size - ct);
       ct += snprintf(
-          p, l, "%2u: ???    17=%02x,23=%02x,24=%02x,25=%02x\r\n",
+          p, l, "%02u: ???    17=%02x,23=%02x,24=%02x,25=%02x\r\n",
           bit, d[17], d[23], d[24], d[25]);
     }
     if (view_mask.test(bit++) && ct >= 0) {
       auto p = std::min(dst_max, dst + ct);
       auto l = std::max(ssize_t(0), dst_size - ct);
       ct += snprintf(
-          p, l, "%2u: ???    28=%02x,29=%02x,30=%02x,31=%02x\r\n",
+          p, l, "%02u: ???    28=%02x,29=%02x,30=%02x,31=%02x\r\n",
           bit, d[28], d[29], d[30], d[31]);
     }
+    if (view_mask.test(bit++) && ct >= 0) {
+      auto p = std::min(dst_max, dst + ct);
+      auto l = std::max(ssize_t(0), dst_size - ct);
+      ct += snprintf(p, l, "%02u: %6d mBar Atmosphere\r\n", bit,
+                   (4 * (~d[29] & 0xff)));
+    }
+
+
     /////////////////////// end experimental ///////////////////////////
     //////////////// original xr25 pc //////////////////////
     if (view_mask.test(bit++) && ct >= 0) {
       auto p = std::min(dst_max, dst + ct);
       auto l = std::max(ssize_t(0), dst_size - ct);
-      ct += snprintf(p, l, "%2u: %6d %% Adaption Regulation Ralenti  (X29)\r\n",
+      ct += snprintf(p, l, "%02u: %6d %% Adaption Regulation Ralenti  (X29)\r\n",
                      bit, d.f3x(29));
     }
 
