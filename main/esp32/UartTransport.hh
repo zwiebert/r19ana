@@ -24,7 +24,7 @@ class UartTransport : public Transport {
 
   void start(ReadCallback cb) override;
   void stop() override;
-  int write(const u_int8_t* data, size_t data_len);
+  int write(const u_int8_t* data, size_t data_len, bool block = false) override;
 
  private:
   uart_port_t m_uart_port;

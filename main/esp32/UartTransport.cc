@@ -30,6 +30,8 @@
 
 using namespace std::chrono;
 
+#define D(x)
+
 /**
  * This is an example which echos any data it receives on configured UART back
  * to the sender, with hardware flow control turned off. It does not use UART
@@ -80,7 +82,7 @@ void UartTransport::worker_thread(ReadCallback cb) {
     int len = uart_read_bytes(m_uart_port, data, (BUF_SIZE - 1),
                               25 / portTICK_PERIOD_MS);
     if (len) {
-    ESP_LOGI("uart2", "read len: %d", len);
+    D(ESP_LOGI("uart2", "read len: %d", len));
       data[len] = '\0';
       cb(data, len);
     }
@@ -116,6 +118,6 @@ void UartTransport::start(ReadCallback cb) {
   m_worker_thread = std::thread(&UartTransport::worker_thread, this, cb);
 }
 
-int UartTransport::write(const u_int8_t* data, size_t data_len) {
+int UartTransport::write(const u_int8_t* data, size_t data_len, bool block) {
   return uart_write_bytes(m_uart_port, (const char*)data, data_len);
 }

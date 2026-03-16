@@ -5,6 +5,38 @@
 
 using r19frame_mask_t = std::bitset<32>;
 
+namespace {
+inline void tohex(const uint8_t* in, size_t insz, char* out, size_t outsz) {
+  const unsigned char* pin = in;
+  const char* hex = "0123456789ABCDEF";
+  char* pout = out;
+  for (; pin < in + insz; pout += 2, pin++) {
+    pout[0] = hex[(*pin >> 4) & 0xF];
+    pout[1] = hex[*pin & 0xF];
+    if (pout + 3 - out > outsz) {
+      /* Better to truncate output string than overflow buffer */
+      /* it would be still better to either return a status */
+      /* or ensure the target buffer is large enough and it never happen */
+      break;
+    }
+  }
+  pout[0] = 0;
+}
+};  // namespace
+
+inline int snprinthex(char* dst, size_t dst_size,
+                      const XR25Frame::frame_data_t& frame) {
+  const int req_len = frame.size() * 2;
+  if (dst_size <= req_len) {
+    *dst = '\0';
+    return req_len;
+  }
+
+  tohex(&frame[0], frame.size(), dst, dst_size);
+
+  return req_len;
+}
+
 inline const char* btoa(bool v) { return v ? "Y" : "N"; }
 
 /// @brief Conditional print members of R19Frame object
@@ -27,105 +59,111 @@ inline int r19_frame_print(char* dst, size_t dst_siz, const R19Frame& d,
     if (ct >= 0) {
       auto p = std::min(dst_max, dst + ct);
       auto l = std::max(ssize_t(0), dst_size - ct);
-      ct += snprintf(p, l, "Frame-Number: %d\r\n", d.get_frame_count());
+      ct += snprinthex(p, l, d.get_frame());
     }
 
-    if (ct >= 0 && view_mask.test(bit++)) {
+    if (ct >= 0) {
       auto p = std::min(dst_max, dst + ct);
       auto l = std::max(ssize_t(0), dst_size - ct);
-      ct += snprintf(p, l, "%u: Crankshaft (RPM)=%d\r\n", bit,
+      ct += snprintf(p, l, "\r\nFrameCt: %d\r\n\n", d.get_frame_count());
+    }
+
+    if (view_mask.test(bit++) && ct >= 0) {
+      auto p = std::min(dst_max, dst + ct);
+      auto l = std::max(ssize_t(0), dst_size - ct);
+      ct += snprintf(p, l, "%2u: %5d rpm Crankshaft\r\n", bit,
                      d.get_engine_speed_RPM());
     }
 
-    if (ct >= 0 && view_mask.test(bit++)) {
+    if (view_mask.test(bit++) && ct >= 0) {
       auto p = std::min(dst_max, dst + ct);
       auto l = std::max(ssize_t(0), dst_size - ct);
-      ct += snprintf(p, l, "%u: Manifold (mBar)=%d\r\n", bit,
-                     d.get_manifold_absolute_pressure_mBar());
-    }
-
-    if (ct >= 0 && view_mask.test(bit++)) {
-      auto p = std::min(dst_max, dst + ct);
-      auto l = std::max(ssize_t(0), dst_size - ct);
-      ct += snprintf(p, l, "%u: Intake Air (°C)=%d\r\n", bit,
-                     d.get_intake_air_temperature_Celsius());
-    }
-
-    if (ct >= 0 && view_mask.test(bit++)) {
-      auto p = std::min(dst_max, dst + ct);
-      auto l = std::max(ssize_t(0), dst_size - ct);
-      ct += snprintf(p, l, "%u: Engine Coolant (°C)=%d\r\n", bit,
-                     d.get_engine_coolant_temperature_Celsius());
-    }
-
-    if (ct >= 0 && view_mask.test(bit++)) {
-      auto p = std::min(dst_max, dst + ct);
-      auto l = std::max(ssize_t(0), dst_size - ct);
-      ct += snprintf(p, l, "%u: O2 Sensor (mV)=%d\r\n", bit,
-                     d.get_oxygen_sensor_voltage_mV());
-    }
-
-    if (ct >= 0 && view_mask.test(bit++)) {
-      auto p = std::min(dst_max, dst + ct);
-      auto l = std::max(ssize_t(0), dst_size - ct);
-      ct += snprintf(p, l, "%u: Atmosphere (mBar)=%d\r\n", bit,
-                     d.get_atmospheric_pressure_mBar());
-    }
-
-    if (ct >= 0 && view_mask.test(bit++)) {
-      auto p = std::min(dst_max, dst + ct);
-      auto l = std::max(ssize_t(0), dst_size - ct);
-      ct += snprintf(p, l, "%u: Battery (V)=%0.1f\r\n", bit,
+      ct += snprintf(p, l, "%2u: %3.2f V Battery\r\n", bit,
                      d.get_battery_voltage_V());
     }
 
-    if (ct >= 0 && view_mask.test(bit++)) {
+    if (view_mask.test(bit++) && ct >= 0) {
       auto p = std::min(dst_max, dst + ct);
       auto l = std::max(ssize_t(0), dst_size - ct);
-      ct += snprintf(p, l, "%u: Injection Duration (ms)=%0.2f\r\n", bit,
+      ct += snprintf(p, l, "%2u: %5d mBar Atmosphere\r\n", bit,
+                     d.get_atmospheric_pressure_mBar());
+    }
+
+    if (view_mask.test(bit++) && ct >= 0) {
+      auto p = std::min(dst_max, dst + ct);
+      auto l = std::max(ssize_t(0), dst_size - ct);
+      ct += snprintf(p, l, "%2u: %5d mBar Manifold\r\n", bit,
+                     d.get_manifold_absolute_pressure_mBar());
+    }
+
+    if (view_mask.test(bit++) && ct >= 0) {
+      auto p = std::min(dst_max, dst + ct);
+      auto l = std::max(ssize_t(0), dst_size - ct);
+      ct += snprintf(p, l, "%2u: %5d °C Intake Air\r\n", bit,
+                     d.get_intake_air_temperature_Celsius());
+    }
+
+    if (view_mask.test(bit++) && ct >= 0) {
+      auto p = std::min(dst_max, dst + ct);
+      auto l = std::max(ssize_t(0), dst_size - ct);
+      ct += snprintf(p, l, "%2u: %5d °C Coolant\r\n", bit,
+                     d.get_engine_coolant_temperature_Celsius());
+    }
+
+    if (view_mask.test(bit++) && ct >= 0) {
+      auto p = std::min(dst_max, dst + ct);
+      auto l = std::max(ssize_t(0), dst_size - ct);
+      ct += snprintf(p, l, "%2u: %3.2f us Injection Duration\r\n", bit,
                      d.get_injection_duration_ms());
     }
 
-    if (ct >= 0 && view_mask.test(bit++)) {
+    if (view_mask.test(bit++) && ct >= 0) {
       auto p = std::min(dst_max, dst + ct);
       auto l = std::max(ssize_t(0), dst_size - ct);
-      ct += snprintf(p, l, "%u: Throttle-Pos Full-Power=%s\r\n", bit,
-                     btoa(d.is_throttle_fully_open()));
+      ct += snprintf(p, l, "%2u: %5d mV O2 Sensor\r\n", bit,
+                     d.get_oxygen_sensor_voltage_mV());
     }
 
-    if (ct >= 0 && view_mask.test(bit++)) {
+    if (view_mask.test(bit++) && ct >= 0) {
       auto p = std::min(dst_max, dst + ct);
       auto l = std::max(ssize_t(0), dst_size - ct);
-      ct += snprintf(p, l, "%u: Throttle-Pos Idle=%s\r\n", bit,
-                     btoa(d.is_throttle_fully_closed()));
-    }
-
-    if (ct >= 0 && view_mask.test(bit++)) {
-      auto p = std::min(dst_max, dst + ct);
-      auto l = std::max(ssize_t(0), dst_size - ct);
-      ct += snprintf(p, l, "%u: EGR/EVap=%s\r\n", bit,
-                     btoa(d.is_vacuum_provided_to_egr_valve()));
-    }
-
-    if (ct >= 0 && view_mask.test(bit++)) {
-      auto p = std::min(dst_max, dst + ct);
-      auto l = std::max(ssize_t(0), dst_size - ct);
-      ct += snprintf(p, l, "%u: O2 sensor loop %s\r\n", bit,
-                     d.is_oxygen_sensor_loop_closed() ? "closed" : "open");
-    }
-
-    if (ct >= 0 && view_mask.test(bit++)) {
-      auto p = std::min(dst_max, dst + ct);
-      auto l = std::max(ssize_t(0), dst_size - ct);
-      ct += snprintf(p, l, "%u: Idle Speed Correction=%d\r\n", bit,
+      ct += snprintf(p, l, "%2u: %5d Idle-Spd-Correction\r\n", bit,
                      d.get_idle_speed_correction());
     }
 
-    if (ct >= 0 && view_mask.test(bit++)) {
+    if (view_mask.test(bit++) && ct >= 0) {
       auto p = std::min(dst_max, dst + ct);
       auto l = std::max(ssize_t(0), dst_size - ct);
-      ct += snprintf(p, l, "%u: Engine Knocking=%d\r\n", bit,
+      ct += snprintf(p, l, "%2u: %5d Engine-Knock\r\n", bit,
                      d.get_engine_knocking());
+    }
+
+    if (view_mask.test(bit++) && ct >= 0) {
+      auto p = std::min(dst_max, dst + ct);
+      auto l = std::max(ssize_t(0), dst_size - ct);
+      ct += snprintf(p, l, "%u:   [%s] Throttle Full-Power\r\n", bit,
+                     btoa(d.is_throttle_fully_open()));
+    }
+
+    if (view_mask.test(bit++) && ct >= 0) {
+      auto p = std::min(dst_max, dst + ct);
+      auto l = std::max(ssize_t(0), dst_size - ct);
+      ct += snprintf(p, l, "%u:   [%s] Throttle Idle\r\n", bit,
+                     btoa(d.is_throttle_fully_closed()));
+    }
+
+    if (view_mask.test(bit++) && ct >= 0) {
+      auto p = std::min(dst_max, dst + ct);
+      auto l = std::max(ssize_t(0), dst_size - ct);
+      ct += snprintf(p, l, "%u:   [%s] EGR+EVap enabled\r\n", bit,
+                     btoa(d.is_vacuum_provided_to_egr_valve()));
+    }
+
+    if (view_mask.test(bit++) && ct >= 0) {
+      auto p = std::min(dst_max, dst + ct);
+      auto l = std::max(ssize_t(0), dst_size - ct);
+      ct += snprintf(p, l, "%u:   [%s] O2 sensor loop\r\n", bit,
+                     btoa(d.is_oxygen_sensor_loop_closed()));
     }
 
     if (ct >= 0) {

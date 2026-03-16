@@ -10,15 +10,32 @@
 #include "FrameProcessor.hh"
 #include "R19Frame_utils.hh"
 #include "UartTransport.hh"
-#include "bt_classic/spp_acceptor.hh"
+#ifdef ESP_PLATFORM
+#include "SppTransport.hh"
+#else
+#include "Xr25Transport.hh"
+#include "ConsoleTransport.hh"
+#endif
 
-#define SPP2
+#define D(x)
+
+#ifdef ESP_PLATFORM
+Transport&& xr25_transport = UartTransport(UartTransportArgs{
+    .bps = 65000, .uart_port_num = 2, .rx_gpio = 16, .tx_gpio = 17});
+Transport&& mock_loop_transport = UartTransport(UartTransportArgs{
+    .bps = 65000, .uart_port_num = 1, .rx_gpio = 18, .tx_gpio = 19});
+Transport&& term_transport = SppTransport();
+#else
+Transport&& xr25_transport = Xr25Transport();
+Transport&& term_transport = ConsoleTransport();
+#endif
+
+inline int terminal_puts(const char* s, bool block = false) {
+  return term_transport.write((const uint8_t*)s, strlen(s), block);
+}
 
 R19Frame R19_frame;
-constexpr unsigned FORCE_IVAL_S = 60;
-
 r19frame_mask_t Mask = ~0LU;
-bool Force;
 
 int r19_alloc_and_print(char*& dst, r19frame_mask_t mask = ~0UL) {
   char dummy;
@@ -51,7 +68,7 @@ struct CliCmd {
   using reply_fun_t = bool (*)(const char*);
   reply_fun_t reply = [](const char* msg) -> bool {
 #ifdef ESP_PLATFORM
-    return spp_tx_enqueue(msg);
+    return term_transport.write((const uint8_t*)msg, strlen(msg));
 #else
     std::cout << msg << "\n";
     return true;
@@ -59,14 +76,15 @@ struct CliCmd {
   };
 
   bool execute(char* cmd_line_buf) {
-    if (strstr(cmd_line_buf, name) != cmd_line_buf) return false;
+    if (*cmd_line_buf && strstr(cmd_line_buf, name) != cmd_line_buf)
+      return false;
     args = cmd_line_buf + strlen(name);
     if (handler) return handler(*this);
     return true;
   }
 };
 
-const std::array<CliCmd, 4> cmds = {{
+CliCmd cmds[] = {
     {.name = "filter ",
      .handler = [](CliCmd& cmd) -> bool {
        // command line was like: "filter 1,2,3,8,12".
@@ -83,8 +101,6 @@ const std::array<CliCmd, 4> cmds = {{
            mask.set(n - 1);
        }
        Mask = mask;
-       Force = true;
-
        return true;
      }},
 
@@ -98,11 +114,13 @@ const std::array<CliCmd, 4> cmds = {{
             (tok = strtok_r(str, ", \r\n", &save_ptr)); str = nullptr) {
          if (strcmp(tok, "on") == 0) {
            void mock_uart_fun(bool& keep_running);
+           if (keep_running) return false;
            keep_running = true;
            mock_uart_thread =
                std::thread(mock_uart_fun, std::ref(keep_running));
            return true;
          } else if (strcmp(tok, "off") == 0) {
+           if (!keep_running) return false;
            keep_running = false;
            mock_uart_thread.join();
            return true;
@@ -113,14 +131,16 @@ const std::array<CliCmd, 4> cmds = {{
        return false;
      }},
 #endif
-}};
+};
 
 bool cli_parse_and_execute_cmdline(char* src) {
-  for (auto cmd : cmds) {
+  for (auto& cmd : cmds) {
+    std::cerr << "for cmd loop\n";
     if (cmd.execute(src)) {
       return true;
     }
   }
+  terminal_puts("unknown command\r\n");
   return false;
 }
 
@@ -138,35 +158,28 @@ void test_print_frame(const XR25Frame& frame) {
 extern "C" int app_main() {
   FrameProcessor processor([](const XR25Frame& frame) { R19_frame = frame; });
 
-  UartTransport uart2(UartTransportArgs{
-      .bps = 65000, .uart_port_num = 2, .rx_gpio = 16, .tx_gpio = 17});
-  uart2.start([&processor](auto data, auto data_len) {
-    ESP_LOGI("uart2", "read len: %u", data_len);
+  xr25_transport.start([&processor](auto data, auto data_len) {
+    D(ESP_LOGI("xr25_transport", "read len: %u", data_len));
     processor.feedBytes(data, data_len);
   });
+  term_transport.start([](auto data, auto data_len) {
+    cli_parse_and_execute_cmdline((char*)data);
+  });
 
-  spp2_main();
   char* dst = 0;
   for (;; std::this_thread::sleep_for(std::chrono::milliseconds(10))) {
     if (!spp_is_connected()) continue;
 
-    uint8_t* data_in;
-    size_t data_in_len;
-    if (spp_rx_dequeue(data_in, data_in_len)) {
-      if (cli_parse_and_execute_cmdline((char*)data_in)) {
-        free(data_in);
-      } else {
-        spp_tx_enqueue("error: unknown commandline\r\n");
-        std::this_thread::sleep_for(std::chrono::seconds(2));
-      }
-    }
-
     if (auto dst_len = r19_alloc_and_print(dst, Mask); dst_len > 0) {
-      if (spp_tx_enqueue((uint8_t*)dst, dst_len, true)) {
+      if (term_transport.write((const uint8_t*)dst, dst_len, true)) {
+        free(dst);
         continue;
       }
+      free(dst);
     }
   }
+
+  xr25_transport.stop();
 
   return 0;
 }
@@ -181,16 +194,16 @@ void mock_uart_fun(bool& keep_running) {
   const size_t data_size = r19data_bin_end - r19data_bin_start;
   const int chunk = 40;
 
-  UartTransport uart1(UartTransportArgs{
-      .bps = 65000, .uart_port_num = 1, .rx_gpio = 18, .tx_gpio = 19});
-  uart1.start([](uint8_t* data, size_t data_len) {});
+  mock_loop_transport.start([](uint8_t* data, size_t data_len) {});
 
   while (keep_running) {
     for (int i = 0; i < data_size - chunk && keep_running; i += chunk) {
-      auto res = uart1.write(data + i, chunk);
+      auto res = mock_loop_transport.write(data + i, chunk);
       std::this_thread::sleep_for(std::chrono::milliseconds(10));
     }
   }
+
+  mock_loop_transport.stop();
 }
 #endif
 
@@ -198,16 +211,28 @@ int main() {
   FrameProcessor processor(
       [](const XR25Frame& frame) { test_print_frame(frame); });
 
-  if (std::ifstream is("data/r19data.bin", std::ifstream::binary); is) {
-    char buf[16];
-    do {
-      is.read(buf, sizeof buf);
-      if (is) {
-        processor.feedBytes((uint8_t*)buf, sizeof buf);
-      }
+  xr25_transport.start([&processor](auto data, auto data_len) {
+    processor.feedBytes(data, data_len);
+  });
+  term_transport.start();
 
-    } while (is);
-  } else
-    processor.test();
+  char* dst = 0;
+  for (;; std::this_thread::sleep_for(std::chrono::milliseconds(10))) {
+    std::cerr << "for loop\n";
+    uint8_t* data_in = 0;
+    size_t data_in_len = 0;
+    if (term_transport.read(data_in, data_in_len)) {
+      if (cli_parse_and_execute_cmdline((char*)data_in)) {
+        free(data_in);
+      } else {
+        std::this_thread::sleep_for(std::chrono::seconds(2));
+      }
+    }
+  }
+
+  std::this_thread::sleep_for(std::chrono::seconds(5));
+
+  xr25_transport.stop();
+  term_transport.stop();
   return 0;
 }

@@ -49,10 +49,11 @@ class R19Frame {
 #endif
   }
 
-  int get_battery_voltage_mV() const { return int(data[6]) * 32 + 8; }
+  int get_battery_voltage_mV() const { return (data[6] * 1000) / 32 + 8000; }
 
   float get_battery_voltage_V() const {
-    return get_battery_voltage_mV() * 0.001f;
+    return data[6] * 0.03125f + 8.0f;
+    //return get_battery_voltage_mV() * 0.001f;
   }
 
   int get_injection_duration_us() const {
@@ -78,6 +79,8 @@ class R19Frame {
   }
 
   bool is_oxygen_sensor_loop_closed() const { return !!(data[18] & 0x08); }
+
+  const XR25Frame::frame_data_t &get_frame() const { return data; }
 
  private:
   XR25Frame::frame_data_t data = {};  ///<  XR25 frame without header ff,00

@@ -44,10 +44,66 @@ struct spp_msg_t {
   uint16_t len;
 };
 static QueueHandle_t spp_tx_queue = NULL;
-std::mutex spp_msg_out_mutex;
-spp_msg_t spp_msg_out;
-ssize_t spp_msg_out_bytes_left;  // bytes of spp_msg_out.data left to send.
 bool tx_thread_kill;
+
+class {
+ public:
+  bool store_new_msg(spp_msg_t& msg, bool free_msg_data = false) {
+    std::lock_guard<std::mutex> guard(m_mutex);
+    if (m_bytes_left) return false;
+    free_data();
+    m_free_data = free_msg_data;
+    m_msg = msg;
+    m_bytes_left = msg.len;
+    return true;
+  }
+
+  spp_msg_t get_remaining_msg() {
+    std::lock_guard<std::mutex> guard(m_mutex);
+    if (m_write_pending) return spp_msg_t{};
+    m_write_pending = true;
+    return spp_msg_t{.data = m_msg.data + (m_msg.len - m_bytes_left),
+                     .len = m_bytes_left};
+  }
+
+  void write_has_failed() {
+    std::lock_guard<std::mutex> guard(m_mutex);
+    assert(m_write_pending);
+    m_write_pending = false;
+  }
+
+  uint16_t number_of_bytes_written(uint16_t n) {
+    std::lock_guard<std::mutex> guard(m_mutex);
+    assert(m_bytes_left >= n);
+    m_write_pending = false;
+    return (m_bytes_left -= n);
+  }
+
+  void clear() {
+    std::lock_guard<std::mutex> guard(m_mutex);
+    free_data();
+    m_msg = spp_msg_t{};
+    m_bytes_left = 0;
+  }
+
+  bool is_empty() {
+    std::lock_guard<std::mutex> guard(m_mutex);
+    return m_bytes_left == 0;
+  }
+
+ private:
+  void free_data() {
+    if (m_free_data) free(m_msg.data);
+    m_msg.data = 0;
+  }
+
+ private:
+  std::mutex m_mutex;
+  spp_msg_t m_msg = {};
+  uint16_t m_bytes_left = 0;
+  bool m_free_data = true;
+  bool m_write_pending = false;
+} our_msg;
 
 static QueueHandle_t spp_rx_queue = NULL;
 
@@ -63,23 +119,15 @@ constexpr auto SPP_TX_QUEUE_NOT_EMPTY = BIT1;
 constexpr auto SPP_TX_QUEUE_NOT_FULL = BIT2;
 constexpr auto SPP_RX_QUEUE_NOT_EMPTY = BIT3;
 constexpr auto SPP_RX_QUEUE_NOT_FULL = BIT4;
+constexpr auto SPP_IS_OPEN = BIT5;
 static EventGroupHandle_t spp_event_group;
 static uint32_t spp_handle = 0;
 
-static void clean_up_msg() {
-  std::lock_guard<std::mutex> guard(spp_msg_out_mutex);
-  free(spp_msg_out.data);
-  spp_msg_out = spp_msg_t{};
-  spp_msg_out_bytes_left = 0;
-}
 static void clean_up() {
-  std::lock_guard<std::mutex> guard(spp_msg_out_mutex);
-  free(spp_msg_out.data);
-  spp_msg_out = spp_msg_t{};
-  spp_msg_out_bytes_left = 0;
-  xEventGroupClearBits(spp_event_group, SPP_READY_TO_WRITE_BIT |
-                                            SPP_TX_QUEUE_NOT_EMPTY |
-                                            SPP_RX_QUEUE_NOT_EMPTY);
+  our_msg.clear();
+  xEventGroupClearBits(spp_event_group,
+                       SPP_READY_TO_WRITE_BIT | SPP_TX_QUEUE_NOT_EMPTY |
+                           SPP_RX_QUEUE_NOT_EMPTY | SPP_IS_OPEN);
   xEventGroupSetBits(spp_event_group,
                      SPP_TX_QUEUE_NOT_FULL | SPP_RX_QUEUE_NOT_FULL);
   xQueueReset(spp_tx_queue);
@@ -184,11 +232,10 @@ static void esp_spp_cb(esp_spp_cb_event_t event, esp_spp_cb_param_t* param) {
       break;
     case ESP_SPP_WRITE_EVT:
       if (param->write.status == ESP_SPP_SUCCESS) {
-        spp_msg_out_bytes_left -= param->write.len;
-        assert(spp_msg_out_bytes_left >= 0);
+        auto bytes_left = our_msg.number_of_bytes_written(param->write.len);
         D(ESP_LOGW(SPP_TAG,
-                   "ESP_SPP_WRITE_EVT success. status:%d, bytes_left:%ld",
-                   param->write.status, spp_msg_out_bytes_left));
+                   "ESP_SPP_WRITE_EVT success. status:%d, bytes_left:%u",
+                   param->write.status, bytes_left));
       } else {
         /* Means the previous data packet is not sent at all, need to send the
          * whole data packet again. */
@@ -208,7 +255,7 @@ static void esp_spp_cb(esp_spp_cb_event_t event, esp_spp_cb_param_t* param) {
       clean_up();
       spp_handle = param->srv_open.handle;
       // Connection opened, we are initially ready to send
-      xEventGroupSetBits(spp_event_group, SPP_READY_TO_WRITE_BIT);
+      xEventGroupSetBits(spp_event_group, SPP_IS_OPEN | SPP_READY_TO_WRITE_BIT);
       ESP_LOGI(SPP_TAG,
                "ESP_SPP_SRV_OPEN_EVT status:%d handle:%" PRIu32
                ", rem_bda:[%s]",
@@ -421,41 +468,29 @@ bool spp_tx_enqueue(uint8_t* data, size_t len, bool block) {
 }
 
 void spp_tx_thread_fun() {
-  while (!tx_thread_kill) {
-    xEventGroupWaitBits(spp_event_group,
-                        (SPP_READY_TO_WRITE_BIT | SPP_TX_QUEUE_NOT_EMPTY),
-                        pdFALSE, pdTRUE, portMAX_DELAY);
+  for (; !tx_thread_kill; vTaskDelay(pdMS_TO_TICKS(10))) {
+    xEventGroupWaitBits(
+        spp_event_group,
+        (SPP_IS_OPEN | SPP_READY_TO_WRITE_BIT | SPP_TX_QUEUE_NOT_EMPTY), pdFALSE,
+        pdTRUE, portMAX_DELAY);
     {
-      // std::lock_guard<std::mutex> guard(spp_msg_out_mutex);
 
-      // when done with the previous message, get new message from queue
-      if (spp_msg_out_bytes_left == 0) {
-        clean_up_msg();
-        if (xQueueReceive(spp_tx_queue, (void*)&spp_msg_out, TickType_t(10)) ==
+      // if needed, try to get a new message from queue
+      if (our_msg.is_empty()) {
+        spp_msg_t msg = {};
+        if (xQueueReceive(spp_tx_queue, (void*)&msg, TickType_t(10)) ==
             pdFALSE) {
-          // failed to get message.  queue must be empty
           xEventGroupClearBits(spp_event_group, SPP_TX_QUEUE_NOT_EMPTY);
-          continue;
+          continue; // no messages in queue
         }
-
-        // we just got a message. queue cannot be full now
         xEventGroupSetBits(spp_event_group, SPP_TX_QUEUE_NOT_FULL);
-
-        D(ESP_LOGW(SPP_TAG, "%s: got msg from fifo", __func__));
-        // nothing was sent from this new message
-        spp_msg_out_bytes_left = spp_msg_out.len;
+        our_msg.store_new_msg(msg, true);
       }
-
-      // here we handle both new messages and partially sent messages
-      auto data_part =
-          spp_msg_out.data + (spp_msg_out.len - spp_msg_out_bytes_left);
-
-      D(ESP_LOGW(SPP_TAG, "%s: call spp_esp_write", __func__));
-
-      if (ESP_OK ==
-          esp_spp_write(spp_handle, int(spp_msg_out_bytes_left), data_part)) {
-        // Small delay to allow Bluetooth stack to process
-        vTaskDelay(pdMS_TO_TICKS(10));
+      // send (wohle or partial) message 
+      if (auto msg = our_msg.get_remaining_msg(); msg.len) {
+        if (ESP_OK != esp_spp_write(spp_handle, int(msg.len), msg.data)) {
+          our_msg.write_has_failed(); // clear the internal has-been-sent-flag
+        }
       }
     }
   }
@@ -463,11 +498,14 @@ void spp_tx_thread_fun() {
 
 bool spp_is_connected() { return !!spp_handle; }
 
-bool spp_tx_enqueue(const char* data, bool block) {
-  auto data_len = strlen(data);
+bool spp_tx_enqueue(const uint8_t* data, size_t data_len, bool block) {
   if (uint8_t* ptr = (uint8_t*)malloc(data_len)) {
     memcpy(ptr, data, data_len);
     return spp_tx_enqueue(ptr, data_len, block);
   }
   return false;
+}
+
+bool spp_tx_enqueue(const char* data_str, bool block) {
+  return spp_tx_enqueue((const uint8_t*)data_str, strlen(data_str), block);
 }

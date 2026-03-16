@@ -45,7 +45,19 @@ void spp2_main();
 /// @param block if true, wait until data becomes available
 /// @return      success (fails if queue is full and not blocking)
 bool spp_tx_enqueue(uint8_t *data, size_t len, bool block = false); 
-bool spp_tx_enqueue(const char *data, bool block = false); 
+
+/// @brief       Add new data to transmitter queue.
+/// @param data  data to send.
+/// @param len   byte length of data
+/// @param block if true, wait until data becomes available
+/// @return      success (fails if queue is full and not blocking)
+bool spp_tx_enqueue(const uint8_t *data, size_t len, bool block = false); 
+
+/// @brief       Add new data to transmitter queue.
+/// @param data_str data to send.
+/// @param block if true, wait until data becomes available
+/// @return      success (fails if queue is full and not blocking)
+bool spp_tx_enqueue(const char *data_str, bool block = false); 
 
 
 /// @brief       Get data from receiver queue
