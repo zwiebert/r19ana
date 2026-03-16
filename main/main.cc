@@ -74,13 +74,10 @@ int r19_alloc_and_print(char*& dst, const R19Frame& R19_frame,
   }
   return -1;
 }
-void test_print_frame(const XR25Frame& frame) {
-  std::cout << "HEX: " << frame.toString() << "\n";
-  std::cout << "bit:  2  3  4  5  6  7  8  9 10 11 12 13 14 15 16 17 "
-               "18 19 20 21 22 23 24 25 26 27 28 29 30 31\n";
+void test_print_frame(const XR25Frame::frame_data_t& frame, int counter) {
   constexpr size_t buf_size = 1024;
   auto buf = new char[buf_size];
-  auto len = write_r19_frame(buf, buf_size, R19Frame(frame), ~0UL, true);
+  auto len = write_r19_frame(buf, buf_size, R19Frame(frame, counter), ~0UL, true);
   if (len < buf_size) std::cout.write(buf, len);
 }
 
@@ -89,8 +86,8 @@ extern "C" int app_main() {
   // processor calls back when it has completed a frame from the chunks of bytes
   // it got from x25_transport. processor has a dedicated thread for doing the
   // callback. its ok to block it.
-  FrameProcessor processor([](const XR25Frame& frame) {
-    R19_frame = frame;
+  FrameProcessor processor([](const XR25Frame::frame_data_t& frame, int frame_count) {
+    R19_frame = R19Frame(frame, frame_count);
     if (!spp_is_connected()) return;
     char* dst = 0;
     if (auto dst_len = r19_alloc_and_print(dst, R19_frame, Mask); dst_len > 0) {
@@ -149,7 +146,7 @@ void mock_uart_fun(bool& keep_running) {
 
 int main() {
   FrameProcessor processor(
-      [](const XR25Frame& frame) { test_print_frame(frame); });
+      [](const XR25Frame::frame_data_t& frame, int frame_count) { test_print_frame(frame, frame_count); });
 
   xr25_transport.start([&processor](auto data, auto data_len) {
     processor.feedBytes(data, data_len);

@@ -13,7 +13,7 @@
 
 class FrameProcessor {
  public:
-  using UpdateCallback = std::function<void(const XR25Frame& frame)>;
+  using UpdateCallback = std::function<void(const XR25Frame::frame_data_t& frame, int frame_count)>;
 
   explicit FrameProcessor(UpdateCallback);
   ~FrameProcessor();

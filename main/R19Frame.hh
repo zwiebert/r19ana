@@ -72,9 +72,9 @@ class R19Frame {
   int FrameNumber = 0;
 
  public:
-  R19Frame(const XR25Frame& xr25_frame)
-      : data(xr25_frame.get_frame_data()),
-        FrameNumber(xr25_frame.getFrameCounter()) {};
+  R19Frame(const XR25Frame::frame_data_t& xr25_frame, int frame_count)
+      : data(xr25_frame),
+        FrameNumber(frame_count) {};
   R19Frame() = default;
 
   bool operator==(const R19Frame&) const = default;
