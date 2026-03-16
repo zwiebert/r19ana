@@ -55,8 +55,8 @@ bool cli_parse_and_execute_cmdline(char* src) {
 int r19_alloc_and_print(char*& dst, const R19Frame& R19_frame,
                         r19frame_mask_t mask = ~0UL) {
   char dummy;
-  const char prepend_txt[] = "";     // "\x1B[2J";
-  const char append_txt[] = "\r\n";  // "\x1B[2J";
+  const char prepend_txt[] = "\r\n";     // "\x1B[2J";
+  const char append_txt[] = "";  // "\x1B[2J";
 
   if (auto buf_len = r19_frame_print(&dummy, 0, R19_frame, mask); buf_len > 0) {
     if (auto ptr =

@@ -43,7 +43,7 @@ inline int snprinthex(char* dst, size_t dst_size,
   return req_len;
 }
 
-inline const char* btoa(bool v) { return v ? "Y" : "N"; }
+inline const char* btoa(bool v) { return v ? "X" : " "; }
 
 /// @brief Conditional print members of R19Frame object
 /// @param dst       write buffer
@@ -65,7 +65,7 @@ inline int r19_frame_print(char* dst, size_t dst_siz, const R19Frame& d,
     if (view_mask.test(bit++) && ct >= 0) {
       auto p = std::min(dst_max, dst + ct);
       auto l = std::max(ssize_t(0), dst_size - ct);
-      ct += snprintf(p, l, "\r\n%2u: %6d Frame-Count #####\r\n", bit,
+      ct += snprintf(p, l, "%2u: %6d Frame-Count #####\r\n", bit,
                      d.get_frame_count());
     }
 
@@ -194,7 +194,8 @@ inline int r19_frame_print(char* dst, size_t dst_siz, const R19Frame& d,
     if (view_mask.test(bit++) && ct >= 0) {
       auto p = std::min(dst_max, dst + ct);
       auto l = std::max(ssize_t(0), dst_size - ct);
-      ct += snprintf(p, l, "%u:    [%s] Fuel-Pump\r\n", bit, btoa(d[23] & 0x10));
+      ct +=
+          snprintf(p, l, "%u:    [%s] Fuel-Pump\r\n", bit, btoa(d[23] & 0x10));
     }
 
     /////////////////////////////////////////////////////
@@ -244,21 +245,16 @@ inline int r19_frame_print(char* dst, size_t dst_siz, const R19Frame& d,
     if (view_mask.test(bit++) && ct >= 0) {
       auto p = std::min(dst_max, dst + ct);
       auto l = std::max(ssize_t(0), dst_size - ct);
-      ct +=
-          snprintf(p, l,
-                   "%2u: "
-                   "17:%02x,23:%02x,24:%02x,25:%02x,28:%02x,29:%02x,30:%02x,31:"
-                   "%02x hex unknown bytes\r\n",
-                   bit, d[17], d[23], d[24], d[25], d[28], d[29], d[30], d[31]);
+      ct += snprintf(
+          p, l, "%2u: ???    17=%02x,23=%02x,24=%02x,25=%02x\r\n",
+          bit, d[17], d[23], d[24], d[25]);
     }
     if (view_mask.test(bit++) && ct >= 0) {
       auto p = std::min(dst_max, dst + ct);
       auto l = std::max(ssize_t(0), dst_size - ct);
-      ct +=
-          snprintf(p, l,
-                   "%2u: 17:%d,23:%d,24:%d,25:%d,28:%d,29:%d,30:%d,31:%d dec "
-                   "unknown bytes\r\n",
-                   bit, d[17], d[23], d[24], d[25], d[28], d[29], d[30], d[31]);
+      ct += snprintf(
+          p, l, "%2u: ???    28=%02x,29=%02x,30=%02x,31=%02x\r\n",
+          bit, d[28], d[29], d[30], d[31]);
     }
     /////////////////////// end experimental ///////////////////////////
     //////////////// original xr25 pc //////////////////////

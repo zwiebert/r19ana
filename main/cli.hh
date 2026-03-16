@@ -3,14 +3,13 @@
 #include <string.h>
 
 #include <chrono>
-#include <thread>
 #include <iostream>
+#include <thread>
 
-#include "main.hh"
 #include "R19Frame.hh"
 #include "R19Frame_utils.hh"
 #include "Transport.hh"
-
+#include "main.hh"
 
 struct CliCmd {
   const char* name = "";
@@ -35,23 +34,49 @@ struct CliCmd {
   }
 };
 
+constexpr const char* reply_msg_all_hidden =
+    "all entries are now hidden!\r\n"
+    "Use <hide 0> to unhide all.\r\n"
+    "Or use <show 1,2,3> to show some.\r\n";
+
 CliCmd cmds[] = {
-    {.name = "filter ",
+    {.name = "show ",
      .handler = [](CliCmd& cmd) -> bool {
        // command line was like: "filter 1,2,3,8,12".
        // cmd.args is now "1,2,3,8,12"
        // we need to convert this into a bitset<32> with only bits 0,1,2,7,11
        // are set to true.
-       r19frame_mask_t mask;
+       r19frame_mask_t mask = Mask;
+       for (char *str = cmd.args, *save_ptr = nullptr, *tok;
+            (tok = strtok_r(str, ", \r\n", &save_ptr)); str = nullptr) {
+         auto n = strtoul(tok, nullptr, 10);
+         if (n == 0) {
+           if (strstr(tok, "0")) mask = 0UL;
+         } else
+           mask.set(n - 1);
+       }
+       Mask = mask;
+       if (!mask.any()) cmd.reply(reply_msg_all_hidden);
+       return true;
+     }},
+
+    {.name = "hide ",
+     .handler = [](CliCmd& cmd) -> bool {
+       // command line was like: "filter 1,2,3,8,12".
+       // cmd.args is now "1,2,3,8,12"
+       // we need to convert this into a bitset<32> with only bits 0,1,2,7,11
+       // are set to true.
+       r19frame_mask_t mask = Mask;
        for (char *str = cmd.args, *save_ptr = nullptr, *tok;
             (tok = strtok_r(str, ", \r\n", &save_ptr)); str = nullptr) {
          auto n = strtoul(tok, nullptr, 10);
          if (n == 0) {
            if (strstr(tok, "0")) mask = ~0UL;
          } else
-           mask.set(n - 1);
+           mask.reset(n - 1);
        }
        Mask = mask;
+       if (!mask.any()) cmd.reply(reply_msg_all_hidden);
        return true;
      }},
 
