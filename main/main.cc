@@ -13,8 +13,8 @@
 #ifdef ESP_PLATFORM
 #include "SppTransport.hh"
 #else
-#include "Xr25Transport.hh"
 #include "ConsoleTransport.hh"
+#include "Xr25Transport.hh"
 #endif
 
 #define D(x)
@@ -37,12 +37,11 @@ inline int terminal_puts(const char* s, bool block = false) {
 R19Frame R19_frame;
 r19frame_mask_t Mask = ~0LU;
 
-int r19_alloc_and_print(char*& dst, r19frame_mask_t mask = ~0UL) {
+int r19_alloc_and_print(char*& dst, const R19Frame& R19_frame,
+                        r19frame_mask_t mask = ~0UL) {
   char dummy;
-  const char prepend_txt[] =
-      "\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\r----"
-      "Live Data----\r\n";                      // "\x1B[2J";
-  const char append_txt[] = "-----------\r\n";  // "\x1B[2J";
+  const char prepend_txt[] = "";     // "\x1B[2J";
+  const char append_txt[] = "\r\n";  // "\x1B[2J";
 
   if (auto buf_len = r19_frame_print(&dummy, 0, R19_frame, mask); buf_len > 0) {
     if (auto ptr =
@@ -146,8 +145,8 @@ bool cli_parse_and_execute_cmdline(char* src) {
 
 void test_print_frame(const XR25Frame& frame) {
   std::cout << "HEX: " << frame.toString() << "\n";
-  std::cout << "bit:  0  1  2  3  4  5  6  7  8  9 10 11 12 13 14 15 16 17 "
-               "18 19 20 21 22 23 24 25 26 27 28 29\n";
+  std::cout << "bit:  2  3  4  5  6  7  8  9 10 11 12 13 14 15 16 17 "
+               "18 19 20 21 22 23 24 25 26 27 28 29 30 31\n";
   constexpr size_t buf_size = 1024;
   auto buf = new char[buf_size];
   auto len = write_r19_frame(buf, buf_size, R19Frame(frame), ~0UL, true);
@@ -156,31 +155,40 @@ void test_print_frame(const XR25Frame& frame) {
 
 #ifdef ESP_PLATFORM
 extern "C" int app_main() {
-  FrameProcessor processor([](const XR25Frame& frame) { R19_frame = frame; });
+  // processor calls back when it has completed a frame from the chunks of bytes
+  // it got from x25_transport
+  FrameProcessor processor([](const XR25Frame& frame) {
+    R19_frame = frame;
+    if (!spp_is_connected()) return;
+    char* dst = 0;
+    if (auto dst_len = r19_alloc_and_print(dst, R19_frame, Mask); dst_len > 0) {
+      if (term_transport.write((const uint8_t*)dst, dst_len, true)) {
+        free(dst);
+        return;
+      }
+      free(dst);
+    }
+  });
 
+  // xr25_transport calls back when it has a received a chunk of bytes from
+  // the car diagnose port
   xr25_transport.start([&processor](auto data, auto data_len) {
-    D(ESP_LOGI("xr25_transport", "read len: %u", data_len));
     processor.feedBytes(data, data_len);
   });
+
+  // term_transport calls back when it has received a line of text from
+  // terminal. It should be a user CLI command.
   term_transport.start([](auto data, auto data_len) {
     cli_parse_and_execute_cmdline((char*)data);
   });
 
-  char* dst = 0;
-  for (;; std::this_thread::sleep_for(std::chrono::milliseconds(10))) {
-    if (!spp_is_connected()) continue;
-
-    if (auto dst_len = r19_alloc_and_print(dst, Mask); dst_len > 0) {
-      if (term_transport.write((const uint8_t*)dst, dst_len, true)) {
-        free(dst);
-        continue;
-      }
-      free(dst);
-    }
+  // it seems this thread has nothing left to do. Wait here to keep local object
+  // <processor> alive
+  for (;; std::this_thread::sleep_for(std::chrono::days(1))) {
   }
 
   xr25_transport.stop();
-
+  term_transport.stop();
   return 0;
 }
 
@@ -215,7 +223,7 @@ int main() {
     processor.feedBytes(data, data_len);
   });
   term_transport.start();
-
+#if 0
   char* dst = 0;
   for (;; std::this_thread::sleep_for(std::chrono::milliseconds(10))) {
     std::cerr << "for loop\n";
@@ -229,8 +237,9 @@ int main() {
       }
     }
   }
+#endif
 
-  std::this_thread::sleep_for(std::chrono::seconds(5));
+  std::this_thread::sleep_for(std::chrono::seconds(2));
 
   xr25_transport.stop();
   term_transport.stop();

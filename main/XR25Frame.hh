@@ -25,7 +25,7 @@ class XR25Frame {
 
   bool test();
 
-  uint8_t operator[](int idx) const { return m_frame[idx]; }
+  uint8_t operator[](int idx) const { return m_complete_frame[idx - 2]; }
 
   const frame_data_t& get_frame_data() const { return m_complete_frame; }
   int get_frame_counter() const { return m_complete_frame_counter; }

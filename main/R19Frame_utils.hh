@@ -10,9 +10,10 @@ inline void tohex(const uint8_t* in, size_t insz, char* out, size_t outsz) {
   const unsigned char* pin = in;
   const char* hex = "0123456789ABCDEF";
   char* pout = out;
-  for (; pin < in + insz; pout += 2, pin++) {
+  for (; pin < in + insz; pout += 3, pin++) {
     pout[0] = hex[(*pin >> 4) & 0xF];
     pout[1] = hex[*pin & 0xF];
+    pout[2] = ' ';
     if (pout + 3 - out > outsz) {
       /* Better to truncate output string than overflow buffer */
       /* it would be still better to either return a status */
@@ -20,8 +21,13 @@ inline void tohex(const uint8_t* in, size_t insz, char* out, size_t outsz) {
       break;
     }
   }
-  pout[0] = 0;
+  pout[-1] = '\0';
 }
+static char frame_hex[XR25Frame::FRAME_SIZE * 3];
+void frame_hex_fill(const XR25Frame::frame_data_t& frame) {
+  tohex(&frame[0], frame.size(), frame_hex, sizeof frame_hex);
+}
+
 };  // namespace
 
 inline int snprinthex(char* dst, size_t dst_size,
@@ -56,85 +62,100 @@ inline int r19_frame_print(char* dst, size_t dst_siz, const R19Frame& d,
     unsigned bit = 0;
     auto dst_max = dst + dst_size - 1;
 
-    if (ct >= 0) {
+    if (view_mask.test(bit++) && ct >= 0) {
       auto p = std::min(dst_max, dst + ct);
       auto l = std::max(ssize_t(0), dst_size - ct);
-      ct += snprinthex(p, l, d.get_frame());
+      ct += snprintf(p, l, "\r\n%2u: %6d Frame-Count #####\r\n", bit,
+                     d.get_frame_count());
     }
 
-    if (ct >= 0) {
+    frame_hex_fill(d.get_frame());
+    if (view_mask.test(bit++) && ct >= 0) {
       auto p = std::min(dst_max, dst + ct);
       auto l = std::max(ssize_t(0), dst_size - ct);
-      ct += snprintf(p, l, "\r\nFrameCt: %d\r\n\n", d.get_frame_count());
+      ct += snprintf(p, l, "%2u:[02-07] %.*s\r\n", bit, 17, frame_hex + 18 * 0);
+    }
+    if (view_mask.test(bit++) && ct >= 0) {
+      auto p = std::min(dst_max, dst + ct);
+      auto l = std::max(ssize_t(0), dst_size - ct);
+      ct +=
+          snprintf(p, l, "%2u:[08-13] %.*s \r\n", bit, 17, frame_hex + 18 * 1);
+    }
+    if (view_mask.test(bit++) && ct >= 0) {
+      auto p = std::min(dst_max, dst + ct);
+      auto l = std::max(ssize_t(0), dst_size - ct);
+      ct += snprintf(p, l, "%2u:[14-19] %.*s\r\n", bit, 17, frame_hex + 18 * 2);
+    }
+    if (view_mask.test(bit++) && ct >= 0) {
+      auto p = std::min(dst_max, dst + ct);
+      auto l = std::max(ssize_t(0), dst_size - ct);
+      ct += snprintf(p, l, "%2u:[20-25] %.*s\r\n", bit, 17, frame_hex + 18 * 3);
+    }
+    if (view_mask.test(bit++) && ct >= 0) {
+      auto p = std::min(dst_max, dst + ct);
+      auto l = std::max(ssize_t(0), dst_size - ct);
+      ct += snprintf(p, l, "%2u:[26-31] %.*s\r\n", bit, 17, frame_hex + 18 * 4);
     }
 
     if (view_mask.test(bit++) && ct >= 0) {
       auto p = std::min(dst_max, dst + ct);
       auto l = std::max(ssize_t(0), dst_size - ct);
-      ct += snprintf(p, l, "%2u: %5d rpm Crankshaft\r\n", bit,
+      ct += snprintf(p, l, "%2u: %6d rpm Crankshaft\r\n", bit,
                      d.get_engine_speed_RPM());
     }
 
     if (view_mask.test(bit++) && ct >= 0) {
       auto p = std::min(dst_max, dst + ct);
       auto l = std::max(ssize_t(0), dst_size - ct);
-      ct += snprintf(p, l, "%2u: %3.2f V Battery\r\n", bit,
+      ct += snprintf(p, l, "%2u: %4.2f V Battery\r\n", bit,
                      d.get_battery_voltage_V());
     }
 
     if (view_mask.test(bit++) && ct >= 0) {
       auto p = std::min(dst_max, dst + ct);
       auto l = std::max(ssize_t(0), dst_size - ct);
-      ct += snprintf(p, l, "%2u: %5d mBar Atmosphere\r\n", bit,
+      ct += snprintf(p, l, "%2u: %6d mBar Atmosphere\r\n", bit,
                      d.get_atmospheric_pressure_mBar());
     }
 
     if (view_mask.test(bit++) && ct >= 0) {
       auto p = std::min(dst_max, dst + ct);
       auto l = std::max(ssize_t(0), dst_size - ct);
-      ct += snprintf(p, l, "%2u: %5d mBar Manifold\r\n", bit,
+      ct += snprintf(p, l, "%2u: %6d mBar Manifold\r\n", bit,
                      d.get_manifold_absolute_pressure_mBar());
     }
 
     if (view_mask.test(bit++) && ct >= 0) {
       auto p = std::min(dst_max, dst + ct);
       auto l = std::max(ssize_t(0), dst_size - ct);
-      ct += snprintf(p, l, "%2u: %5d °C Intake Air\r\n", bit,
+      ct += snprintf(p, l, "%2u: %6d °C Intake Air\r\n", bit,
                      d.get_intake_air_temperature_Celsius());
     }
 
     if (view_mask.test(bit++) && ct >= 0) {
       auto p = std::min(dst_max, dst + ct);
       auto l = std::max(ssize_t(0), dst_size - ct);
-      ct += snprintf(p, l, "%2u: %5d °C Coolant\r\n", bit,
+      ct += snprintf(p, l, "%2u: %6d °C Coolant\r\n", bit,
                      d.get_engine_coolant_temperature_Celsius());
     }
 
     if (view_mask.test(bit++) && ct >= 0) {
       auto p = std::min(dst_max, dst + ct);
       auto l = std::max(ssize_t(0), dst_size - ct);
-      ct += snprintf(p, l, "%2u: %3.2f us Injection Duration\r\n", bit,
+      ct += snprintf(p, l, "%2u: %4.2f us Injection Duration\r\n", bit,
                      d.get_injection_duration_ms());
     }
 
     if (view_mask.test(bit++) && ct >= 0) {
       auto p = std::min(dst_max, dst + ct);
       auto l = std::max(ssize_t(0), dst_size - ct);
-      ct += snprintf(p, l, "%2u: %5d mV O2 Sensor\r\n", bit,
+      ct += snprintf(p, l, "%2u: %6d mV O2 Sensor\r\n", bit,
                      d.get_oxygen_sensor_voltage_mV());
     }
-
     if (view_mask.test(bit++) && ct >= 0) {
       auto p = std::min(dst_max, dst + ct);
       auto l = std::max(ssize_t(0), dst_size - ct);
-      ct += snprintf(p, l, "%2u: %5d Idle-Spd-Correction\r\n", bit,
-                     d.get_idle_speed_correction());
-    }
-
-    if (view_mask.test(bit++) && ct >= 0) {
-      auto p = std::min(dst_max, dst + ct);
-      auto l = std::max(ssize_t(0), dst_size - ct);
-      ct += snprintf(p, l, "%2u: %5d Engine-Knock\r\n", bit,
+      ct += snprintf(p, l, "%2u: %6d Engine-Knock\r\n", bit,
                      d.get_engine_knocking());
     }
 
@@ -152,6 +173,7 @@ inline int r19_frame_print(char* dst, size_t dst_siz, const R19Frame& d,
                      btoa(d.is_throttle_fully_closed()));
     }
 
+#if 0  // no idea which index, if any
     if (view_mask.test(bit++) && ct >= 0) {
       auto p = std::min(dst_max, dst + ct);
       auto l = std::max(ssize_t(0), dst_size - ct);
@@ -165,7 +187,89 @@ inline int r19_frame_print(char* dst, size_t dst_siz, const R19Frame& d,
       ct += snprintf(p, l, "%u:   [%s] O2 sensor loop\r\n", bit,
                      btoa(d.is_oxygen_sensor_loop_closed()));
     }
+#endif
+    /////////////////////////// experimental
+    /////////////// try and error confirmed /////////////
+    // fuel pump (can be heard when ignition turns on)
+    if (view_mask.test(bit++) && ct >= 0) {
+      auto p = std::min(dst_max, dst + ct);
+      auto l = std::max(ssize_t(0), dst_size - ct);
+      ct += snprintf(p, l, "%u:   [%s] Fuel-Pump\r\n", bit, btoa(d[23] & 0x10));
+    }
 
+    /////////////////////////////////////////////////////
+    if (view_mask.test(bit++) && ct >= 0) {
+      auto p = std::min(dst_max, dst + ct);
+      auto l = std::max(ssize_t(0), dst_size - ct);
+      ct += snprintf(p, l, "%2u: %6d Advance (15)\r\n", bit, d[15]);
+    }
+
+    if (view_mask.test(bit++) && ct >= 0) {
+      auto p = std::min(dst_max, dst + ct);
+      auto l = std::max(ssize_t(0), dst_size - ct);
+      ct += snprintf(p, l, "%2u: %6d Idle-Regulation\r\n", bit,
+                     d.get_idle_regulation());
+    }
+
+    if (view_mask.test(bit++) && ct >= 0) {
+      auto p = std::min(dst_max, dst + ct);
+      auto l = std::max(ssize_t(0), dst_size - ct);
+      ct +=
+          snprintf(p, l, "%2u: %6d Idle-Period\r\n", bit, d.get_idle_period());
+    }
+
+    if (view_mask.test(bit++) && ct >= 0) {
+      auto p = std::min(dst_max, dst + ct);
+      auto l = std::max(ssize_t(0), dst_size - ct);
+      ct += snprintf(p, l, "%2u: %6d Knock-Delay (28)\r\n", bit, d[28]);
+    }
+
+    if (view_mask.test(bit++) && ct >= 0) {
+      auto p = std::min(dst_max, dst + ct);
+      auto l = std::max(ssize_t(0), dst_size - ct);
+      ct += snprintf(p, l, "%2u: %4.2f Throttle (22)\r\n", bit, d[22] / 2.25);
+    }
+    if (view_mask.test(bit++) && ct >= 0) {
+      auto p = std::min(dst_max, dst + ct);
+      auto l = std::max(ssize_t(0), dst_size - ct);
+      ct += snprintf(p, l, "%2u:%02x%02x%02x Fault-Flags (27,19,18)\r\n", bit,
+                     d[27], d[19], d[18]);
+    }
+    if (view_mask.test(bit++) && ct >= 0) {
+      auto p = std::min(dst_max, dst + ct);
+      auto l = std::max(ssize_t(0), dst_size - ct);
+      ct += snprintf(p, l, "%2u:    %02x Fault-Fugitive (26)\r\n", bit, d[26]);
+    }
+    //  unknown: 17, 23, 24, 25, 29, 30, 31
+    if (view_mask.test(bit++) && ct >= 0) {
+      auto p = std::min(dst_max, dst + ct);
+      auto l = std::max(ssize_t(0), dst_size - ct);
+      ct +=
+          snprintf(p, l,
+                   "%2u: "
+                   "17:%02x,23:%02x,24:%02x,25:%02x,28:%02x,29:%02x,30:%02x,31:"
+                   "%02x hex unknown bytes\r\n",
+                   bit, d[17], d[23], d[24], d[25], d[28], d[29], d[30], d[31]);
+    }
+    if (view_mask.test(bit++) && ct >= 0) {
+      auto p = std::min(dst_max, dst + ct);
+      auto l = std::max(ssize_t(0), dst_size - ct);
+      ct +=
+          snprintf(p, l,
+                   "%2u: 17:%d,23:%d,24:%d,25:%d,28:%d,29:%d,30:%d,31:%d dec "
+                   "unknown bytes\r\n",
+                   bit, d[17], d[23], d[24], d[25], d[28], d[29], d[30], d[31]);
+    }
+    /////////////////////// end experimental ///////////////////////////
+    //////////////// original xr25 pc //////////////////////
+    if (view_mask.test(bit++) && ct >= 0) {
+      auto p = std::min(dst_max, dst + ct);
+      auto l = std::max(ssize_t(0), dst_size - ct);
+      ct += snprintf(p, l, "%2u: %6d %% Adaption Regulation Ralenti  (X29)\r\n",
+                     bit, d.f3x(29));
+    }
+
+    ////////////////////////////////////////////////////////
     if (ct >= 0) {
       auto p = std::min(dst_max, dst + ct);
       auto l = std::max(ssize_t(0), dst_size - ct);
@@ -213,8 +317,9 @@ inline r19frame_mask_t r19_frame_members_cmp(const R19Frame& c,
                                   d.is_vacuum_provided_to_egr_valve()));
     ++bit, changed_mask.set(bit, (c.is_oxygen_sensor_loop_closed() !=
                                   d.is_oxygen_sensor_loop_closed()));
-    ++bit, changed_mask.set(bit, (c.get_idle_speed_correction() !=
-                                  d.get_idle_speed_correction()));
+    ++bit, changed_mask.set(
+               bit, (c.get_idle_regulation() != d.get_idle_regulation()));
+    ++bit, changed_mask.set(bit, (c.get_idle_period() != d.get_idle_period()));
     ++bit, changed_mask.set(
                bit, (c.get_engine_knocking() != d.get_engine_knocking()));
   }
