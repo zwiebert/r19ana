@@ -29,7 +29,7 @@
 #include "sys/time.h"
 #include "time.h"
 
-#define D(x)
+#define D(x) x
 
 #define SPP_TAG "SPP_ACCEPTOR_DEMO"
 #define SPP_SERVER_NAME "SPP_SERVER"
@@ -44,7 +44,10 @@ struct spp_msg_t {
   uint16_t len;
 };
 static QueueHandle_t spp_tx_queue = NULL;
-bool tx_thread_kill;
+
+std::thread spp_tx_thread;
+bool tx_thread_keep_running;
+void spp_tx_thread_fun();
 
 class {
  public:
@@ -123,7 +126,8 @@ constexpr auto SPP_IS_OPEN = BIT5;
 static EventGroupHandle_t spp_event_group;
 static uint32_t spp_handle = 0;
 
-static void clean_up() {
+static void clean_up_connection() {
+  D(ESP_LOGI(SPP_TAG, "%s", __func__));
   our_msg.clear();
   xEventGroupClearBits(spp_event_group,
                        SPP_READY_TO_WRITE_BIT | SPP_TX_QUEUE_NOT_EMPTY |
@@ -133,6 +137,34 @@ static void clean_up() {
   xQueueReset(spp_tx_queue);
   xQueueReset(spp_rx_queue);
   spp_handle = 0;
+}
+static void set_up_connection() {
+  D(ESP_LOGI(SPP_TAG, "%s", __func__));
+  clean_up_connection();
+}
+static void clean_up() {
+  D(ESP_LOGI(SPP_TAG, "%s", __func__));
+  clean_up_connection();
+
+  tx_thread_keep_running = false;
+  if (spp_event_group) {
+    xEventGroupSetBits(spp_event_group,
+                       SPP_IS_OPEN | SPP_READY_TO_WRITE_BIT |
+                           SPP_TX_QUEUE_NOT_EMPTY);
+  }
+  if (spp_tx_thread.joinable()) {
+    spp_tx_thread.join();
+  }
+}
+static void set_up() {
+  D(ESP_LOGI(SPP_TAG, "%s", __func__));
+  set_up_connection();
+  if (!tx_thread_keep_running) {
+    auto cfg = esp_pthread_get_default_config();
+    esp_pthread_set_cfg(&cfg);
+    tx_thread_keep_running = true;
+    spp_tx_thread = std::thread(spp_tx_thread_fun);
+  }
 }
 
 static char* bda2str(uint8_t* bda, char* str, size_t size) {
@@ -145,9 +177,6 @@ static char* bda2str(uint8_t* bda, char* str, size_t size) {
           p[5]);
   return str;
 }
-
-std::thread spp_tx_thread;
-void spp_tx_thread_fun();
 
 static void esp_spp_cb(esp_spp_cb_event_t event, esp_spp_cb_param_t* param) {
   char bda_str[18] = {0};
@@ -166,9 +195,10 @@ static void esp_spp_cb(esp_spp_cb_event_t event, esp_spp_cb_param_t* param) {
       break;
     case ESP_SPP_OPEN_EVT:
       D(ESP_LOGI(SPP_TAG, "ESP_SPP_OPEN_EVT"));
+      set_up_connection();
       break;
     case ESP_SPP_CLOSE_EVT:
-      clean_up();
+      clean_up_connection();
       ESP_LOGI(SPP_TAG,
                "ESP_SPP_CLOSE_EVT status:%d handle:%" PRIu32
                " close_by_remote:%d",
@@ -252,7 +282,7 @@ static void esp_spp_cb(esp_spp_cb_event_t event, esp_spp_cb_param_t* param) {
       }
       break;
     case ESP_SPP_SRV_OPEN_EVT:
-      clean_up();
+      set_up();
       spp_handle = param->srv_open.handle;
       // Connection opened, we are initially ready to send
       xEventGroupSetBits(spp_event_group, SPP_IS_OPEN | SPP_READY_TO_WRITE_BIT);
@@ -424,10 +454,6 @@ void spp2_main(void) {
   spp_tx_queue = xQueueCreate(SPP_TX_QUEUE_LEN, sizeof(spp_msg_t));
   spp_event_group = xEventGroupCreate();
   spp_rx_queue = xQueueCreate(SPP_RX_QUEUE_LEN, sizeof(spp_msg_t));
-
-  auto cfg = esp_pthread_get_default_config();
-  esp_pthread_set_cfg(&cfg);
-  spp_tx_thread = std::thread(spp_tx_thread_fun);
 }
 
 bool spp_rx_dequeue(uint8_t*& data, size_t& len, bool block) {
@@ -468,28 +494,27 @@ bool spp_tx_enqueue(uint8_t* data, size_t len, bool block) {
 }
 
 void spp_tx_thread_fun() {
-  for (; !tx_thread_kill; vTaskDelay(pdMS_TO_TICKS(10))) {
+  for (; tx_thread_keep_running; vTaskDelay(pdMS_TO_TICKS(10))) {
     xEventGroupWaitBits(
         spp_event_group,
-        (SPP_IS_OPEN | SPP_READY_TO_WRITE_BIT | SPP_TX_QUEUE_NOT_EMPTY), pdFALSE,
-        pdTRUE, portMAX_DELAY);
+        (SPP_IS_OPEN | SPP_READY_TO_WRITE_BIT | SPP_TX_QUEUE_NOT_EMPTY),
+        pdFALSE, pdTRUE, portMAX_DELAY);
     {
-
       // if needed, try to get a new message from queue
       if (our_msg.is_empty()) {
         spp_msg_t msg = {};
         if (xQueueReceive(spp_tx_queue, (void*)&msg, TickType_t(10)) ==
             pdFALSE) {
           xEventGroupClearBits(spp_event_group, SPP_TX_QUEUE_NOT_EMPTY);
-          continue; // no messages in queue
+          continue;  // no messages in queue
         }
         xEventGroupSetBits(spp_event_group, SPP_TX_QUEUE_NOT_FULL);
         our_msg.store_new_msg(msg, true);
       }
-      // send (wohle or partial) message 
+      // send (wohle or partial) message
       if (auto msg = our_msg.get_remaining_msg(); msg.len) {
         if (ESP_OK != esp_spp_write(spp_handle, int(msg.len), msg.data)) {
-          our_msg.write_has_failed(); // clear the internal has-been-sent-flag
+          our_msg.write_has_failed();  // clear the internal has-been-sent-flag
         }
       }
     }
