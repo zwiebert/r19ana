@@ -4,7 +4,8 @@
 #include "R19Frame.hh"
 #include "i18n.hh"
 
-using r19frame_mask_t = std::bitset<32>;
+using r19frame_mask_t = std::bitset<64U>;
+
 
 namespace {
 inline void tohex(const uint8_t* in, size_t insz, char* out, size_t outsz) {
@@ -55,7 +56,7 @@ inline const char* btoa(bool v) { return v ? "X" : " "; }
 /// @return  bytes written or if greater than dst_siz, the required buffer size
 /// (man 3 snprintf)
 inline int r19_frame_print(char* dst, size_t dst_siz, const R19Frame& d,
-                           r19frame_mask_t view_mask) {
+                           const r19frame_mask_t &view_mask) {
   ssize_t dst_size = ssize_t(dst_siz);
   int ct = 0;
 
@@ -99,7 +100,14 @@ inline int r19_frame_print(char* dst, size_t dst_siz, const R19Frame& d,
       auto p = std::min(dst_max, dst + ct);
       auto l = std::max(ssize_t(0), dst_size - ct);
       ct +=
-          snprintf(p, l, "%02u:[26-31] %.*s\r\n", bit, 17, frame_hex + 18 * 4);
+          snprintf(p, l, "%02u:[26-30] %.*s\r\n", bit, 14, frame_hex + 18 * 4);
+    }
+
+    if (view_mask.test(bit++) && ct >= 0) {
+      auto p = std::min(dst_max, dst + ct);
+      auto l = std::max(ssize_t(0), dst_size - ct);
+      ct += snprintf(p, l, "%02u: %6d %s\r\n", bit,
+                     d.get_id(), _("ID"));
     }
 
     if (view_mask.test(bit++) && ct >= 0) {
@@ -168,14 +176,14 @@ inline int r19_frame_print(char* dst, size_t dst_siz, const R19Frame& d,
       auto p = std::min(dst_max, dst + ct);
       auto l = std::max(ssize_t(0), dst_size - ct);
       ct +=
-          snprintf(p, l, "%u:    [%s] %s\r\n", bit,
+          snprintf(p, l, "%u:    [%s] %s (4-0x10)\r\n", bit,
                    btoa(d.is_throttle_fully_open()), _("Throttle Full-Power"));
     }
 
     if (view_mask.test(bit++) && ct >= 0) {
       auto p = std::min(dst_max, dst + ct);
       auto l = std::max(ssize_t(0), dst_size - ct);
-      ct += snprintf(p, l, "%u:    [%s] %s\r\n", bit,
+      ct += snprintf(p, l, "%u:    [%s] %s (4-0x08)\r\n", bit,
                      btoa(d.is_throttle_fully_closed()), _("Throttle Idle"));
     }
 
@@ -195,20 +203,44 @@ inline int r19_frame_print(char* dst, size_t dst_siz, const R19Frame& d,
     }
 #endif
     /////////////////////////// experimental
+    if (view_mask.test(bit++) && ct >= 0) {
+      auto p = std::min(dst_max, dst + ct);
+      auto l = std::max(ssize_t(0), dst_size - ct);
+      ct += snprintf(p, l, "%u:    [%s] %s\r\n", bit, btoa(d[4] & 0x08),
+                     _("4-0x01"));
+    }
     /////////////// try and error confirmed /////////////
     // fuel pump (can be heard when ignition turns on)
     if (view_mask.test(bit++) && ct >= 0) {
       auto p = std::min(dst_max, dst + ct);
       auto l = std::max(ssize_t(0), dst_size - ct);
-      ct += snprintf(p, l, "%u:    [%s] %s\r\n", bit, btoa(d[23] & 0x10),
+      ct += snprintf(p, l, "%u:    [%s] %s (23-0x10)\r\n", bit, btoa(d[23] & 0x10),
                      _("Fuel-Pump"));
     }
 
+    if (view_mask.test(bit++) && ct >= 0) {
+      auto p = std::min(dst_max, dst + ct);
+      auto l = std::max(ssize_t(0), dst_size - ct);
+      ct += snprintf(p, l, "%u:    [%s] %s\r\n", bit, btoa(d[4] & 0x08),
+                     _("23-0x08"));
+    }
+    if (view_mask.test(bit++) && ct >= 0) {
+      auto p = std::min(dst_max, dst + ct);
+      auto l = std::max(ssize_t(0), dst_size - ct);
+      ct += snprintf(p, l, "%u:    [%s] %s\r\n", bit, btoa(d[4] & 0x08),
+                     _("23-0x20"));
+    }
+    if (view_mask.test(bit++) && ct >= 0) {
+      auto p = std::min(dst_max, dst + ct);
+      auto l = std::max(ssize_t(0), dst_size - ct);
+      ct += snprintf(p, l, "%u:    [%s] %s\r\n", bit, btoa(d[4] & 0x08),
+                     _("23-0x80"));
+    }
     /////////////////////////////////////////////////////
     if (view_mask.test(bit++) && ct >= 0) {
       auto p = std::min(dst_max, dst + ct);
       auto l = std::max(ssize_t(0), dst_size - ct);
-      ct += snprintf(p, l, "%02u: %6d %s (15)\r\n", bit, d[15], _("Advance"));
+      ct += snprintf(p, l, "%02u: %6d °D %s (15)\r\n", bit, d[15], _("Advance"));
     }
 
     if (view_mask.test(bit++) && ct >= 0) {
@@ -229,7 +261,7 @@ inline int r19_frame_print(char* dst, size_t dst_siz, const R19Frame& d,
       auto p = std::min(dst_max, dst + ct);
       auto l = std::max(ssize_t(0), dst_size - ct);
       ct +=
-          snprintf(p, l, "%02u: %6d %s (28)\r\n", bit, d[28], _("Knock-Delay"));
+          snprintf(p, l, "%02u: %6d °D %s (28)\r\n", bit, d[28], _("Knock-Delay"));
     }
 
     if (view_mask.test(bit++) && ct >= 0) {
@@ -250,6 +282,24 @@ inline int r19_frame_print(char* dst, size_t dst_siz, const R19Frame& d,
       ct += snprintf(p, l, "%02u:     %02x %s (26)\r\n", bit, d[26],
                      _("Fault-Fugitive"));
     }
+    if (view_mask.test(bit++) && ct >= 0) {
+      auto p = std::min(dst_max, dst + ct);
+      auto l = std::max(ssize_t(0), dst_size - ct);
+      ct += snprintf(p, l, "%02u: %6d mBar %s\r\n", bit, (4 * (~d[29] & 0xff)),
+                     _("Atmosphere"));
+    }
+    if (view_mask.test(bit++) && ct >= 0) {
+      auto p = std::min(dst_max, dst + ct);
+      auto l = std::max(ssize_t(0), dst_size - ct);
+      ct +=
+          snprintf(p, l, "%02u: %6d ??? %s\r\n", bit, int(d[27]) - 0x82, _("(27) - 0x82"));
+    }
+    if (view_mask.test(bit++) && ct >= 0) {
+      auto p = std::min(dst_max, dst + ct);
+      auto l = std::max(ssize_t(0), dst_size - ct);
+      ct +=
+          snprintf(p, l, "%02u: %6d ??? %s\r\n", bit, int(d[27] | (d[28] << 8)) - 0x8182, _("(28,27) - 0x8182"));
+    }
     //  unknown: 17, 23, 24, 25, 29, 30, 31
     if (view_mask.test(bit++) && ct >= 0) {
       auto p = std::min(dst_max, dst + ct);
@@ -260,15 +310,10 @@ inline int r19_frame_print(char* dst, size_t dst_siz, const R19Frame& d,
     if (view_mask.test(bit++) && ct >= 0) {
       auto p = std::min(dst_max, dst + ct);
       auto l = std::max(ssize_t(0), dst_size - ct);
-      ct += snprintf(p, l, "%02u: ???    28=%02x,29=%02x,30=%02x,31=%02x\r\n",
-                     bit, d[28], d[29], d[30], d[31]);
+      ct += snprintf(p, l, "%02u: ???    28=%02x,29=%02x,30=%02x,4=%02x\r\n",
+                     bit, d[28], d[29], d[30], d[4]);
     }
-    if (view_mask.test(bit++) && ct >= 0) {
-      auto p = std::min(dst_max, dst + ct);
-      auto l = std::max(ssize_t(0), dst_size - ct);
-      ct += snprintf(p, l, "%02u: %6d mBar %s\r\n", bit, (4 * (~d[29] & 0xff)),
-                     _("Atmosphere"));
-    }
+
 
     /////////////////////// end experimental ///////////////////////////
 
@@ -329,7 +374,7 @@ inline r19frame_mask_t r19_frame_members_cmp(const R19Frame& c,
 }
 
 int write_r19_frame(char* dst, size_t dst_siz, const R19Frame& d,
-                    r19frame_mask_t mask = ~0UL, bool force = false) {
+                    const r19frame_mask_t &mask, bool force = false) {
   ssize_t dst_size = ssize_t(dst_siz);
   static R19Frame c;  // copy of last written frame
   int ct = 0;

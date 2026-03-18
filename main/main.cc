@@ -39,7 +39,7 @@ int terminal_puts(const char* s, bool block) {
 }
 
 R19Frame R19_frame;
-r19frame_mask_t Mask = ~0LU;
+r19frame_mask_t Mask = r19frame_mask_t().set();
 
 bool cli_parse_and_execute_cmdline(char* src) {
   for (auto& cmd : cmds) {
@@ -53,7 +53,7 @@ bool cli_parse_and_execute_cmdline(char* src) {
 }
 
 int r19_alloc_and_print(char*& dst, const R19Frame& R19_frame,
-                        r19frame_mask_t mask = ~0UL) {
+                        const r19frame_mask_t &mask) {
   char dummy;
   const char prepend_txt[] = "\r\n";  // "\x1B[2J";
   const char append_txt[] = "";       // "\x1B[2J";
@@ -77,7 +77,7 @@ int r19_alloc_and_print(char*& dst, const R19Frame& R19_frame,
 void test_print_frame(const XR25Frame::frame_data_t& frame, int counter) {
   constexpr size_t buf_size = 1024;
   auto buf = new char[buf_size];
-  auto len = write_r19_frame(buf, buf_size, R19Frame(frame, counter), ~0UL, true);
+  auto len = write_r19_frame(buf, buf_size, R19Frame(frame, counter), r19frame_mask_t().set(), true);
   if (len < buf_size) std::cout.write(buf, len);
 }
 

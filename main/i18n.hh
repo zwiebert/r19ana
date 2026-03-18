@@ -99,7 +99,7 @@ class I18n {
     };
     m_txt[i18n_txt::Advance] = {
         "Advance",
-        "Vorzündung",
+        "Zündverstellung",
     };
     m_txt[i18n_txt::Idle_Regulation] = {
         "Idle-Regulation",
@@ -111,7 +111,7 @@ class I18n {
     };
     m_txt[i18n_txt::Knock_Delay] = {
         "Knock-Delay",
-        "Klopf-Nachzündung",
+        "Klopf-Verstellung",
     };
     m_txt[i18n_txt::Throttle] = {
         "Throttle",

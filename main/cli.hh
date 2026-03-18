@@ -51,7 +51,7 @@ CliCmd cmds[] = {
             (tok = strtok_r(str, ", \r\n", &save_ptr)); str = nullptr) {
          auto n = strtoul(tok, nullptr, 10);
          if (n == 0) {
-           if (strstr(tok, "0")) mask = 0UL;
+           if (strstr(tok, "0")) mask.reset();
          } else
            mask.set(n - 1);
        }
@@ -71,7 +71,7 @@ CliCmd cmds[] = {
             (tok = strtok_r(str, ", \r\n", &save_ptr)); str = nullptr) {
          auto n = strtoul(tok, nullptr, 10);
          if (n == 0) {
-           if (strstr(tok, "0")) mask = ~0UL;
+           if (strstr(tok, "0")) mask.set();
          } else
            mask.reset(n - 1);
        }
