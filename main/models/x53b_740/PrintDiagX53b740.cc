@@ -97,6 +97,7 @@ static int frame_print(char* dst, size_t dst_siz, const X53b740Frame& d,
       ct +=
           snprintf(p, l, "%02u:[26-30] %.*s\r\n", bit, 14, frame_hex + 18 * 4);
     }
+    ///////////////////////////////////////////////
 
     if (view_mask.test(bit++) && ct >= 0) {
       auto p = std::min(dst_max, dst + ct);
@@ -107,29 +108,8 @@ static int frame_print(char* dst, size_t dst_siz, const X53b740Frame& d,
     if (view_mask.test(bit++) && ct >= 0) {
       auto p = std::min(dst_max, dst + ct);
       auto l = std::max(ssize_t(0), dst_size - ct);
-      ct += snprintf(p, l, "%02u: %6d rpm %s\r\n", bit,
-                     d.get_engine_speed_RPM(), _("Crankshaft"));
-    }
-
-    if (view_mask.test(bit++) && ct >= 0) {
-      auto p = std::min(dst_max, dst + ct);
-      auto l = std::max(ssize_t(0), dst_size - ct);
       ct += snprintf(p, l, "%02u:   %2.1f V %s\r\n", bit,
                      d.get_battery_voltage_V(), _("Battery"));
-    }
-
-    if (view_mask.test(bit++) && ct >= 0) {
-      auto p = std::min(dst_max, dst + ct);
-      auto l = std::max(ssize_t(0), dst_size - ct);
-      ct += snprintf(p, l, "%02u: %6d mBar %s\r\n", bit,
-                     d.get_atmospheric_pressure_mBar(), _("Atmosphere"));
-    }
-
-    if (view_mask.test(bit++) && ct >= 0) {
-      auto p = std::min(dst_max, dst + ct);
-      auto l = std::max(ssize_t(0), dst_size - ct);
-      ct += snprintf(p, l, "%02u: %6d mBar %s\r\n", bit,
-                     d.get_manifold_absolute_pressure_mBar(), _("Manifold"));
     }
 
     if (view_mask.test(bit++) && ct >= 0) {
@@ -144,6 +124,27 @@ static int frame_print(char* dst, size_t dst_siz, const X53b740Frame& d,
       auto l = std::max(ssize_t(0), dst_size - ct);
       ct += snprintf(p, l, "%02u: %6d °C %s\r\n", bit,
                      d.get_engine_coolant_temperature_Celsius(), _("Coolant"));
+    }
+
+    if (view_mask.test(bit++) && ct >= 0) {
+      auto p = std::min(dst_max, dst + ct);
+      auto l = std::max(ssize_t(0), dst_size - ct);
+      ct += snprintf(p, l, "%02u: %6d rpm %s\r\n", bit,
+                     d.get_engine_speed_RPM(), _("Crankshaft"));
+    }
+
+    if (view_mask.test(bit++) && ct >= 0) {
+      auto p = std::min(dst_max, dst + ct);
+      auto l = std::max(ssize_t(0), dst_size - ct);
+      ct += snprintf(p, l, "%02u: %6d mBar %s\r\n", bit,
+                     d.get_manifold_absolute_pressure_mBar(), _("Manifold"));
+    }
+
+    if (view_mask.test(bit++) && ct >= 0) {
+      auto p = std::min(dst_max, dst + ct);
+      auto l = std::max(ssize_t(0), dst_size - ct);
+      ct +=
+          snprintf(p, l, "%02u: %6d °D %s (15)\r\n", bit, d[15], _("Advance"));
     }
 
     if (view_mask.test(bit++) && ct >= 0) {
@@ -164,6 +165,13 @@ static int frame_print(char* dst, size_t dst_siz, const X53b740Frame& d,
       auto l = std::max(ssize_t(0), dst_size - ct);
       ct += snprintf(p, l, "%02u: %6d %s\r\n", bit, d.get_engine_knocking(),
                      _("Engine-Knock"));
+    }
+
+    if (view_mask.test(bit++) && ct >= 0) {
+      auto p = std::min(dst_max, dst + ct);
+      auto l = std::max(ssize_t(0), dst_size - ct);
+      ct += snprintf(p, l, "%02u: %6d mBar %s\r\n", bit,
+                     d.get_atmospheric_pressure_mBar(), _("Atmosphere"));
     }
 
     if (view_mask.test(bit++) && ct >= 0) {
@@ -225,12 +233,6 @@ static int frame_print(char* dst, size_t dst_siz, const X53b740Frame& d,
                      _("23-0x80"));
     }
     /////////////////////////////////////////////////////
-    if (view_mask.test(bit++) && ct >= 0) {
-      auto p = std::min(dst_max, dst + ct);
-      auto l = std::max(ssize_t(0), dst_size - ct);
-      ct +=
-          snprintf(p, l, "%02u: %6d °D %s (15)\r\n", bit, d[15], _("Advance"));
-    }
 #if 0
     if (view_mask.test(bit++) && ct >= 0) {
       auto p = std::min(dst_max, dst + ct);
