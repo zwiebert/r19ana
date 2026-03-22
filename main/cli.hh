@@ -46,7 +46,7 @@ CliCmd cmds[] = {
        // cmd.args is now "1,2,3,8,12"
        // we need to convert this into a bitset<32> with only bits 0,1,2,7,11
        // are set to true.
-       r19frame_mask_t mask = Mask;
+       PrintCarDiag::line_view_mask_t mask = Mask;
        for (char *str = cmd.args, *save_ptr = nullptr, *tok;
             (tok = strtok_r(str, ", \r\n", &save_ptr)); str = nullptr) {
          auto n = strtoul(tok, nullptr, 10);
@@ -66,7 +66,7 @@ CliCmd cmds[] = {
        // cmd.args is now "1,2,3,8,12"
        // we need to convert this into a bitset<32> with only bits 0,1,2,7,11
        // are set to true.
-       r19frame_mask_t mask = Mask;
+       PrintCarDiag::line_view_mask_t mask = Mask;
        for (char *str = cmd.args, *save_ptr = nullptr, *tok;
             (tok = strtok_r(str, ", \r\n", &save_ptr)); str = nullptr) {
          auto n = strtoul(tok, nullptr, 10);

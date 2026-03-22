@@ -1,10 +1,8 @@
 #pragma once
 #include <bitset>
-
+#include "PrintCarDiag.hh"
 #include "X53B_740_frame.hh"
 #include "i18n.hh"
-
-using r19frame_mask_t = std::bitset<64U>;
 
 
 namespace {
@@ -56,7 +54,7 @@ inline const char* btoa(bool v) { return v ? "X" : " "; }
 /// @return  bytes written or if greater than dst_siz, the required buffer size
 /// (man 3 snprintf)
 inline int r19_frame_print(char* dst, size_t dst_siz, const X53b740Frame& d,
-                           const r19frame_mask_t &view_mask) {
+                           const PrintCarDiag::line_view_mask_t &view_mask) {
   ssize_t dst_size = ssize_t(dst_siz);
   int ct = 0;
 
@@ -331,9 +329,9 @@ inline int r19_frame_print(char* dst, size_t dst_siz, const X53b740Frame& d,
 /// @param d    object
 /// @return     bitset where none differing members are represented by zero
 /// bits. order of bits is order of member definition.
-inline r19frame_mask_t r19_frame_members_cmp(const X53b740Frame& c,
+inline PrintCarDiag::line_view_mask_t r19_frame_members_cmp(const X53b740Frame& c,
                                              const X53b740Frame& d) {
-  r19frame_mask_t changed_mask = 0;
+  PrintCarDiag::line_view_mask_t changed_mask = 0;
   {
     unsigned bit = 0;
     changed_mask.set(bit,
@@ -369,14 +367,14 @@ inline r19frame_mask_t r19_frame_members_cmp(const X53b740Frame& c,
   return changed_mask;
 }
 
-int write_r19_frame(char* dst, size_t dst_siz, const X53b740Frame& d,
-                    const r19frame_mask_t &mask, bool force = false) {
+inline int write_r19_frame(char* dst, size_t dst_siz, const X53b740Frame& d,
+                    const PrintCarDiag::line_view_mask_t &mask, bool force = false) {
   ssize_t dst_size = ssize_t(dst_siz);
   static X53b740Frame c;  // copy of last written frame
   int ct = 0;
 
   const bool hide_unchanged = !force && true;
-  const r19frame_mask_t view_mask =
+  const PrintCarDiag::line_view_mask_t view_mask =
       hide_unchanged ? (r19_frame_members_cmp(c, d) & mask) : mask;
 
   if (view_mask.any()) {

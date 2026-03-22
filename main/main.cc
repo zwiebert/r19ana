@@ -3,9 +3,10 @@
 #include "main.hh"
 
 #include "FrameProcessor.hh"
-#include "X53B_740_frame_utils.hh"
 #include "UartTransport.hh"
+#include "select_model.hh"
 #include "cli.hh"
+
 #ifdef ESP_PLATFORM
 #include "SppTransport.hh"
 #else
@@ -38,8 +39,9 @@ int terminal_puts(const char* s, bool block) {
   return term_transport.write((const uint8_t*)s, strlen(s), block);
 }
 
-X53b740Frame R19_frame;
-r19frame_mask_t Mask = r19frame_mask_t().set();
+
+PrintCarDiag::line_view_mask_t Mask = PrintCarDiag::line_view_mask_t().set();
+
 
 bool cli_parse_and_execute_cmdline(char* src) {
   for (auto& cmd : cmds) {
@@ -52,8 +54,8 @@ bool cli_parse_and_execute_cmdline(char* src) {
   return false;
 }
 
-int r19_alloc_and_print(char*& dst, const X53b740Frame& R19_frame,
-                        const r19frame_mask_t &mask) {
+int r19_alloc_and_print(char*& dst, const PrintCarDiag &print_diag,
+                        const PrintCarDiag::line_view_mask_t& mask) {
   char dummy;
   const char prepend_txt[] = "\r\n";  // "\x1B[2J";
   const char append_txt[] = "";       // "\x1B[2J";
@@ -77,7 +79,8 @@ int r19_alloc_and_print(char*& dst, const X53b740Frame& R19_frame,
 void test_print_frame(const XR25Frame::frame_data_t& frame, int counter) {
   constexpr size_t buf_size = 1024;
   auto buf = new char[buf_size];
-  auto len = write_r19_frame(buf, buf_size, X53b740Frame(frame, counter), r19frame_mask_t().set(), true);
+  auto len = write_r19_frame(buf, buf_size, X53b740Frame(frame, counter),
+                             PrintCarDiag::line_view_mask_t().set(), true);
   if (len < buf_size) std::cout.write(buf, len);
 }
 
@@ -86,11 +89,12 @@ extern "C" int app_main() {
   // processor calls back when it has completed a frame from the chunks of bytes
   // it got from x25_transport. processor has a dedicated thread for doing the
   // callback. its ok to block it.
-  FrameProcessor processor([](const XR25Frame::frame_data_t& frame, int frame_count) {
+  FrameProcessor processor([](const XR25Frame::frame_data_t& frame,
+                              int frame_count) {
     R19_frame = X53b740Frame(frame, frame_count);
     if (!spp_is_connected()) return;
     char* dst = 0;
-    if (auto dst_len = r19_alloc_and_print(dst, R19_frame, Mask); dst_len > 0) {
+    if (auto dst_len = r19_alloc_and_print(dst, *print_car_diag, Mask); dst_len > 0) {
       if (term_transport.write((const uint8_t*)dst, dst_len, true)) {
         free(dst);
         return;
@@ -146,7 +150,9 @@ void mock_uart_fun(bool& keep_running) {
 
 int main() {
   FrameProcessor processor(
-      [](const XR25Frame::frame_data_t& frame, int frame_count) { test_print_frame(frame, frame_count); });
+      [](const XR25Frame::frame_data_t& frame, int frame_count) {
+        test_print_frame(frame, frame_count);
+      });
 
   xr25_transport.start([&processor](auto data, auto data_len) {
     processor.feedBytes(data, data_len);
