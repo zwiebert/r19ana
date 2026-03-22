@@ -8,7 +8,7 @@
 #include <vector>
 #include <condition_variable>
 
-#include "R19Frame.hh"
+#include "X53B_740_frame.hh"
 #include "XR25Frame.hh"
 
 class FrameProcessor {

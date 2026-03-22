@@ -69,7 +69,7 @@ public class MainActivity extends AppCompatActivity {
 
         try {
             textViewHex.setText(xr25.toString());
-            display.setText(new R19Frame(xr25).getDataAsText());
+            display.setText(new X53b740Frame(xr25).getDataAsText());
 
         } catch (Exception e) {
             textViewHex.setText(e.toString());
@@ -189,7 +189,7 @@ public class MainActivity extends AppCompatActivity {
                     byte[] data = (byte[]) msg.obj;
                     if (mActivity.get().xr25.append(data)) {
 
-                        mActivity.get().display.setText(new R19Frame(ma.xr25).getDataAsText());
+                        mActivity.get().display.setText(new X53b740Frame(ma.xr25).getDataAsText());
                     }
 
                     mActivity.get().textViewHex.setText(mActivity.get().xr25.toString());
@@ -269,7 +269,7 @@ public class MainActivity extends AppCompatActivity {
                 case 0:
                     try {
                         if (ma.xr25.append((byte[]) msg.obj)) {
-                            ma.display.setText(new R19Frame(ma.xr25).getDataAsText());
+                            ma.display.setText(new X53b740Frame(ma.xr25).getDataAsText());
                             ma.textViewHex.setText(ma.xr25.toString());
                         }
                     } catch (Exception e) {

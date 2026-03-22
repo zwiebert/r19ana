@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.16)
-set(srcs "main.cc" "R19Frame.cc" "XR25Frame.cc" "FrameProcessor.cc" "i18n.cc")
+set(srcs "main.cc" "X53B_740_frame.cc" "XR25Frame.cc" "FrameProcessor.cc" "i18n.cc")
 set(srcs_esp32 "../bt_classic/esp32/spp.cc" "../bt_classic/esp32/spp_task.cc" "../bt_classic/esp32/spp2.cc" esp32/UartTransport.cc)
 set(srcs_host "../bt_classic/host/mock.cc")
 

@@ -6,7 +6,7 @@
 #include "XR25Frame.hh"
 
 /// @brief
-class R19Frame {
+class X53b740Frame {
   static constexpr bool OLD_FORMULAS = false;
 
  public:
@@ -76,13 +76,13 @@ class R19Frame {
   int FrameNumber = 0;
 
  public:
-  R19Frame(const XR25Frame::frame_data_t& xr25_frame, int frame_count)
+  X53b740Frame(const XR25Frame::frame_data_t& xr25_frame, int frame_count)
       : data(xr25_frame),
         FrameNumber(frame_count) {};
-  R19Frame() = default;
+  X53b740Frame() = default;
 
-  bool operator==(const R19Frame&) const = default;
-  bool operator!=(const R19Frame&) const = default;
+  bool operator==(const X53b740Frame&) const = default;
+  bool operator!=(const X53b740Frame&) const = default;
   uint8_t operator[](int idx) const { return data[idx - 2]; }
 
   std::string getDataAsText() const;

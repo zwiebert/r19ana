@@ -4,13 +4,13 @@ package bertw.xr25x53;
  * Created by bertw on 31.08.2017.
  */
 
-public class R19Frame {
+public class X53b740Frame {
     public int FrameNumber, EngineSpeed_RPM, MAP_mBar, IAT_Celsius, ECT_Celsius, O2_Sensor_mV, AP_mBar;
     public float BatteryVoltage_V, ID_msec;
     public boolean isThrottleOpen, isThrottleClosed, isAGR_AKF;
     public int IdleSpeedCorr, EngineKnocking;
 
-    public R19Frame(XR25Frame data) {
+    public X53b740Frame(XR25Frame data) {
         FrameNumber = data.getFrameCounter();
         {
             int idx_add = (data.getByteByIndex(6) == 0xff ? 0 : -2) + 1 ;  // index

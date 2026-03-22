@@ -1,7 +1,7 @@
 #pragma once
 #include <bitset>
 
-#include "R19Frame.hh"
+#include "X53B_740_frame.hh"
 #include "i18n.hh"
 
 using r19frame_mask_t = std::bitset<64U>;
@@ -47,7 +47,7 @@ inline int snprinthex(char* dst, size_t dst_size,
 
 inline const char* btoa(bool v) { return v ? "X" : " "; }
 
-/// @brief Conditional print members of R19Frame object
+/// @brief Conditional print members of X53b740Frame object
 /// @param dst       write buffer
 /// @param dst_siz   write buffer size
 /// @param d         object
@@ -55,7 +55,7 @@ inline const char* btoa(bool v) { return v ? "X" : " "; }
 /// printed.
 /// @return  bytes written or if greater than dst_siz, the required buffer size
 /// (man 3 snprintf)
-inline int r19_frame_print(char* dst, size_t dst_siz, const R19Frame& d,
+inline int r19_frame_print(char* dst, size_t dst_siz, const X53b740Frame& d,
                            const r19frame_mask_t &view_mask) {
   ssize_t dst_size = ssize_t(dst_siz);
   int ct = 0;
@@ -326,13 +326,13 @@ inline int r19_frame_print(char* dst, size_t dst_siz, const R19Frame& d,
   return ct;
 }
 
-/// @brief      compare all members of 2 R19Frame objects
+/// @brief      compare all members of 2 X53b740Frame objects
 /// @param c    object
 /// @param d    object
 /// @return     bitset where none differing members are represented by zero
 /// bits. order of bits is order of member definition.
-inline r19frame_mask_t r19_frame_members_cmp(const R19Frame& c,
-                                             const R19Frame& d) {
+inline r19frame_mask_t r19_frame_members_cmp(const X53b740Frame& c,
+                                             const X53b740Frame& d) {
   r19frame_mask_t changed_mask = 0;
   {
     unsigned bit = 0;
@@ -369,10 +369,10 @@ inline r19frame_mask_t r19_frame_members_cmp(const R19Frame& c,
   return changed_mask;
 }
 
-int write_r19_frame(char* dst, size_t dst_siz, const R19Frame& d,
+int write_r19_frame(char* dst, size_t dst_siz, const X53b740Frame& d,
                     const r19frame_mask_t &mask, bool force = false) {
   ssize_t dst_size = ssize_t(dst_siz);
-  static R19Frame c;  // copy of last written frame
+  static X53b740Frame c;  // copy of last written frame
   int ct = 0;
 
   const bool hide_unchanged = !force && true;
