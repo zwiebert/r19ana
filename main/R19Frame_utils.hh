@@ -176,16 +176,24 @@ inline int r19_frame_print(char* dst, size_t dst_siz, const R19Frame& d,
       auto p = std::min(dst_max, dst + ct);
       auto l = std::max(ssize_t(0), dst_size - ct);
       ct +=
-          snprintf(p, l, "%u:    [%s] %s (4-0x10)\r\n", bit,
+          snprintf(p, l, "%u:    [%s] %s\r\n", bit,
                    btoa(d.is_throttle_fully_open()), _("Throttle Full-Power"));
     }
 
     if (view_mask.test(bit++) && ct >= 0) {
       auto p = std::min(dst_max, dst + ct);
       auto l = std::max(ssize_t(0), dst_size - ct);
-      ct += snprintf(p, l, "%u:    [%s] %s (4-0x08)\r\n", bit,
+      ct += snprintf(p, l, "%u:    [%s] %s\r\n", bit,
                      btoa(d.is_throttle_fully_closed()), _("Throttle Idle"));
     }
+
+    if (view_mask.test(bit++) && ct >= 0) {
+      auto p = std::min(dst_max, dst + ct);
+      auto l = std::max(ssize_t(0), dst_size - ct);
+      ct += snprintf(p, l, "%u:    [%s] %s\r\n", bit, btoa(d.is_fuel_pump_on()),
+                     _("Fuel-Pump"));
+    }
+
 
 #if 0  // no idea which index, if any
     if (view_mask.test(bit++) && ct >= 0) {
@@ -203,37 +211,24 @@ inline int r19_frame_print(char* dst, size_t dst_siz, const R19Frame& d,
     }
 #endif
     /////////////////////////// experimental
-    if (view_mask.test(bit++) && ct >= 0) {
-      auto p = std::min(dst_max, dst + ct);
-      auto l = std::max(ssize_t(0), dst_size - ct);
-      ct += snprintf(p, l, "%u:    [%s] %s\r\n", bit, btoa(d[4] & 0x08),
-                     _("4-0x01"));
-    }
     /////////////// try and error confirmed /////////////
     // fuel pump (can be heard when ignition turns on)
     if (view_mask.test(bit++) && ct >= 0) {
       auto p = std::min(dst_max, dst + ct);
       auto l = std::max(ssize_t(0), dst_size - ct);
-      ct += snprintf(p, l, "%u:    [%s] %s (23-0x10)\r\n", bit, btoa(d[23] & 0x10),
-                     _("Fuel-Pump"));
-    }
-
-    if (view_mask.test(bit++) && ct >= 0) {
-      auto p = std::min(dst_max, dst + ct);
-      auto l = std::max(ssize_t(0), dst_size - ct);
-      ct += snprintf(p, l, "%u:    [%s] %s\r\n", bit, btoa(d[4] & 0x08),
+      ct += snprintf(p, l, "%u:    [%s] %s\r\n", bit, btoa(d[23] & 0x08),
                      _("23-0x08"));
     }
     if (view_mask.test(bit++) && ct >= 0) {
       auto p = std::min(dst_max, dst + ct);
       auto l = std::max(ssize_t(0), dst_size - ct);
-      ct += snprintf(p, l, "%u:    [%s] %s\r\n", bit, btoa(d[4] & 0x08),
+      ct += snprintf(p, l, "%u:    [%s] %s\r\n", bit, btoa(d[23] & 0x20),
                      _("23-0x20"));
     }
     if (view_mask.test(bit++) && ct >= 0) {
       auto p = std::min(dst_max, dst + ct);
       auto l = std::max(ssize_t(0), dst_size - ct);
-      ct += snprintf(p, l, "%u:    [%s] %s\r\n", bit, btoa(d[4] & 0x08),
+      ct += snprintf(p, l, "%u:    [%s] %s\r\n", bit, btoa(d[23] & 0x80),
                      _("23-0x80"));
     }
     /////////////////////////////////////////////////////
@@ -242,7 +237,7 @@ inline int r19_frame_print(char* dst, size_t dst_siz, const R19Frame& d,
       auto l = std::max(ssize_t(0), dst_size - ct);
       ct += snprintf(p, l, "%02u: %6d °D %s (15)\r\n", bit, d[15], _("Advance"));
     }
-
+#if 0
     if (view_mask.test(bit++) && ct >= 0) {
       auto p = std::min(dst_max, dst + ct);
       auto l = std::max(ssize_t(0), dst_size - ct);
@@ -256,6 +251,25 @@ inline int r19_frame_print(char* dst, size_t dst_siz, const R19Frame& d,
       ct += snprintf(p, l, "%02u: %6d %s\r\n", bit, d.get_idle_period(),
                      _("Idle-Period"));
     }
+    if (view_mask.test(bit++) && ct >= 0) {
+      auto p = std::min(dst_max, dst + ct);
+      auto l = std::max(ssize_t(0), dst_size - ct);
+      ct += snprintf(p, l, "%02u:  %4.2f %s (22)\r\n", bit, d[22] / 2.25,
+                     _("Throttle"));
+    }
+    if (view_mask.test(bit++) && ct >= 0) {
+      auto p = std::min(dst_max, dst + ct);
+      auto l = std::max(ssize_t(0), dst_size - ct);
+      ct += snprintf(p, l, "%02u: %6d mBar %s\r\n", bit, (4 * (~d[29] & 0xff)),
+                     _("Atmosphere"));
+    }
+    if (view_mask.test(bit++) && ct >= 0) {
+      auto p = std::min(dst_max, dst + ct);
+      auto l = std::max(ssize_t(0), dst_size - ct);
+      ct += snprintf(p, l, "%02u: %02x%02x%02x %s (27,19,18)\r\n", bit, d[27],
+                     d[19], d[18], _("Fault-Flags"));
+    }
+ #endif
 
     if (view_mask.test(bit++) && ct >= 0) {
       auto p = std::min(dst_max, dst + ct);
@@ -267,26 +281,8 @@ inline int r19_frame_print(char* dst, size_t dst_siz, const R19Frame& d,
     if (view_mask.test(bit++) && ct >= 0) {
       auto p = std::min(dst_max, dst + ct);
       auto l = std::max(ssize_t(0), dst_size - ct);
-      ct += snprintf(p, l, "%02u:  %4.2f %s (22)\r\n", bit, d[22] / 2.25,
-                     _("Throttle"));
-    }
-    if (view_mask.test(bit++) && ct >= 0) {
-      auto p = std::min(dst_max, dst + ct);
-      auto l = std::max(ssize_t(0), dst_size - ct);
-      ct += snprintf(p, l, "%02u: %02x%02x%02x %s (27,19,18)\r\n", bit, d[27],
-                     d[19], d[18], _("Fault-Flags"));
-    }
-    if (view_mask.test(bit++) && ct >= 0) {
-      auto p = std::min(dst_max, dst + ct);
-      auto l = std::max(ssize_t(0), dst_size - ct);
       ct += snprintf(p, l, "%02u:     %02x %s (26)\r\n", bit, d[26],
                      _("Fault-Fugitive"));
-    }
-    if (view_mask.test(bit++) && ct >= 0) {
-      auto p = std::min(dst_max, dst + ct);
-      auto l = std::max(ssize_t(0), dst_size - ct);
-      ct += snprintf(p, l, "%02u: %6d mBar %s\r\n", bit, (4 * (~d[29] & 0xff)),
-                     _("Atmosphere"));
     }
     if (view_mask.test(bit++) && ct >= 0) {
       auto p = std::min(dst_max, dst + ct);

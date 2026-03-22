@@ -63,8 +63,8 @@ class R19Frame {
   bool is_evap_canister_open_to_intake() const {
     return is_vacuum_provided_to_egr_valve();
   }
-
   bool is_oxygen_sensor_loop_closed() const { return !!(X(21) & 0x08); }
+  bool is_fuel_pump_on() const { return !!(X(23) & 0x10); }
 
 
   int get_id() const {return X(31);}

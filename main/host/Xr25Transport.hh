@@ -10,12 +10,12 @@ class Xr25Transport : public Transport {
   static void read_data_thread(ReadCallback cb, bool keep_running) {
     if (std::ifstream is("data/r19data.bin", std::ifstream::binary); is) {
       char buf[16];
-      do {
+      for(;is && keep_running; std::this_thread::sleep_for(std::chrono::milliseconds(1))) {
         is.read(buf, sizeof buf);
         if (is) {
           if (cb) cb((uint8_t*)buf, sizeof buf);
         }
-      } while (is && keep_running);
+      }
     }
   }
   void start(ReadCallback cb) override {
