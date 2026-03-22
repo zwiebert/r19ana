@@ -4,7 +4,7 @@
 
 X53b740Frame R19_frame;
 PrintDiagX53b740 print_diag_X53b740 = {R19_frame};
-PrintCarDiag const* print_car_diag = &print_diag_X53b740;
+PrintCarDiag * print_car_diag = &print_diag_X53b740;
 
 const char* select_model(const char* id) {
   if (strcasecmp(id, "x53b-740") == 0) {
@@ -12,8 +12,4 @@ const char* select_model(const char* id) {
     return "X53B-740 (R19, 54kW, TBI, Manual)";
   }
   return nullptr;
-}
-
-void push_frame(const XR25Frame::frame_data_t& xr25_frame, int frame_count) {
-  R19_frame = {xr25_frame, frame_count};
 }

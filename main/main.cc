@@ -77,7 +77,7 @@ int r19_alloc_and_print(char*& dst, const PrintCarDiag& print_diag,
 void test_print_frame(const XR25Frame::frame_data_t& frame, int counter) {
   constexpr size_t buf_size = 2046;
   auto buf = new char[buf_size];
-  push_frame(frame, counter);
+  print_car_diag->push_frame(frame, counter);
   auto len = print_car_diag->snprint_diag(
       buf, buf_size, PrintCarDiag::line_view_mask_t().set());
   if (len < buf_size) std::cout.write(buf, len);
@@ -90,7 +90,7 @@ extern "C" int app_main() {
   // callback. its ok to block it.
   FrameProcessor processor(
       [](const XR25Frame::frame_data_t& frame, int frame_count) {
-        push_frame(frame, frame_count);
+        print_car_diag->push_frame(frame, frame_count);
         if (!spp_is_connected()) return;
         char* dst = 0;
         if (auto dst_len = r19_alloc_and_print(dst, *print_car_diag, Mask);
