@@ -1,12 +1,11 @@
-#pragma once
+#include "PrintDiagX53b740.hh"
+
 #include <bitset>
-#include "PrintCarDiag.hh"
+
 #include "X53B_740_frame.hh"
 #include "i18n.hh"
 
-
-namespace {
-inline void tohex(const uint8_t* in, size_t insz, char* out, size_t outsz) {
+static void tohex(const uint8_t* in, size_t insz, char* out, size_t outsz) {
   const unsigned char* pin = in;
   const char* hex = "0123456789ABCDEF";
   char* pout = out;
@@ -28,9 +27,7 @@ void frame_hex_fill(const XR25Frame::frame_data_t& frame) {
   tohex(&frame[0], frame.size(), frame_hex, sizeof frame_hex);
 }
 
-};  // namespace
-
-inline int snprinthex(char* dst, size_t dst_size,
+static int snprinthex(char* dst, size_t dst_size,
                       const XR25Frame::frame_data_t& frame) {
   const int req_len = frame.size() * 2;
   if (dst_size <= req_len) {
@@ -53,8 +50,8 @@ inline const char* btoa(bool v) { return v ? "X" : " "; }
 /// printed.
 /// @return  bytes written or if greater than dst_siz, the required buffer size
 /// (man 3 snprintf)
-inline int r19_frame_print(char* dst, size_t dst_siz, const X53b740Frame& d,
-                           const PrintCarDiag::line_view_mask_t &view_mask) {
+static int frame_print(char* dst, size_t dst_siz, const X53b740Frame& d,
+                       const PrintCarDiag::line_view_mask_t& view_mask) {
   ssize_t dst_size = ssize_t(dst_siz);
   int ct = 0;
 
@@ -104,8 +101,7 @@ inline int r19_frame_print(char* dst, size_t dst_siz, const X53b740Frame& d,
     if (view_mask.test(bit++) && ct >= 0) {
       auto p = std::min(dst_max, dst + ct);
       auto l = std::max(ssize_t(0), dst_size - ct);
-      ct += snprintf(p, l, "%02u: %6d %s\r\n", bit,
-                     d.get_id(), _("ID"));
+      ct += snprintf(p, l, "%02u: %6d %s\r\n", bit, d.get_id(), _("ID"));
     }
 
     if (view_mask.test(bit++) && ct >= 0) {
@@ -192,7 +188,6 @@ inline int r19_frame_print(char* dst, size_t dst_siz, const X53b740Frame& d,
                      _("Fuel-Pump"));
     }
 
-
 #if 0  // no idea which index, if any
     if (view_mask.test(bit++) && ct >= 0) {
       auto p = std::min(dst_max, dst + ct);
@@ -233,7 +228,8 @@ inline int r19_frame_print(char* dst, size_t dst_siz, const X53b740Frame& d,
     if (view_mask.test(bit++) && ct >= 0) {
       auto p = std::min(dst_max, dst + ct);
       auto l = std::max(ssize_t(0), dst_size - ct);
-      ct += snprintf(p, l, "%02u: %6d °D %s (15)\r\n", bit, d[15], _("Advance"));
+      ct +=
+          snprintf(p, l, "%02u: %6d °D %s (15)\r\n", bit, d[15], _("Advance"));
     }
 #if 0
     if (view_mask.test(bit++) && ct >= 0) {
@@ -267,13 +263,13 @@ inline int r19_frame_print(char* dst, size_t dst_siz, const X53b740Frame& d,
       ct += snprintf(p, l, "%02u: %02x%02x%02x %s (27,19,18)\r\n", bit, d[27],
                      d[19], d[18], _("Fault-Flags"));
     }
- #endif
+#endif
 
     if (view_mask.test(bit++) && ct >= 0) {
       auto p = std::min(dst_max, dst + ct);
       auto l = std::max(ssize_t(0), dst_size - ct);
-      ct +=
-          snprintf(p, l, "%02u: %6d °D %s (28)\r\n", bit, d[28], _("Knock-Delay"));
+      ct += snprintf(p, l, "%02u: %6d °D %s (28)\r\n", bit, d[28],
+                     _("Knock-Delay"));
     }
 
     if (view_mask.test(bit++) && ct >= 0) {
@@ -285,14 +281,14 @@ inline int r19_frame_print(char* dst, size_t dst_siz, const X53b740Frame& d,
     if (view_mask.test(bit++) && ct >= 0) {
       auto p = std::min(dst_max, dst + ct);
       auto l = std::max(ssize_t(0), dst_size - ct);
-      ct +=
-          snprintf(p, l, "%02u: %6d ??? %s\r\n", bit, int(d[27]) - 0x82, _("(27) - 0x82"));
+      ct += snprintf(p, l, "%02u: %6d ??? %s\r\n", bit, int(d[27]) - 0x82,
+                     _("(27) - 0x82"));
     }
     if (view_mask.test(bit++) && ct >= 0) {
       auto p = std::min(dst_max, dst + ct);
       auto l = std::max(ssize_t(0), dst_size - ct);
-      ct +=
-          snprintf(p, l, "%02u: %6d ??? %s\r\n", bit, int(d[27] | (d[28] << 8)) - 0x8182, _("(28,27) - 0x8182"));
+      ct += snprintf(p, l, "%02u: %6d ??? %s\r\n", bit,
+                     int(d[27] | (d[28] << 8)) - 0x8182, _("(28,27) - 0x8182"));
     }
     //  unknown: 17, 23, 24, 25, 29, 30, 31
     if (view_mask.test(bit++) && ct >= 0) {
@@ -307,7 +303,6 @@ inline int r19_frame_print(char* dst, size_t dst_siz, const X53b740Frame& d,
       ct += snprintf(p, l, "%02u: ???    28=%02x,29=%02x,30=%02x,4=%02x\r\n",
                      bit, d[28], d[29], d[30], d[4]);
     }
-
 
     /////////////////////// end experimental ///////////////////////////
 
@@ -324,68 +319,7 @@ inline int r19_frame_print(char* dst, size_t dst_siz, const X53b740Frame& d,
   return ct;
 }
 
-/// @brief      compare all members of 2 X53b740Frame objects
-/// @param c    object
-/// @param d    object
-/// @return     bitset where none differing members are represented by zero
-/// bits. order of bits is order of member definition.
-inline PrintCarDiag::line_view_mask_t r19_frame_members_cmp(const X53b740Frame& c,
-                                             const X53b740Frame& d) {
-  PrintCarDiag::line_view_mask_t changed_mask = 0;
-  {
-    unsigned bit = 0;
-    changed_mask.set(bit,
-                     (c.get_engine_speed_RPM() != d.get_engine_speed_RPM()));
-    ++bit, changed_mask.set(bit, (c.get_manifold_absolute_pressure_mBar() !=
-                                  d.get_manifold_absolute_pressure_mBar()));
-    ++bit, changed_mask.set(bit, (c.get_intake_air_temperature_Celsius() !=
-                                  d.get_intake_air_temperature_Celsius()));
-    ++bit, changed_mask.set(bit, (c.get_engine_coolant_temperature_Celsius() !=
-                                  d.get_engine_coolant_temperature_Celsius()));
-    ++bit, changed_mask.set(bit, (c.get_oxygen_sensor_voltage_mV() !=
-                                  d.get_oxygen_sensor_voltage_mV()));
-    ++bit, changed_mask.set(bit, (c.get_atmospheric_pressure_mBar() !=
-                                  d.get_atmospheric_pressure_mBar()));
-    ++bit, changed_mask.set(
-               bit, (c.get_battery_voltage_mV() != d.get_battery_voltage_mV()));
-    ++bit, changed_mask.set(bit, (c.get_injection_duration_us() !=
-                                  d.get_injection_duration_us()));
-    ++bit, changed_mask.set(
-               bit, (c.is_throttle_fully_open() != d.is_throttle_fully_open()));
-    ++bit, changed_mask.set(bit, (c.is_throttle_fully_closed() !=
-                                  d.is_throttle_fully_closed()));
-    ++bit, changed_mask.set(bit, (c.is_vacuum_provided_to_egr_valve() !=
-                                  d.is_vacuum_provided_to_egr_valve()));
-    ++bit, changed_mask.set(bit, (c.is_oxygen_sensor_loop_closed() !=
-                                  d.is_oxygen_sensor_loop_closed()));
-    ++bit, changed_mask.set(
-               bit, (c.get_idle_regulation() != d.get_idle_regulation()));
-    ++bit, changed_mask.set(bit, (c.get_idle_period() != d.get_idle_period()));
-    ++bit, changed_mask.set(
-               bit, (c.get_engine_knocking() != d.get_engine_knocking()));
-  }
-  return changed_mask;
-}
-
-inline int write_r19_frame(char* dst, size_t dst_siz, const X53b740Frame& d,
-                    const PrintCarDiag::line_view_mask_t &mask, bool force = false) {
-  ssize_t dst_size = ssize_t(dst_siz);
-  static X53b740Frame c;  // copy of last written frame
-  int ct = 0;
-
-  const bool hide_unchanged = !force && true;
-  const PrintCarDiag::line_view_mask_t view_mask =
-      hide_unchanged ? (r19_frame_members_cmp(c, d) & mask) : mask;
-
-  if (view_mask.any()) {
-    ct = r19_frame_print(dst, dst_size, d, view_mask);
-
-    if (ct >= dst_size || ct < 0)
-      return ct;  // ERROR: data was not fully written (e.g. buffer too small)
-
-    // all done. update our local state variables
-    c = d;
-  }
-
-  return ct;
+int PrintDiagX53b740::snprint_diag(char* dst, size_t dst_size,
+                                   line_view_mask_t show_lines) const {
+  return frame_print(dst, dst_size, m_frame, show_lines);
 }

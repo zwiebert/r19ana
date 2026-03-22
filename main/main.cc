@@ -74,14 +74,6 @@ int r19_alloc_and_print(char*& dst, const PrintCarDiag& print_diag,
   }
   return -1;
 }
-void test_print_frame(const XR25Frame::frame_data_t& frame, int counter) {
-  constexpr size_t buf_size = 2046;
-  auto buf = new char[buf_size];
-  print_car_diag->push_frame(frame, counter);
-  auto len = print_car_diag->snprint_diag(
-      buf, buf_size, PrintCarDiag::line_view_mask_t().set());
-  if (len < buf_size) std::cout.write(buf, len);
-}
 
 #ifdef ESP_PLATFORM
 extern "C" int app_main() {
@@ -151,14 +143,23 @@ void mock_uart_fun(bool& keep_running) {
 int main() {
   FrameProcessor processor(
       [](const XR25Frame::frame_data_t& frame, int frame_count) {
-        test_print_frame(frame, frame_count);
+        print_car_diag->push_frame(frame, frame_count);
+        char* dst = 0;
+        if (auto dst_len = r19_alloc_and_print(dst, *print_car_diag, Mask);
+            dst_len > 0) {
+          if (term_transport.write((const uint8_t*)dst, dst_len, true)) {
+            free(dst);
+            return;
+          }
+          free(dst);
+        }
       });
 
   xr25_transport.start([&processor](auto data, auto data_len) {
     processor.feedBytes(data, data_len);
   });
   term_transport.start();
-#if 0
+#if 1
   char* dst = 0;
   for (;; std::this_thread::sleep_for(std::chrono::milliseconds(10))) {
     std::cerr << "for loop\n";

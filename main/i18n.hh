@@ -95,11 +95,11 @@ class I18n {
     };
     m_txt[i18n_txt::Fuel_Pump] = {
         "Fuel-Pump",
-        "Benzinpumpe",
+        "Kraftstoff-Pumpe",
     };
     m_txt[i18n_txt::Advance] = {
         "Advance",
-        "Zündverstellung",
+        "Zündwinkel",
     };
     m_txt[i18n_txt::Idle_Regulation] = {
         "Idle-Regulation",

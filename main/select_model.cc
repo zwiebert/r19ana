@@ -1,10 +1,11 @@
 #include "select_model.hh"
 
-#include "models/x53b_740/PrintDiagX53b740.hh"
+#include <string.h>
 
-X53b740Frame R19_frame;
-PrintDiagX53b740 print_diag_X53b740 = {R19_frame};
-PrintCarDiag * print_car_diag = &print_diag_X53b740;
+#include "models/x53b_740/PrintDiagX53b740.hh"
+static PrintDiagX53b740 print_diag_X53b740;
+
+PrintCarDiag* print_car_diag = &print_diag_X53b740;  // default
 
 const char* select_model(const char* id) {
   if (strcasecmp(id, "x53b-740") == 0) {
