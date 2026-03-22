@@ -6,8 +6,6 @@
 #include <iostream>
 #include <thread>
 
-#include "X53B_740_frame.hh"
-#include "X53B_740_frame_utils.hh"
 #include "Transport.hh"
 #include "main.hh"
 

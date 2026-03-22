@@ -4,8 +4,8 @@
 
 #include "FrameProcessor.hh"
 #include "UartTransport.hh"
-#include "select_model.hh"
 #include "cli.hh"
+#include "select_model.hh"
 
 #ifdef ESP_PLATFORM
 #include "SppTransport.hh"
@@ -39,9 +39,7 @@ int terminal_puts(const char* s, bool block) {
   return term_transport.write((const uint8_t*)s, strlen(s), block);
 }
 
-
 PrintCarDiag::line_view_mask_t Mask = PrintCarDiag::line_view_mask_t().set();
-
 
 bool cli_parse_and_execute_cmdline(char* src) {
   for (auto& cmd : cmds) {
@@ -54,19 +52,19 @@ bool cli_parse_and_execute_cmdline(char* src) {
   return false;
 }
 
-int r19_alloc_and_print(char*& dst, const PrintCarDiag &print_diag,
+int r19_alloc_and_print(char*& dst, const PrintCarDiag& print_diag,
                         const PrintCarDiag::line_view_mask_t& mask) {
   char dummy;
   const char prepend_txt[] = "\r\n";  // "\x1B[2J";
   const char append_txt[] = "";       // "\x1B[2J";
 
-  if (auto buf_len = r19_frame_print(&dummy, 0, R19_frame, mask); buf_len > 0) {
+  if (auto buf_len = print_diag.snprint_diag(&dummy, 0, mask); buf_len > 0) {
     if (auto ptr =
             (char*)malloc(buf_len + 1 + sizeof prepend_txt + sizeof append_txt);
         ptr) {
       memcpy(ptr, prepend_txt, sizeof prepend_txt);
-      if (auto len = r19_frame_print(ptr + sizeof prepend_txt, buf_len + 1,
-                                     R19_frame, mask)) {
+      if (auto len = print_diag.snprint_diag(ptr + sizeof prepend_txt,
+                                             buf_len + 1, mask)) {
         memcpy(ptr + sizeof prepend_txt + len, append_txt, sizeof append_txt);
         dst = ptr;
         return len + sizeof prepend_txt + sizeof append_txt;
@@ -77,10 +75,11 @@ int r19_alloc_and_print(char*& dst, const PrintCarDiag &print_diag,
   return -1;
 }
 void test_print_frame(const XR25Frame::frame_data_t& frame, int counter) {
-  constexpr size_t buf_size = 1024;
+  constexpr size_t buf_size = 2046;
   auto buf = new char[buf_size];
-  auto len = write_r19_frame(buf, buf_size, X53b740Frame(frame, counter),
-                             PrintCarDiag::line_view_mask_t().set(), true);
+  push_frame(frame, counter);
+  auto len = print_car_diag->snprint_diag(
+      buf, buf_size, PrintCarDiag::line_view_mask_t().set());
   if (len < buf_size) std::cout.write(buf, len);
 }
 
@@ -89,19 +88,20 @@ extern "C" int app_main() {
   // processor calls back when it has completed a frame from the chunks of bytes
   // it got from x25_transport. processor has a dedicated thread for doing the
   // callback. its ok to block it.
-  FrameProcessor processor([](const XR25Frame::frame_data_t& frame,
-                              int frame_count) {
-    R19_frame = X53b740Frame(frame, frame_count);
-    if (!spp_is_connected()) return;
-    char* dst = 0;
-    if (auto dst_len = r19_alloc_and_print(dst, *print_car_diag, Mask); dst_len > 0) {
-      if (term_transport.write((const uint8_t*)dst, dst_len, true)) {
-        free(dst);
-        return;
-      }
-      free(dst);
-    }
-  });
+  FrameProcessor processor(
+      [](const XR25Frame::frame_data_t& frame, int frame_count) {
+        push_frame(frame, frame_count);
+        if (!spp_is_connected()) return;
+        char* dst = 0;
+        if (auto dst_len = r19_alloc_and_print(dst, *print_car_diag, Mask);
+            dst_len > 0) {
+          if (term_transport.write((const uint8_t*)dst, dst_len, true)) {
+            free(dst);
+            return;
+          }
+          free(dst);
+        }
+      });
 
   // xr25_transport calls back when it has a received a chunk of bytes from
   // the car diagnose port
