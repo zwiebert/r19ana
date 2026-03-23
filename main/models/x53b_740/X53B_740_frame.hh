@@ -10,7 +10,7 @@ class X53b740Frame {
   static constexpr bool OLD_FORMULAS = false;
 
  public:
-  static constexpr int FRAME_SIZE = 30;
+  static constexpr int FRAME_SIZE = 29;
   using frame_data_t = std::array<uint8_t, FRAME_SIZE>;
 
  public:
@@ -79,10 +79,10 @@ class X53b740Frame {
   int FrameNumber = 0;
 
  public:
-  X53b740Frame(const XR25Frame::frame_data_t& xr25_frame, int frame_count)
-      : FrameNumber(frame_count) {
-    for (int i = 0; i < data.size(); ++i) {
-      data[i] = xr25_frame[i];
+  X53b740Frame(const XR25Frame& frame)
+      : FrameNumber(frame.get_frame_counter()) {
+    for (int i = 0; i < frame.get_frame_length(); ++i) {
+      data[i] = frame[i];
     }
   };
   X53b740Frame() = default;

@@ -5,39 +5,31 @@
 #include "X53B_740_frame.hh"
 #include "i18n.hh"
 
-static void tohex(const uint8_t* in, size_t insz, char* out, size_t outsz) {
+static int tohex(const uint8_t* in, size_t insz, char* out, size_t outsz, const char *sep = "") {
+  const auto sep_len = strlen(sep);
   const unsigned char* pin = in;
   const char* hex = "0123456789ABCDEF";
+  const int req_size = insz * (2 + sep_len) - sep_len; 
+
   char* pout = out;
-  for (; pin < in + insz; pout += 3, pin++) {
+  for (; pin < in + insz; pout += 2 + sep_len, pin++) {
     pout[0] = hex[(*pin >> 4) & 0xF];
     pout[1] = hex[*pin & 0xF];
-    pout[2] = ' ';
-    if (pout + 3 - out > outsz) {
+    memcpy (&pout[2], sep, sep_len);
+    if (pout + 2 + sep_len - out > outsz) {
       /* Better to truncate output string than overflow buffer */
       /* it would be still better to either return a status */
       /* or ensure the target buffer is large enough and it never happen */
       break;
     }
   }
-  pout[-1] = '\0';
+  pout[-sep_len] = '\0';
+  return req_size;
 }
+
 static char frame_hex[X53b740Frame::FRAME_SIZE * 3];
-static void frame_hex_fill(const X53b740Frame::frame_data_t& frame) {
-  tohex(&frame[0], frame.size(), frame_hex, sizeof frame_hex);
-}
-
-static int snprinthex(char* dst, size_t dst_size,
-                      const XR25Frame::frame_data_t& frame) {
-  const int req_len = frame.size() * 2;
-  if (dst_size <= req_len) {
-    *dst = '\0';
-    return req_len;
-  }
-
-  tohex(&frame[0], frame.size(), dst, dst_size);
-
-  return req_len;
+static void frame_hex_fill(const X53b740Frame::frame_data_t& frame, const char *sep = ",") {
+  tohex(&frame[0], frame.size(), frame_hex, sizeof frame_hex, sep);
 }
 
 inline const char* btoa(bool v) { return v ? "X" : " "; }
@@ -59,12 +51,23 @@ static int frame_print(char* dst, size_t dst_siz, const X53b740Frame& d,
     unsigned bit = 0;
     auto dst_max = dst + dst_size - 1;
 
+    ///////////////////////////////////////////////
+    frame_hex_fill(d.get_frame(), "");
+    if (view_mask.test(bit++) && ct >= 0) {
+      auto p = std::min(dst_max, dst + ct);
+      auto l = std::max(ssize_t(0), dst_size - ct);
+      ct +=
+          snprintf(p, l, "%02u: %s\n", bit, frame_hex);
+    }
+    ///////////////////////////////////////////////
+
     if (view_mask.test(bit++) && ct >= 0) {
       auto p = std::min(dst_max, dst + ct);
       auto l = std::max(ssize_t(0), dst_size - ct);
       ct += snprintf(p, l, "%02u: %6d Frame-Count, ID=%d\n", bit,
                      d.get_frame_count(), d.get_id());
     }
+    
 
 
     if (view_mask.test(bit++) && ct >= 0) {

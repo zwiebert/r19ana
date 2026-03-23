@@ -84,8 +84,8 @@ extern "C" int app_main() {
   // it got from x25_transport. processor has a dedicated thread for doing the
   // callback. its ok to block it.
   FrameProcessor processor(
-      [](const XR25Frame::frame_data_t& frame, int frame_count) {
-        print_car_diag->push_frame(frame, frame_count);
+      [](const XR25Frame & frame) {
+        print_car_diag->push_frame(frame);
         if (!spp_is_connected()) return;
         char* dst = 0;
         if (auto dst_len = r19_alloc_and_print(dst, *print_car_diag, Mask);
@@ -145,8 +145,8 @@ void mock_uart_fun(bool& keep_running) {
 
 int main() {
   FrameProcessor processor(
-      [](const XR25Frame::frame_data_t& frame, int frame_count) {
-        print_car_diag->push_frame(frame, frame_count);
+      [](const XR25Frame& frame) {
+        print_car_diag->push_frame(frame);
         char* dst = 0;
         if (auto dst_len = r19_alloc_and_print(dst, *print_car_diag, Mask);
             dst_len > 0) {

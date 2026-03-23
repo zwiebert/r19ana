@@ -29,6 +29,7 @@ class XR25Frame {
 
   const frame_data_t& get_frame_data() const { return m_frames[(frameCounter & 1) ? 0 : 1]; }
   int get_frame_counter() const { return m_complete_frame_counter; }
+  int get_frame_length() const { return m_complete_frame_length; }
 
  private:
   frame_data_t& get_frame_tmp() { return m_frames[(frameCounter & 1) ? 1 : 0]; }

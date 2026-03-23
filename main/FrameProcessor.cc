@@ -14,7 +14,7 @@ FrameProcessor::~FrameProcessor() {
 }
 
 void FrameProcessor::update_thread_fun() {
-  XR25Frame::frame_data_t frame;
+  XR25Frame frame;
   for (; m_update_thread_keep_running;) {
     {
       std::unique_lock<std::mutex> lock(m_update_thread_mutex);
@@ -24,10 +24,10 @@ void FrameProcessor::update_thread_fun() {
       });
       // make copies of frame data and counter while feeder thread is locked by
       // mutex
-      frame = xr25.get_frame_data();
+      frame = xr25;
       m_last_xr25_frame_number = old_frame_number;
     }
-    if (callback) callback(frame, m_last_xr25_frame_number);
+    if (callback) callback(frame);
   }
 }
 
