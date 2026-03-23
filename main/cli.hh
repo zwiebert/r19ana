@@ -8,6 +8,7 @@
 
 #include "Transport.hh"
 #include "main.hh"
+#include "select_model.hh"
 
 struct CliCmd {
   const char* name = "";
@@ -105,4 +106,17 @@ CliCmd cmds[] = {
        return false;
      }},
 #endif
+    {.name = "model ",
+     .handler = [](CliCmd& cmd) -> bool {
+       for (char *str = cmd.args, *save_ptr = nullptr, *tok;
+            (tok = strtok_r(str, ", \r\n", &save_ptr)); str = nullptr) {
+        if (auto s = select_model(tok)) {
+            cmd.reply(s);
+            return true;
+        } else {
+          return false;
+        }
+       }
+       return false;
+     }},
 };
