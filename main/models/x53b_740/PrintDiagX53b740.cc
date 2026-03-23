@@ -48,7 +48,7 @@ inline const char* btoa(bool v) { return v ? "X" : " "; }
 int PrintDiagX53b740::snprint_diag(char* dst, size_t dst_siz,
                                    line_view_mask_t view_mask) const {
   const X53b740Frame& d = m_frame;
-  // using idx_t = X53b740Frame::idx_t;
+  using idx_t = X53b740Frame::idx_t;
 
   ssize_t dst_size = ssize_t(dst_siz);
   int ct = 0;
@@ -83,6 +83,9 @@ int PrintDiagX53b740::snprint_diag(char* dst, size_t dst_siz,
     diag_printf("%3.2f ms %s\n", d.get_injection_duration_ms(),
                 _("Injection Duration"));
 
+    diag_printf("%6d %s\n", d[idx_t::adaption_AFR], _("Adaption Air/Fuel"));
+    diag_printf("%6d %s\n", d[idx_t::adaption_running], _("Adaption Running (Driving)"));
+    diag_printf("%6d %s\n", d[idx_t::adaption_stationary], _("Adaption Stationary (Idle)"));
     diag_printf("%6d mV %s\n", d.get_oxygen_sensor_voltage_mV(),
                 _("O2 Sensor"));
 
@@ -97,11 +100,11 @@ int PrintDiagX53b740::snprint_diag(char* dst, size_t dst_siz,
 
     ///////////////////////////////////////////////
     frame_hex_fill(d.get_frame());
-    diag_printf(" 02-07 %.*s\n", 17, frame_hex + 18 * 0);
-    diag_printf(" 08-13 %.*s\n", 17, frame_hex + 18 * 1);
-    diag_printf(" 14-19 %.*s\n", 17, frame_hex + 18 * 2);
-    diag_printf(" 20-25 %.*s\n", 17, frame_hex + 18 * 3);
-    diag_printf(" 26-30 %.*s\n", 14, frame_hex + 18 * 4);
+    diag_printf(" 00-05 %.*s\n", 17, frame_hex + 18 * 0);
+    diag_printf(" 06-11 %.*s\n", 17, frame_hex + 18 * 1);
+    diag_printf(" 12-17 %.*s\n", 17, frame_hex + 18 * 2);
+    diag_printf(" 18-23 %.*s\n", 17, frame_hex + 18 * 3);
+    diag_printf(" 24-28 %.*s\n", 14, frame_hex + 18 * 4);
     ///////////////////////////////////////////////
 
 #if 0  // no idea which index, if any
@@ -113,9 +116,9 @@ int PrintDiagX53b740::snprint_diag(char* dst, size_t dst_siz,
     /////////////////////////// experimental
     /////////////// try and error confirmed /////////////
     // fuel pump (can be heard when ignition turns on)
-    diag_printf("   [%s] %s\n", btoa(d[23] & 0x08), _("23-0x08"));
-    diag_printf("   [%s] %s\n", btoa(d[23] & 0x20), _("23-0x20"));
-    diag_printf("   [%s] %s\n", btoa(d[23] & 0x80), _("23-0x80"));
+    diag_printf("   [%s] %s\n", btoa(d[23] & 0x08), _("21-0x08"));
+    diag_printf("   [%s] %s\n", btoa(d[23] & 0x20), _("21-0x20"));
+    diag_printf("   [%s] %s\n", btoa(d[23] & 0x80), _("21-0x80"));
     /////////////////////////////////////////////////////
 #if 0
     diag_printf("%6d %s\n", d.get_idle_regulation(), _("Idle-Regulation"));
@@ -127,16 +130,16 @@ int PrintDiagX53b740::snprint_diag(char* dst, size_t dst_siz,
 
 #endif
 
-    diag_printf("%6d °D %s (28)\n", d[28], _("Knock-Delay"));
+    diag_printf("%6d °D %s (26)\n", d[28], _("Knock-Delay"));
 
     diag_printf("     %02x %s (26)\n", d[26], _("Fault-Fugitive"));
-    diag_printf("%6d ??? %s\n", int(d[27]) - 0x82, _("(27) - 0x82"));
+    diag_printf("%6d ??? %s\n", int(d[27]) - 0x82, _("(25) - 0x82"));
     diag_printf("%6d ??? %s\n", int(d[27] | (d[28] << 8)) - 0x8182,
-                _("(28,27) - 0x8182"));
+                _("(26,25) - 0x8182"));
     //  unknown: 17, 23, 24, 25, 29, 30, 31
-    diag_printf("???    17=%02x,23=%02x,24=%02x,25=%02x\n", d[17], d[23], d[24],
+    diag_printf("???    15=%02x,21=%02x,22=%02x,23=%02x\n", d[17], d[23], d[24],
                 d[25]);
-    diag_printf("???    28=%02x,29=%02x,30=%02x,4=%02x\n", d[28], d[29], d[30],
+    diag_printf("???    26=%02x,27=%02x,28=%02x,2=%02x\n", d[28], d[29], d[30],
                 d[4]);
 
     /////////////////////// end experimental ///////////////////////////

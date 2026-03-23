@@ -15,8 +15,8 @@ class X53b740Frame {
 
  public:
   enum idx_t : uint8_t {
-    c0,
-    c1,
+    program_version,
+    calibration_version,
     flags_in,
     MAP,
     ECT,
@@ -37,13 +37,13 @@ class X53b740Frame {
     c19,
     flags_out,
     c21,
-    c23,
+    c22,
+    adaption_AFR,
     c24,
-    c25,
+    adaption_running,
     c26,
-    c27,
+    adaption_stationary,
     id,
-    c29,
   };
 
  public:
