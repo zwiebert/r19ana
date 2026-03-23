@@ -63,32 +63,25 @@ int PrintDiagX53b740::snprint_diag(char* dst, size_t dst_siz,
     ///////////////////////////////////////////////
 
     diag_printf("%6d Frame-Count, ID=%d\n", d.get_frame_count(), d.get_id());
-
-    diag_printf("  %2.1f V %s\n", d.get_battery_voltage_V(), _("Battery"));
-
     diag_printf("  %2.1f V %s\n", d.get_battery_voltage_V(), _("Battery"));
     diag_printf("%6d °C %s\n", d.get_intake_air_temperature_Celsius(),
                 _("Intake Air"));
-
     diag_printf("%6d °C %s\n", d.get_engine_coolant_temperature_Celsius(),
                 _("Coolant"));
-
     diag_printf("%6d rpm %s\n", d.get_engine_speed_RPM(), _("Crankshaft"));
-
     diag_printf("%6d mBar %s\n", d.get_manifold_absolute_pressure_mBar(),
                 _("Manifold"));
-
-    diag_printf("%6d °D %s (15)\n", d.get_ignition_advance_deg(), _("Advance"));
-
+    diag_printf("%6d °D %s\n", d.get_ignition_advance_deg(), _("Advance"));
+    diag_printf("%6d °D %s\n", d.get_detonation_correction_deg(), _("Detonation Correction"));
     diag_printf("%3.2f ms %s\n", d.get_injection_duration_ms(),
                 _("Injection Duration"));
-
     diag_printf("%6d %s\n", d[idx_t::adaption_AFR], _("Adaption Air/Fuel"));
-    diag_printf("%6d %s\n", d[idx_t::adaption_running], _("Adaption Running (Driving)"));
-    diag_printf("%6d %s\n", d[idx_t::adaption_stationary], _("Adaption Stationary (Idle)"));
+    diag_printf("%6d %s\n", d[idx_t::adaption_running],
+                _("Adaption Running (Driving)"));
+    diag_printf("%6d %s\n", d[idx_t::adaption_stationary],
+                _("Adaption Stationary (Idle)"));
     diag_printf("%6d mV %s\n", d.get_oxygen_sensor_voltage_mV(),
                 _("O2 Sensor"));
-
     diag_printf("%6d %s\n", d.get_engine_knocking(), _("Engine-Knock"));
     diag_printf("%6d mBar %s\n", d.get_atmospheric_pressure_mBar(),
                 _("Atmosphere"));
@@ -97,7 +90,6 @@ int PrintDiagX53b740::snprint_diag(char* dst, size_t dst_siz,
     diag_printf("   [%s] %s\n", btoa(d.is_throttle_fully_closed()),
                 _("Throttle Idle"));
     diag_printf("   [%s] %s\n", btoa(d.is_fuel_pump_on()), _("Fuel-Pump"));
-
     ///////////////////////////////////////////////
     frame_hex_fill(d.get_frame());
     diag_printf(" 00-05 %.*s\n", 17, frame_hex + 18 * 0);

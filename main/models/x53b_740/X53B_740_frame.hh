@@ -7,7 +7,7 @@
 
 /// @brief
 class X53b740Frame {
-  static constexpr bool OLD_FORMULAS = false;
+  #define OLD_FORMULAS  1
 
  public:
   static constexpr int FRAME_SIZE = 29;
@@ -17,7 +17,7 @@ class X53b740Frame {
   enum idx_t : uint8_t {
     program_version,
     calibration_version,
-    flags_in,
+    flags0,
     MAP,
     ECT,
     IAT,
@@ -29,14 +29,14 @@ class X53b740Frame {
     injection_duration_hb,
     injection_duration_lb,
     ignition_advance,
-    c14,
-    c15,
-    c16,
-    c17,
-    c18,
-    c19,
-    flags_out,
-    c21,
+    detonation_correction,
+    flags1,
+    flags2,
+    flags3,
+    flags4,
+    flags5,
+    flags6,
+    flags7,
     c22,
     adaption_AFR,
     c24,
@@ -54,12 +54,6 @@ class X53b740Frame {
   uint8_t X(idx_t col) const { return data[col]; }
   // unknown indexes
   // 15, 17, 18, 19, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31
-  bool is_throttle_fully_open() const {
-    return (X(idx_t::flags_in) & 0x10) == 0;
-  }
-  bool is_throttle_fully_closed() const {
-    return (X(idx_t::flags_in) & 0x08) == 0;
-  }
   int get_manifold_absolute_pressure_mBar() const {
 #if OLD_FORMULAS
     return int(X(idx_t::MAP) * 3.697f + 103.0f);
@@ -100,6 +94,9 @@ class X53b740Frame {
     return get_injection_duration_us() * 0.001f;
   }
   int get_ignition_advance_deg() const { return X(idx_t::ignition_advance); }
+  int get_detonation_correction_deg() const {
+    return X(idx_t::detonation_correction);
+  }
   int get_idle_regulation() const { return X(17); }  // TODO
   int get_atmospheric_pressure_mBar() const {
 #if OLD_FORMULAS
@@ -110,15 +107,58 @@ class X53b740Frame {
   }
   int get_idle_period() const { return X(22); }  // TODO
 
-  bool is_vacuum_provided_to_egr_valve() const { return !!(X(21) & 0x20); }
   bool is_evap_canister_open_to_intake() const {
     return is_vacuum_provided_to_egr_valve();
   }
-  bool is_oxygen_sensor_loop_closed() const { return !!(X(21) & 0x08); }
-  bool is_fuel_pump_on() const { return !!(X(idx_t::flags_out) & 0x10); }
 
   int get_id() const { return X(idx_t::id); }
 
+  ///////////////////////// Flags ////////////////////
+  // flags0
+
+  bool is_aircon_select() const { return X(idx_t::flags0) & 0x20; }
+  bool is_aircon_demand() const { return X(idx_t::flags0) & 0x04; }
+  bool is_throttle_fully_open() const { return (X(idx_t::flags0) & 0x10) == 0; }
+  bool is_throttle_fully_closed() const {
+    return (X(idx_t::flags0) & 0x08) == 0;
+  }
+
+  // flags2
+
+  bool is_flag2_bit0() const { return X(idx_t::flags2) & 0x01; }
+
+  // flags3
+
+  /**
+   * @brief Manifold air pressure continuous defect
+   *
+   * @return  true means fault
+   */
+  bool is_fpp_map() const { return X(idx_t::flags3 & 0x01); }
+
+  bool is_flags3_bit2() const { return X(idx_t::flags3 & 0x02); }
+
+  // flags4
+
+  bool is_oxygen_sensor_loop_closed() const { return X(idx_t::flags4) & 0x08; }
+  bool is_vacuum_provided_to_egr_valve() const {
+    return X(idx_t::flags4) & 0x20;
+  }
+
+  /**
+   * @brief for f3n-741. is automatic in park/neutral
+   *
+   * @return true if auto gearbox is in neutral/park
+   */
+  bool is_auto_park_neutral() const { return X(idx_t::flags4) & 0x80; }
+
+  // flags6
+
+  // flags7
+
+  bool is_fuel_pump_on() const { return X(idx_t::flags7) & 0x10; }
+
+ public:
   const frame_data_t& get_frame() const { return data; }
 
  private:
