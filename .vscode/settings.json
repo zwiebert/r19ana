@@ -4,7 +4,7 @@
     "/home/bertw/esp/ft2232.cfg",
     "target/esp32.cfg"
   ],
-  "idf.port": "/dev/ttyUSB0",
+  "idf.port": "/dev/ttyUSB2",
   "idf.currentSetup": "/home/bertw/.espressif/v5.5.3/esp-idf",
   "idf.customExtraVars": {
     "IDF_TARGET": "esp32"
@@ -16,5 +16,5 @@
     "--compile-commands-dir=/home/bertw/proj/xr25/r19xr25-esp32/build"
   ],
   "idf.flashType": "UART",
-  "idf.monitorPort": "/dev/ttyUSB0"
+  "idf.monitorPort": "/dev/ttyUSB2"
 }

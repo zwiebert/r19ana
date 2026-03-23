@@ -43,31 +43,34 @@ PrintCarDiag::line_view_mask_t Mask = PrintCarDiag::line_view_mask_t().set();
 
 bool cli_parse_and_execute_cmdline(char* src) {
   for (auto& cmd : cmds) {
-    std::cerr << "for cmd loop\n";
+    std::cerr << "for cmd loop line:(" << src << ")\n";
     if (cmd.execute(src)) {
       return true;
     }
   }
-  terminal_puts("unknown command\r\n");
+  terminal_puts("unknown command\n");
   return false;
 }
 
 int r19_alloc_and_print(char*& dst, const PrintCarDiag& print_diag,
                         const PrintCarDiag::line_view_mask_t& mask) {
   char dummy;
-  const char prepend_txt[] = "\r\n";  // "\x1B[2J";
+  const char prepend_txt[] = "\n";  // "\x1B[2J";
   const char append_txt[] = "";       // "\x1B[2J";
+  const size_t prepend_txt_len = sizeof prepend_txt - 1;
+  const size_t append_txt_len = sizeof append_txt - 1;
 
   if (auto buf_len = print_diag.snprint_diag(&dummy, 0, mask); buf_len > 0) {
     if (auto ptr =
-            (char*)malloc(buf_len + 1 + sizeof prepend_txt + sizeof append_txt);
+            (char*)malloc(buf_len  + prepend_txt_len + append_txt_len + 1);
         ptr) {
-      memcpy(ptr, prepend_txt, sizeof prepend_txt);
-      if (auto len = print_diag.snprint_diag(ptr + sizeof prepend_txt,
+          *ptr = '\0';
+          strcat(ptr, prepend_txt);
+      if (auto len = print_diag.snprint_diag(ptr + prepend_txt_len,
                                              buf_len + 1, mask)) {
-        memcpy(ptr + sizeof prepend_txt + len, append_txt, sizeof append_txt);
+        strcat(ptr + prepend_txt_len + len, append_txt);
         dst = ptr;
-        return len + sizeof prepend_txt + sizeof append_txt;
+        return len + prepend_txt_len + append_txt_len;
       }
       free(ptr);
     }

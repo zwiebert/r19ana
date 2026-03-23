@@ -33,9 +33,9 @@ struct CliCmd {
 };
 
 constexpr const char* reply_msg_all_hidden =
-    "all entries are now hidden!\r\n"
-    "Use <hide 0> to unhide all.\r\n"
-    "Or use <show 1,2,3> to show some.\r\n";
+    "all entries are now hidden!\n"
+    "Use <hide 0> to unhide all.\n"
+    "Or use <show 1,2,3> to show some.\n";
 
 CliCmd cmds[] = {
     {.name = "show ",
@@ -79,7 +79,7 @@ CliCmd cmds[] = {
      }},
 
 #ifdef ESP_PLATFORM
-    {.name = "mock-loop",
+    {.name = "mock-loop ",
      .handler = [](CliCmd& cmd) -> bool {
        static std::thread mock_uart_thread;
        static bool keep_running;

@@ -10,12 +10,16 @@ class X53b740Frame {
   static constexpr bool OLD_FORMULAS = false;
 
  public:
+  static constexpr int FRAME_SIZE = 30;
+  using frame_data_t = std::array<uint8_t, FRAME_SIZE>;
+
+ public:
   int get_frame_count() const { return FrameNumber; }
   uint8_t fb(uint8_t data_idx_plus2) const { return data[data_idx_plus2 - 2]; }
   uint8_t f3x(uint8_t data_idx_plus2) const { return data[data_idx_plus2 - 3]; }
   uint8_t X(uint8_t data_idx_plus2) const { return data[data_idx_plus2 - 3]; }
-// unknown indexes
-// 15, 17, 18, 19, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31
+  // unknown indexes
+  // 15, 17, 18, 19, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31
   bool is_throttle_fully_open() const { return (X(5) & 0x10) == 0; }
   bool is_throttle_fully_closed() const { return (X(5) & 0x08) == 0; }
   int get_manifold_absolute_pressure_mBar() const {
@@ -66,19 +70,21 @@ class X53b740Frame {
   bool is_oxygen_sensor_loop_closed() const { return !!(X(21) & 0x08); }
   bool is_fuel_pump_on() const { return !!(X(23) & 0x10); }
 
+  int get_id() const { return X(31); }
 
-  int get_id() const {return X(31);}
-
-  const XR25Frame::frame_data_t& get_frame() const { return data; }
+  const frame_data_t& get_frame() const { return data; }
 
  private:
-  XR25Frame::frame_data_t data = {};  ///<  XR25 frame without header ff,00
+  frame_data_t data = {};  ///<  XR25 frame without header ff,00
   int FrameNumber = 0;
 
  public:
   X53b740Frame(const XR25Frame::frame_data_t& xr25_frame, int frame_count)
-      : data(xr25_frame),
-        FrameNumber(frame_count) {};
+      : FrameNumber(frame_count) {
+    for (int i = 0; i < data.size(); ++i) {
+      data[i] = xr25_frame[i];
+    }
+  };
   X53b740Frame() = default;
 
   bool operator==(const X53b740Frame&) const = default;
