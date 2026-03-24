@@ -19,8 +19,8 @@ struct model_table_t {
   }
 };
 
-#include "models/raw/PrintDiagRaw.hh"
-#include "models/x53b_740/PrintDiagX53b740.hh"
+#include "models/raw/PrintDiag.hh"
+#include "models/x53b_740/PrintDiag.hh"
 #include "models/exp/PrintDiag.hh"
 
 static model_table_t our_model_table[] = {

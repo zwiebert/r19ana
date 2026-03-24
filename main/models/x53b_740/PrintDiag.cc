@@ -1,9 +1,11 @@
-#include "PrintDiagX53b740.hh"
+#include "PrintDiag.hh"
 
 #include <bitset>
 
-#include "X53B_740_frame.hh"
+#include "frame.hh"
 #include "i18n.hh"
+
+using OurFrame = X53b740Frame;
 
 #define diag_printf(fmt, ...)                               \
   do {                                                      \
@@ -37,8 +39,8 @@ static int tohex(const uint8_t* in, size_t insz, char* out, size_t outsz,
   return req_size;
 }
 
-static char frame_hex[X53b740Frame::FRAME_SIZE * 3];
-static void frame_hex_fill(const X53b740Frame::frame_data_t& frame,
+static char frame_hex[OurFrame::FRAME_SIZE * 3];
+static void frame_hex_fill(const OurFrame::frame_data_t& frame,
                            const char* sep = ",") {
   tohex(&frame[0], frame.size(), frame_hex, sizeof frame_hex, sep);
 }
@@ -47,8 +49,8 @@ inline const char* btoa(bool v) { return v ? "X" : " "; }
 
 int PrintDiagX53b740::snprint_diag(char* dst, size_t dst_siz,
                                    line_view_mask_t view_mask) const {
-  const X53b740Frame& d = m_frame;
-  using idx_t = X53b740Frame::idx_t;
+  const OurFrame& d = m_frame;
+  using idx_t = OurFrame::idx_t;
 
   ssize_t dst_size = ssize_t(dst_siz);
   int ct = 0;

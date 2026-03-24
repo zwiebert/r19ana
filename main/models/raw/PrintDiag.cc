@@ -1,9 +1,11 @@
-#include "PrintDiagRaw.hh"
+#include "PrintDiag.hh"
 
 #include <bitset>
 
-#include "Raw_frame.hh"
+#include "frame.hh"
 #include "i18n.hh"
+
+using OurFrame = RawFrame;
 
 static int tohex(const uint8_t* in, size_t insz, char* out, size_t outsz, const char *sep = "") {
   const auto sep_len = strlen(sep);
@@ -27,8 +29,8 @@ static int tohex(const uint8_t* in, size_t insz, char* out, size_t outsz, const 
   return req_size;
 }
 
-static char frame_hex[RawFrame::FRAME_SIZE * 3];
-static void frame_hex_fill(const RawFrame &frame, const char *sep = ",") {
+static char frame_hex[OurFrame::FRAME_SIZE * 3];
+static void frame_hex_fill(const OurFrame &frame, const char *sep = ",") {
   tohex(&frame.get_frame()[0], frame.get_frame_length(), frame_hex, sizeof frame_hex, sep);
 }
 
@@ -41,7 +43,7 @@ static void frame_hex_fill(const RawFrame &frame, const char *sep = ",") {
 /// printed.
 /// @return  bytes written or if greater than dst_siz, the required buffer size
 /// (man 3 snprintf)
-static int frame_print(char* dst, size_t dst_siz, const RawFrame& d,
+static int frame_print(char* dst, size_t dst_siz, const OurFrame& d,
                        const PrintCarDiag::line_view_mask_t& view_mask) {
   ssize_t dst_size = ssize_t(dst_siz);
   int ct = 0;

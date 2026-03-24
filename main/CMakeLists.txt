@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.16)
 set(srcs 
- "models/x53b_740/X53B_740_frame.cc" models/x53b_740/PrintDiagX53b740.cc models/exp/PrintDiag.cc
- models/raw/PrintDiagRaw.cc 
+ models/x53b_740/PrintDiag.cc models/exp/PrintDiag.cc
+ models/raw/PrintDiag.cc 
 "XR25Frame.cc" "FrameProcessor.cc" "i18n.cc" select_model.cc)
 set(srcs_esp32 esp32/main.cc esp32/pers_storage.cc "../bt_classic/esp32/spp.cc" "../bt_classic/esp32/spp_task.cc" "../bt_classic/esp32/spp2.cc" esp32/UartTransport.cc)
 set(srcs_host host/main.cc host/pers_storage.cc "../bt_classic/host/mock.cc")
