@@ -13,6 +13,9 @@ class PrintCarDiag {
   using line_view_mask_t = std::bitset<64U>;
 
  public:
+  virtual ~PrintCarDiag() = default;
+
+ public:
   /**
    * @brief Print formatted data into buffer
    *
@@ -27,5 +30,5 @@ class PrintCarDiag {
    */
   virtual int snprint_diag(char* dst, size_t dst_size,
                            line_view_mask_t show_lines) const = 0;
-  virtual void push_frame(const XR25Frame & xr25_frame) = 0;
+  virtual void push_frame(const XR25Frame& xr25_frame) = 0;
 };

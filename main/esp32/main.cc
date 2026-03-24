@@ -1,0 +1,145 @@
+// main.cc
+
+#include "main.hh"
+
+#include <nvs_flash.h>
+#include <stdio.h>
+#include <string.h>
+
+#include <chrono>
+#include <fstream>
+#include <iostream>
+#include <thread>
+
+#include "FrameProcessor.hh"
+#include "SppTransport.hh"
+#include "UartTransport.hh"
+#include "cli.hh"
+#include "select_model.hh"
+
+#define D(x)
+
+Transport&& xr25_transport = UartTransport(UartTransportArgs{
+    .bps = 65000, .uart_port_num = 2, .rx_gpio = 16, .tx_gpio = 17});
+Transport&& mock_loop_transport = UartTransport(UartTransportArgs{
+    .bps = 65000, .uart_port_num = 1, .rx_gpio = 18, .tx_gpio = 19});
+Transport&& term_transport = SppTransport();
+
+int terminal_puts(const char* s, bool block) {
+  return term_transport.write((const uint8_t*)s, strlen(s), block);
+}
+
+PrintCarDiag::line_view_mask_t Mask = PrintCarDiag::line_view_mask_t().set();
+
+bool cli_parse_and_execute_cmdline(char* src) {
+  for (auto& cmd : cmds) {
+    std::cerr << "for cmd loop line:(" << src << ")\n";
+    if (cmd.execute(src)) {
+      return true;
+    }
+  }
+  terminal_puts("unknown command\n");
+  return false;
+}
+
+int r19_alloc_and_print(char*& dst, const PrintCarDiag& print_diag,
+                        const PrintCarDiag::line_view_mask_t& mask) {
+  char dummy;
+  const char prepend_txt[] = "\n";  // "\x1B[2J";
+  const char append_txt[] = "";     // "\x1B[2J";
+  const size_t prepend_txt_len = sizeof prepend_txt - 1;
+  const size_t append_txt_len = sizeof append_txt - 1;
+
+  if (auto buf_len = print_diag.snprint_diag(&dummy, 0, mask); buf_len > 0) {
+    if (auto ptr =
+            (char*)malloc(buf_len + prepend_txt_len + append_txt_len + 1);
+        ptr) {
+      *ptr = '\0';
+      strcat(ptr, prepend_txt);
+      if (auto len = print_diag.snprint_diag(ptr + prepend_txt_len, buf_len + 1,
+                                             mask)) {
+        strcat(ptr + prepend_txt_len + len, append_txt);
+        dst = ptr;
+        return len + prepend_txt_len + append_txt_len;
+      }
+      free(ptr);
+    }
+  }
+  return -1;
+}
+
+static void main_init() {
+  // Initialize NVS
+  esp_err_t err = nvs_flash_init();
+  if (err == ESP_ERR_NVS_NO_FREE_PAGES ||
+      err == ESP_ERR_NVS_NEW_VERSION_FOUND) {
+    // NVS partition was truncated and needs to be erased
+    // Retry nvs_flash_init
+    ESP_ERROR_CHECK(nvs_flash_erase());
+    err = nvs_flash_init();
+  }
+  ESP_ERROR_CHECK(err);
+
+  select_model_init();
+}
+
+extern "C" int app_main() {
+  main_init();
+
+  // processor calls back when it has completed a frame from the chunks of bytes
+  // it got from x25_transport. processor has a dedicated thread for doing the
+  // callback. its ok to block it.
+  FrameProcessor processor([](const XR25Frame& frame) {
+    print_car_diag->push_frame(frame);
+    if (!spp_is_connected()) return;
+    char* dst = 0;
+    if (auto dst_len = r19_alloc_and_print(dst, *print_car_diag, Mask);
+        dst_len > 0) {
+      if (term_transport.write((const uint8_t*)dst, dst_len, true)) {
+        free(dst);
+        return;
+      }
+      free(dst);
+    }
+  });
+
+  // xr25_transport calls back when it has a received a chunk of bytes from
+  // the car diagnose port
+  xr25_transport.start([&processor](auto data, auto data_len) {
+    processor.feedBytes(data, data_len);
+  });
+
+  // term_transport calls back when it has received a line of text from
+  // terminal. It should be a user CLI command.
+  term_transport.start([](auto data, auto data_len) {
+    cli_parse_and_execute_cmdline((char*)data);
+  });
+
+  // it seems this thread has nothing left to do. Wait here to keep local object
+  // <processor> alive
+  for (;; std::this_thread::sleep_for(std::chrono::days(1))) {
+  }
+
+  xr25_transport.stop();
+  term_transport.stop();
+  return 0;
+}
+
+void mock_uart_fun(bool& keep_running) {
+  extern const uint8_t r19data_bin_start[] asm("_binary_r19data_bin_start");
+  extern const uint8_t r19data_bin_end[] asm("_binary_r19data_bin_end");
+  const uint8_t* data = r19data_bin_start;
+  const size_t data_size = r19data_bin_end - r19data_bin_start;
+  const int chunk = 40;
+
+  mock_loop_transport.start([](uint8_t* data, size_t data_len) {});
+
+  while (keep_running) {
+    for (int i = 0; i < data_size - chunk && keep_running; i += chunk) {
+      auto res = mock_loop_transport.write(data + i, chunk);
+      std::this_thread::sleep_for(std::chrono::milliseconds(10));
+    }
+  }
+
+  mock_loop_transport.stop();
+}

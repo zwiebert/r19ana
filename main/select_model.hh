@@ -5,4 +5,6 @@
 
 extern PrintCarDiag * print_car_diag;
 
-const char *select_model(const char *id);
+void select_model_init();
+
+const char *select_model(const char *id, bool permanent = true);

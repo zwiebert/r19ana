@@ -1,0 +1,102 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) YEAR THE PACKAGE'S COPYRIGHT HOLDER
+# This file is distributed under the same license as the PACKAGE package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: PACKAGE VERSION\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2026-03-17 21:28+0100\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"Language: \n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=CHARSET\n"
+"Content-Transfer-Encoding: 8bit\n"
+
+#: X53B_740_frame_utils.hh:109
+msgid "Crankshaft"
+msgstr ""
+
+#: X53B_740_frame_utils.hh:116
+msgid "Battery"
+msgstr ""
+
+#: X53B_740_frame_utils.hh:123 X53B_740_frame_utils.hh:270
+msgid "Atmosphere"
+msgstr ""
+
+#: X53B_740_frame_utils.hh:130
+msgid "Manifold"
+msgstr ""
+
+#: X53B_740_frame_utils.hh:137
+msgid "Intake Air"
+msgstr ""
+
+#: X53B_740_frame_utils.hh:144
+msgid "Coolant"
+msgstr ""
+
+#: X53B_740_frame_utils.hh:151
+msgid "Injection Duration"
+msgstr ""
+
+#: X53B_740_frame_utils.hh:158
+msgid "O2 Sensor"
+msgstr ""
+
+#: X53B_740_frame_utils.hh:164
+msgid "Engine-Knock"
+msgstr ""
+
+#: X53B_740_frame_utils.hh:172
+msgid "Throttle Full-Power"
+msgstr ""
+
+#: X53B_740_frame_utils.hh:179
+msgid "Throttle Idle"
+msgstr ""
+
+#: X53B_740_frame_utils.hh:187
+msgid "EGR+EVap enabled"
+msgstr ""
+
+#: X53B_740_frame_utils.hh:194
+msgid "O2 sensor loop"
+msgstr ""
+
+#: X53B_740_frame_utils.hh:204
+msgid "Fuel-Pump"
+msgstr ""
+
+#: X53B_740_frame_utils.hh:211
+msgid "Advance"
+msgstr ""
+
+#: X53B_740_frame_utils.hh:218
+msgid "Idle-Regulation"
+msgstr ""
+
+#: X53B_740_frame_utils.hh:225
+msgid "Idle-Period"
+msgstr ""
+
+#: X53B_740_frame_utils.hh:232
+msgid "Knock-Delay"
+msgstr ""
+
+#: X53B_740_frame_utils.hh:239
+msgid "Throttle"
+msgstr ""
+
+#: X53B_740_frame_utils.hh:245
+msgid "Fault-Flags"
+msgstr ""
+
+#: X53B_740_frame_utils.hh:251
+msgid "Fault-Fugitive"
+msgstr ""
