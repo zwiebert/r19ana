@@ -5,7 +5,7 @@
 #include "raw/PrintDiag.hh"
 #include "x53b_740/PrintDiag.hh"
 
-static model_table_t our_model_table[] = {
+static model_t our_model_table[] = {
     {
         .new_pcd_fun = []() -> PrintCarDiag* { return new PrintDiagRaw; },
         .names = {"raw"},
@@ -24,5 +24,5 @@ static model_table_t our_model_table[] = {
 };
 /////////////////////////////////////////////////////////////////////////////
 #include <iterator>
-model_table_t* model_table_begin() { return std::begin(our_model_table); }
-model_table_t* model_table_end() { return std::end(our_model_table); }
+model_t* model_table_begin() { return std::begin(our_model_table); }
+model_t* model_table_end() { return std::end(our_model_table); }

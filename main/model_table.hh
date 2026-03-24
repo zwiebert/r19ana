@@ -2,7 +2,7 @@
 
 #include <string.h>
 
-struct model_table_t {
+struct model_t {
   using new_pcd_fun_t = class PrintCarDiag* (*)();
   new_pcd_fun_t new_pcd_fun;
   const char* names[4];
@@ -17,5 +17,5 @@ struct model_table_t {
   }
 };
 
-model_table_t* model_table_begin();
-model_table_t* model_table_end();
+model_t* model_table_begin();
+model_t* model_table_end();
