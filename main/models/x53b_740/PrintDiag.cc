@@ -92,14 +92,6 @@ int PrintDiagX53b740::snprint_diag(char* dst, size_t dst_siz,
     diag_printf("   [%s] %s\n", btoa(d.is_throttle_fully_closed()),
                 _("Throttle Idle"));
     diag_printf("   [%s] %s\n", btoa(d.is_fuel_pump_on()), _("Fuel-Pump"));
-    ///////////////////////////////////////////////
-    frame_hex_fill(d.get_frame());
-    diag_printf(" 00-05 %.*s\n", 17, frame_hex + 18 * 0);
-    diag_printf(" 06-11 %.*s\n", 17, frame_hex + 18 * 1);
-    diag_printf(" 12-17 %.*s\n", 17, frame_hex + 18 * 2);
-    diag_printf(" 18-23 %.*s\n", 17, frame_hex + 18 * 3);
-    diag_printf(" 24-28 %.*s\n", 14, frame_hex + 18 * 4);
-    ///////////////////////////////////////////////
 
 #if 0  // no idea which index, if any
     diag_printf("   [%s] %s\n", btoa(d.is_vacuum_provided_to_egr_valve()),
@@ -107,36 +99,9 @@ int PrintDiagX53b740::snprint_diag(char* dst, size_t dst_siz,
     diag_printf("   [%s] %s\n", btoa(d.is_oxygen_sensor_loop_closed()),
                 _("O2 sensor loop"));
 #endif
-    /////////////////////////// experimental
-    /////////////// try and error confirmed /////////////
-    // fuel pump (can be heard when ignition turns on)
-    diag_printf("   [%s] %s\n", btoa(d[23] & 0x08), _("21-0x08"));
-    diag_printf("   [%s] %s\n", btoa(d[23] & 0x20), _("21-0x20"));
-    diag_printf("   [%s] %s\n", btoa(d[23] & 0x80), _("21-0x80"));
-    /////////////////////////////////////////////////////
-#if 0
-    diag_printf("%6d %s\n", d.get_idle_regulation(), _("Idle-Regulation"));
-    diag_printf("%6d %s\n", d.get_idle_period(), _("Idle-Period"));
-    diag_printf("%6d mBar %s\n", (4 * (~d[29] & 0xff)), _("Atmosphere"));
-
-    diag_printf("%02x%02x%02x %s (27,19,18)\n", d[27], d[19], d[18],
-                _("Fault-Flags"));
-
-#endif
-
     diag_printf("%6d °D %s (26)\n", d[28], _("Knock-Delay"));
 
-    diag_printf("     %02x %s (26)\n", d[26], _("Fault-Fugitive"));
-    diag_printf("%6d ??? %s\n", int(d[27]) - 0x82, _("(25) - 0x82"));
-    diag_printf("%6d ??? %s\n", int(d[27] | (d[28] << 8)) - 0x8182,
-                _("(26,25) - 0x8182"));
-    //  unknown: 17, 23, 24, 25, 29, 30, 31
-    diag_printf("???    15=%02x,21=%02x,22=%02x,23=%02x\n", d[17], d[23], d[24],
-                d[25]);
-    diag_printf("???    26=%02x,27=%02x,28=%02x,2=%02x\n", d[28], d[29], d[30],
-                d[4]);
 
-    /////////////////////// end experimental ///////////////////////////
 
     if (ct >= 0) {
       auto p = std::min(dst_max, dst + ct);
