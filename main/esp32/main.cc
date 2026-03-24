@@ -32,9 +32,9 @@ int terminal_puts(const char* s, bool block) {
 PrintCarDiag::line_view_mask_t Mask = PrintCarDiag::line_view_mask_t().set();
 
 bool cli_parse_and_execute_cmdline(char* src) {
-  for (auto& cmd : cmds) {
+  for (auto cmd = cli_cmds_begin(), end = cli_cmds_end(); cmd != end; ++cmd) {
     std::cerr << "for cmd loop line:(" << src << ")\n";
-    if (cmd.execute(src)) {
+    if (cmd->execute(src)) {
       return true;
     }
   }

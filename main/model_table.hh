@@ -17,5 +17,5 @@ struct model_table_t {
   }
 };
 
-extern size_t model_table_size;
-extern model_table_t* model_table;
+model_table_t* model_table_begin();
+model_table_t* model_table_end();
