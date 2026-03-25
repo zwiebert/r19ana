@@ -25,49 +25,6 @@ Transport&& mock_loop_transport = UartTransport(UartTransportArgs{
     .bps = 65000, .uart_port_num = 1, .rx_gpio = 18, .tx_gpio = 19});
 Transport&& term_transport = SppTransport();
 
-int terminal_puts(const char* s, bool block) {
-  return term_transport.write((const uint8_t*)s, strlen(s), block);
-}
-
-PrintCarDiag::line_view_mask_t Mask = PrintCarDiag::line_view_mask_t().set();
-
-bool cli_parse_and_execute_cmdline(char* src) {
-  for (auto cmd = cli_cmds_begin(), end = cli_cmds_end(); cmd != end; ++cmd) {
-    std::cerr << "for cmd loop line:(" << src << ")\n";
-    if (cmd->execute(src)) {
-      return true;
-    }
-  }
-  terminal_puts("unknown command\n");
-  return false;
-}
-
-int r19_alloc_and_print(char*& dst, const PrintCarDiag& print_diag,
-                        const PrintCarDiag::line_view_mask_t& mask) {
-  char dummy;
-  const char prepend_txt[] = "\n";  // "\x1B[2J";
-  const char append_txt[] = "";     // "\x1B[2J";
-  const size_t prepend_txt_len = sizeof prepend_txt - 1;
-  const size_t append_txt_len = sizeof append_txt - 1;
-
-  if (auto buf_len = print_diag.snprint_diag(&dummy, 0, mask); buf_len > 0) {
-    if (auto ptr =
-            (char*)malloc(buf_len + prepend_txt_len + append_txt_len + 1);
-        ptr) {
-      *ptr = '\0';
-      strcat(ptr, prepend_txt);
-      if (auto len = print_diag.snprint_diag(ptr + prepend_txt_len, buf_len + 1,
-                                             mask)) {
-        strcat(ptr + prepend_txt_len + len, append_txt);
-        dst = ptr;
-        return len + prepend_txt_len + append_txt_len;
-      }
-      free(ptr);
-    }
-  }
-  return -1;
-}
-
 static void main_init() {
   // Initialize NVS
   esp_err_t err = nvs_flash_init();

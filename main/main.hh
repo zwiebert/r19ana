@@ -7,3 +7,6 @@ extern class X53b740Frame R19_frame;
 extern PrintCarDiag::line_view_mask_t Mask;
 
 int terminal_puts(const char* s, bool block = false);
+bool cli_parse_and_execute_cmdline(char* src);
+int r19_alloc_and_print(char*& dst, const PrintCarDiag& print_diag,
+                        const PrintCarDiag::line_view_mask_t& mask);
