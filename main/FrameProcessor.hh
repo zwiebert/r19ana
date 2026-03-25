@@ -26,7 +26,7 @@ class FrameProcessor {
   void update_thread_fun();
 
  private:
-  int old_frame_number = 0;
+  unsigned m_nmb_frames_waiting = 0;
   XR25Frame xr25;
   UpdateCallback callback;
   std::thread m_update_thread;

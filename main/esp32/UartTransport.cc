@@ -80,7 +80,7 @@ void UartTransport::worker_thread(ReadCallback cb) {
     auto data = m_buf;
     // Read data from the UART
     int len = uart_read_bytes(m_uart_port, data, (BUF_SIZE - 1),
-                              25 / portTICK_PERIOD_MS);
+                              100 / portTICK_PERIOD_MS);
     if (len) {
     D(ESP_LOGI("uart2", "read len: %d", len));
       data[len] = '\0';

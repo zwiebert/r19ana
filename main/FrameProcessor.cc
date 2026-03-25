@@ -18,15 +18,15 @@ void FrameProcessor::update_thread_fun() {
   for (; m_update_thread_keep_running;) {
     {
       std::unique_lock<std::mutex> lock(m_update_thread_mutex);
-      m_update_thread_cv.wait_for(lock, std::chrono::seconds(2), [frame, this]() {
-        return frame.counter < old_frame_number ||
-               !m_update_thread_keep_running;
-      });
+      if (!(m_nmb_frames_waiting = xr25.get_buffered_frame_count()))
+        m_update_thread_cv.wait_for(
+            lock, std::chrono::seconds(2), [frame, this]() {
+              return m_nmb_frames_waiting || !m_update_thread_keep_running;
+            });
       // make copies of frame data and counter while feeder thread is locked by
       // mutex
-      if (m_last_xr25_frame_number >= old_frame_number) continue;
-      xr25.get_voc(frame);
-      m_last_xr25_frame_number = old_frame_number;
+      if (!m_nmb_frames_waiting) continue;
+      if (!xr25.pull_voc(frame)) continue;
     }
     if (callback) callback(frame);
   }
@@ -36,10 +36,7 @@ void FrameProcessor::feedBytes(const uint8_t* data, const size_t data_len) {
   {
     std::lock_guard<std::mutex> lk(m_update_thread_mutex);
     xr25.append(data, data_len);
-    if (old_frame_number >= xr25.get_frame_counter())
-      return;  // current frame is not completed
-
-    old_frame_number = xr25.get_frame_counter();
+    m_nmb_frames_waiting = xr25.get_buffered_frame_count();
   }
   m_update_thread_cv.notify_one();
 }
