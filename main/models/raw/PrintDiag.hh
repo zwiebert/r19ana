@@ -14,7 +14,7 @@ class PrintDiagRaw : public PrintCarDiag {
   int snprint_diag(char* dst, size_t dst_size,
                    line_view_mask_t show_lines) const override;
 
-    void push_frame(const XR25Frame& xr25_frame) override {
+    void push_frame(const XR25Frame::voc_t& xr25_frame) override {
     m_frame = {xr25_frame};
   }
 

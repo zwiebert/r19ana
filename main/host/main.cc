@@ -70,7 +70,7 @@ int main() {
   select_model("exp");
 
   FrameProcessor processor(
-      [](const XR25Frame& frame) {
+      [](const XR25Frame::voc_t& frame) {
         print_car_diag->push_frame(frame);
         char* dst = 0;
         if (auto dst_len = r19_alloc_and_print(dst, *print_car_diag, Mask);

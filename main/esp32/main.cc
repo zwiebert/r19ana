@@ -85,11 +85,12 @@ static void main_init() {
 
 extern "C" int app_main() {
   main_init();
+  assert(print_car_diag);
 
   // processor calls back when it has completed a frame from the chunks of bytes
   // it got from x25_transport. processor has a dedicated thread for doing the
   // callback. its ok to block it.
-  FrameProcessor processor([](const XR25Frame& frame) {
+  FrameProcessor processor([](const XR25Frame::voc_t& frame) {
     print_car_diag->push_frame(frame);
     if (!spp_is_connected()) return;
     char* dst = 0;

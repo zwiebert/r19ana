@@ -23,10 +23,10 @@ class RawFrame {
   size_t m_frame_len = 0;
 
  public:
-  RawFrame(const XR25Frame& frame)
-      : FrameNumber(frame.get_frame_counter()), m_frame_len(frame.get_frame_length()) {
+  RawFrame(const XR25Frame::voc_t& frame)
+      : FrameNumber(frame.counter), m_frame_len(frame.frame_len) {
     for (int i = 0; i < m_frame_len; ++i) {
-      data[i] = frame.get_frame_data()[i];
+      data[i] = frame.frame[i];
     }
   };
   RawFrame() = default;

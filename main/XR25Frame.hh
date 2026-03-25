@@ -11,6 +11,18 @@ class XR25Frame {
   static constexpr int FRAME_MAX_SIZE = 64;
   using frame_data_t = std::array<uint8_t, FRAME_MAX_SIZE>;
 
+  struct voc_t {
+    frame_data_t frame;
+    size_t frame_len;
+    unsigned counter; 
+  };
+
+  void get_voc(voc_t &dst) {
+    dst.frame =  get_frame_data();
+    dst.frame_len = get_frame_length();
+    dst.counter = get_frame_counter();
+  }
+
   XR25Frame();
 
   bool add(uint8_t b);
@@ -29,7 +41,7 @@ class XR25Frame {
 
   const frame_data_t& get_frame_data() const { return m_frames[(frameCounter & 1) ? 0 : 1]; }
   int get_frame_counter() const { return m_complete_frame_counter; }
-  int get_frame_length() const { return m_complete_frame_length; }
+  size_t get_frame_length() const { return m_complete_frame_length; }
 
  private:
   frame_data_t& get_frame_tmp() { return m_frames[(frameCounter & 1) ? 1 : 0]; }
@@ -38,8 +50,8 @@ class XR25Frame {
   }
 
  private:
-  int m_complete_frame_counter = 0;
-  int m_complete_frame_length = 0;  ///< actual data frame length
+  size_t m_complete_frame_counter = 0;
+  size_t m_complete_frame_length = 0;  ///< actual data frame length
  private:
   int frameCounter = 0;
   frame_data_t m_frames[2] = {};

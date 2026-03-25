@@ -167,10 +167,10 @@ class ExpFrame {
   int FrameNumber = 0;
 
  public:
-  ExpFrame(const XR25Frame& frame)
-      : FrameNumber(frame.get_frame_counter()) {
+  ExpFrame(const XR25Frame::voc_t& frame)
+      : FrameNumber(frame.counter) {
     for (int i = 0; i < FRAME_SIZE; ++i) {
-      data[i] = frame.get_frame_data()[i];
+      data[i] = frame.frame[i];
     }
   };
   ExpFrame() = default;

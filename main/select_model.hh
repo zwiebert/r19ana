@@ -7,4 +7,4 @@ extern PrintCarDiag * print_car_diag;
 
 void select_model_init();
 
-const char *select_model(const char *id, bool permanent = true);
+const char *select_model(const char *id, bool persistent = true);

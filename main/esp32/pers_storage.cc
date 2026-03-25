@@ -35,7 +35,7 @@ bool set_model(int model) { return store("model", model); }
 int get_model() {
   int32_t model;
   if (restore("model", model)) {
-    return int(model);
+    return model > 0 ? int(model) : 0;
   }
   return 0;
 }
