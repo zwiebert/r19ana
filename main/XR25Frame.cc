@@ -13,20 +13,19 @@ bool XR25Frame::add(uint8_t b) {
   }
 
   if (b == 0x00 && m_last_byte_was_ff) {
-    m_complete_frame_length = m_idx;
-    m_idx = 0;
-    m_complete_frame_counter = frameCounter;
-    m_last_byte_was_ff = false;
-    ++frameCounter;
+    m_complete_frame_length = std::distance(rbuf_begin(), m_rbuf_ptr);
+    rbuf_push();
     return true;
   }
 
   m_last_byte_was_ff = false;
 
-  if (m_idx >= FRAME_MAX_SIZE) return false;
-  if (frameCounter == 0) return true;
+  if (m_rbuf_ptr >= rbuf_end()) {
+    rbuf_clear();
+    return false;
+  }
 
-  get_frame_tmp()[m_idx++] = b;
+  *m_rbuf_ptr++ = b;
 
   return true;
 }
@@ -71,7 +70,7 @@ std::vector<uint8_t> XR25Frame::hexStringToByteArray(const std::string& s) {
 
 std::string XR25Frame::toString() const {
   std::ostringstream sb;
-  for (int i=0; i < m_complete_frame_length; ++i) {
+  for (int i = 0; i < m_complete_frame_length; ++i) {
     auto c = (*this)[i];
     sb << std::hex << std::nouppercase << (int)((c >> 4) & 0xF) << std::hex
        << std::nouppercase << (int)(c & 0xF) << " ";

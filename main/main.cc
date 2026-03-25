@@ -54,14 +54,17 @@ int r19_alloc_and_print(char*& dst, const PrintCarDiag& print_diag,
       return -1;
     }
     ptr = tmp;
+    *ptr = '\0';
+
+    strcat(ptr, prepend_txt);
     {
       char* dst = ptr + prepend_txt_len;
       const size_t dst_size = buf_len + 1;
       buf_len = print_diag.snprint_diag(dst, dst_size, mask);
       if (buf_len >= dst_size) continue;
     }
-
     strcat(ptr + prepend_txt_len + buf_len, append_txt);
+
     dst = ptr;
     return buf_len + prepend_txt_len + append_txt_len;
   }
