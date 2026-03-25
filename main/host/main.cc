@@ -23,7 +23,7 @@ Transport&& xr25_transport = Xr25Transport();
 Transport&& term_transport = ConsoleTransport();
 
 int main() {
-  select_model("exp");
+  select_model("raw");
 
   FrameProcessor processor([](const XR25Frame::voc_t& frame) {
     print_car_diag->push_frame(frame);

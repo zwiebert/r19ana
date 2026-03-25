@@ -15,12 +15,12 @@ class RawFrame {
  public:
   int get_frame_count() const { return FrameNumber; }
   const frame_data_t& get_frame() const { return data; }
-  size_t get_frame_length() const { return m_frame_len; }
+  unsigned get_frame_length() const { return m_frame_len; }
 
  private:
   frame_data_t data = {};  ///<  XR25 frame without header ff,00
   int FrameNumber = 0;
-  size_t m_frame_len = 0;
+  unsigned m_frame_len = 0;
 
  public:
   RawFrame(const XR25Frame::voc_t& frame)
