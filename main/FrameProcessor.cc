@@ -9,13 +9,12 @@ FrameProcessor::FrameProcessor(UpdateCallback cb) : callback(std::move(cb)) {
 FrameProcessor::~FrameProcessor() {
   if (m_update_thread_keep_running) {
     m_update_thread_keep_running = false;
-    m_update_thread.join();
+    if (m_update_thread.joinable()) m_update_thread.join();
   }
 }
 
 void FrameProcessor::update_thread_fun() {
   XR25Frame frame;
-  bool do_call = false;
   for (; m_update_thread_keep_running;) {
     {
       std::unique_lock<std::mutex> lock(m_update_thread_mutex);
@@ -25,11 +24,11 @@ void FrameProcessor::update_thread_fun() {
       });
       // make copies of frame data and counter while feeder thread is locked by
       // mutex
+      if(m_last_xr25_frame_number >= old_frame_number) continue;
       frame = xr25;
-      do_call = m_last_xr25_frame_number != old_frame_number;
       m_last_xr25_frame_number = old_frame_number;
     }
-    if (callback && do_call) callback(frame);
+    if (callback) callback(frame);
   }
 }
 
