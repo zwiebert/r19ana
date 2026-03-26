@@ -4,12 +4,16 @@
 #include <string>
 
 #include "XR25Frame.hh"
+#include "models/settings.hh"
 
 /// @brief
-class X53b740Frame {
-  #define OLD_FORMULAS  1
+class X53b740Frame : CarModelBase {
+ public:
+  // virtual void get_defaults(settings_model_specific_t& dst) const override {
+  // }
 
  public:
+#define OLD_FORMULAS 1
   static constexpr int FRAME_SIZE = 29;
   using frame_data_t = std::array<uint8_t, FRAME_SIZE>;
 
@@ -166,8 +170,7 @@ class X53b740Frame {
   int FrameNumber = 0;
 
  public:
-  X53b740Frame(const XR25Frame::voc_t& frame)
-      : FrameNumber(frame.counter) {
+  X53b740Frame(const XR25Frame::voc_t& frame) : FrameNumber(frame.counter) {
     for (int i = 0; i < FRAME_SIZE; ++i) {
       data[i] = frame.frame[i];
     }

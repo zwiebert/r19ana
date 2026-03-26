@@ -4,10 +4,10 @@
 #include <string>
 
 #include "XR25Frame.hh"
+#include "models/settings.hh"
 
 /// @brief
-class RawFrame {
-
+class RawFrame : CarModelBase {
  public:
   static constexpr int FRAME_SIZE = XR25Frame::FRAME_MAX_SIZE;
   using frame_data_t = std::array<uint8_t, FRAME_SIZE>;

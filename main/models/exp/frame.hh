@@ -4,11 +4,11 @@
 #include <string>
 
 #include "XR25Frame.hh"
-
+#include "models/settings.hh"
 
 /// @brief
-class ExpFrame {
-  #define OLD_FORMULAS  1
+class ExpFrame : CarModelBase {
+#define OLD_FORMULAS 1
 
  public:
   static constexpr int FRAME_SIZE = 29;
@@ -167,8 +167,7 @@ class ExpFrame {
   int FrameNumber = 0;
 
  public:
-  ExpFrame(const XR25Frame::voc_t& frame)
-      : FrameNumber(frame.counter) {
+  ExpFrame(const XR25Frame::voc_t& frame) : FrameNumber(frame.counter) {
     for (int i = 0; i < FRAME_SIZE; ++i) {
       data[i] = frame.frame[i];
     }
