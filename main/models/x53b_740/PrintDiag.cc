@@ -12,7 +12,7 @@ using OurFrame = X53b740Frame;
     if (view_mask.test(bit++) && ct >= 0) {                 \
       auto p = std::min(dst_max, dst + ct);                 \
       auto l = std::max(ssize_t(0), dst_size - ct);         \
-      ct += snprintf(p, l, "%02u: " fmt, bit, __VA_ARGS__); \
+      ct += snprintf(p, l, "%02u " fmt, bit, __VA_ARGS__); \
     }                                                       \
   } while (0)
 
@@ -44,8 +44,6 @@ static void frame_hex_fill(const OurFrame::frame_data_t& frame,
                            const char* sep = ",") {
   tohex(&frame[0], frame.size(), frame_hex, sizeof frame_hex, sep);
 }
-
-inline const char* btoa(bool v) { return v ? "X" : " "; }
 
 int PrintDiagX53b740::snprint_diag(char* dst, size_t dst_siz,
                                    line_view_mask_t view_mask) const {
@@ -87,16 +85,16 @@ int PrintDiagX53b740::snprint_diag(char* dst, size_t dst_siz,
     diag_printf("%6d %s\n", d.get_engine_knocking(), _("Engine-Knock"));
     diag_printf("%6d mBar %s\n", d.get_atmospheric_pressure_mBar(),
                 _("Atmosphere"));
-    diag_printf("   [%s] %s\n", btoa(d.is_throttle_fully_open()),
+    diag_printf("%6d %s\n", (d.is_throttle_fully_open()),
                 _("Throttle Full-Power"));
-    diag_printf("   [%s] %s\n", btoa(d.is_throttle_fully_closed()),
+    diag_printf("%6d %s\n", (d.is_throttle_fully_closed()),
                 _("Throttle Idle"));
-    diag_printf("   [%s] %s\n", btoa(d.is_fuel_pump_on()), _("Fuel-Pump"));
+    diag_printf("%6d %s\n", d.is_fuel_pump_on(), _("Fuel-Pump"));
 
 #if 0  // no idea which index, if any
-    diag_printf("   [%s] %s\n", btoa(d.is_vacuum_provided_to_egr_valve()),
+    diag_printf("%6d %s\n", (d.is_vacuum_provided_to_egr_valve()),
                 _("EGR+EVap enabled"));
-    diag_printf("   [%s] %s\n", btoa(d.is_oxygen_sensor_loop_closed()),
+    diag_printf("%6d %s\n", (d.is_oxygen_sensor_loop_closed()),
                 _("O2 sensor loop"));
 #endif
     diag_printf("%6d °D %s (26)\n", d[28], _("Knock-Delay"));

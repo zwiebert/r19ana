@@ -35,7 +35,7 @@ bool cli_parse_and_execute_cmdline(char* src) {
 
 int r19_alloc_and_print(char*& dst, const PrintCarDiag& print_diag,
                         const PrintCarDiag::line_view_mask_t& mask) {
-  const char prepend_txt[] = "\n";  // "\x1B[2J";
+  const char prepend_txt[] = "\n\n";  // "\x1B[2J";
   const char append_txt[] = "";     // "\x1B[2J";
   const size_t prepend_txt_len = sizeof prepend_txt - 1;
   const size_t append_txt_len = sizeof append_txt - 1;
