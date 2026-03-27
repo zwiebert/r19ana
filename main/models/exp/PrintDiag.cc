@@ -12,7 +12,7 @@ using OurFrame = class ExpFrame;
     if (view_mask.test(bit++) && ct >= 0) {                 \
       auto p = std::min(dst_max, dst + ct);                 \
       auto l = std::max(ssize_t(0), dst_size - ct);         \
-      ct += snprintf(p, l, "%02u: " fmt, bit, __VA_ARGS__); \
+      ct += snprintf(p, l, "%02u " fmt, bit, __VA_ARGS__); \
     }                                                       \
   } while (0)
 

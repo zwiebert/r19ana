@@ -1,0 +1,171 @@
+// main.cc
+
+#include <getopt.h>
+#include <stdio.h>
+#include <string.h>
+
+#include <chrono>
+#include <fstream>
+#include <iostream>
+#include <thread>
+
+#include "ConsoleTransport.hh"
+#include "FrameProcessor.hh"
+#include "UartTransport.hh"
+#include "Xr25Transport.hh"
+#include "cli.hh"
+#include "main.hh"
+#include "select_model.hh"
+
+#define D(x)
+
+Transport&& term_transport = ConsoleTransport();
+
+static int hex_nibble(char c) {
+  if (c >= '0' && c <= '9') return c - '0';
+  if (c >= 'a' && c <= 'f') return c - 'a' + 10;
+  if (c >= 'A' && c <= 'F') return c - 'A' + 10;
+  return -1;
+}
+
+void hex2voc(XR25Frame::voc_t& voc, const char* src) {
+  voc.frame_len = 0;
+  if (!src) return;
+
+  unsigned dst_idx = 0;
+  int high_nibble = -1;
+
+  for (const char* p = src; *p != '\0'; ++p) {
+    int val = hex_nibble(*p);
+    if (val < 0) {
+      // invalid char, abort and reset
+      voc.frame_len = 0;
+      return;
+    }
+    if (high_nibble < 0) {
+      high_nibble = val;
+      continue;
+    }
+    // complete byte
+    if (dst_idx >= XR25Frame::FRAME_MAX_SIZE) {
+      break;
+    }
+    voc.frame[dst_idx++] = static_cast<uint8_t>((high_nibble << 4) | val);
+    high_nibble = -1;
+  }
+
+  // ignore final nibble if odd length
+  voc.frame_len = dst_idx;
+}
+
+int main(int argc, char** argv) {
+  constexpr const char* usage_txt =
+      "Usage: xr25-hex2human  [OPTION...]\n"
+      "\n"
+      "  -i, --infile=FILE\n"
+      "  -o, --outfile=FILE\n"
+      "  -m, --model=MODEL (x53b-740|raw|exp)\n"
+      "\n";
+
+  constexpr struct option long_options[] = {
+      {"infile", required_argument, 0, 'i'},
+      {"outfile", required_argument, 0, 'o'},
+      {"model", required_argument, 0, 'm'},
+      {"help", no_argument, 0, 'h'},
+      {}};
+
+  constexpr const char* short_options = "i:m:o:h";
+
+  int c;
+  int digit_optind = 0;
+
+  const char* hexfile_name = nullptr;
+  const char* outfile_name = nullptr;
+  const char* model_name = "73PS";
+
+  while (1) {
+    int this_option_optind = optind ? optind : 1;
+    int option_index = 0;
+
+    c = getopt_long(argc, argv, short_options, long_options, &option_index);
+    if (c == -1) break;
+
+    switch (c) {
+      case 0:
+        printf("option %s", long_options[option_index].name);
+        if (optarg) printf(" with arg %s", optarg);
+        printf("\n");
+        break;
+
+      case 'i':
+        hexfile_name = optarg;
+        break;
+
+      case 'o':
+        outfile_name = optarg;
+        break;
+
+
+      case 'm':
+        model_name = optarg;
+        break;
+
+      case 'h':
+        std::cout << usage_txt;
+        return EXIT_SUCCESS;
+        break;
+
+      case ':':
+        return EXIT_FAILURE;
+        break;
+
+      case '?':
+        return EXIT_FAILURE;
+        break;
+
+      default:
+        printf("?? getopt returned character code 0%o ??\n", c);
+    }
+  }
+
+  select_model(model_name);
+  std::ifstream* is = nullptr;
+  std::ofstream* os = nullptr;
+
+  if (hexfile_name) {
+    is = new std::ifstream(hexfile_name);
+    if (!is && *is) {
+      return EXIT_FAILURE;
+    }
+    std::cin.rdbuf(is->rdbuf());
+  }
+
+  if (outfile_name) {
+    os = new std::ofstream(outfile_name);
+    if (!os && *os) {
+      return EXIT_FAILURE;
+    }
+    std::cout.rdbuf(os->rdbuf());
+  }
+
+  XR25Frame::voc_t voc;
+  for (std::string line; std::getline(std::cin, line);) {
+    const char* cline = line.c_str();
+
+    if (true) {  // validate line
+      ++voc.counter;
+    }
+
+    hex2voc(voc, line.c_str());
+    print_car_diag->push_frame(voc);
+
+    char* dst = 0;
+    if (auto dst_len = r19_alloc_and_print(dst, *print_car_diag, Mask);
+        dst_len > 0) {
+      std::cout << dst;
+    }
+    free(dst);
+    continue;
+  }
+  delete is;
+}

@@ -14,7 +14,7 @@ using OurFrame = RawFrame;
     if (view_mask.test(bit++) && ct >= 0) {                 \
       auto p = std::min(dst_max, dst + ct);                 \
       auto l = std::max(ssize_t(0), dst_size - ct);         \
-      ct += snprintf(p, l, "%02u: " fmt, bit, __VA_ARGS__); \
+      ct += snprintf(p, l, "%02u " fmt, bit, __VA_ARGS__); \
     }                                                       \
   } while (0)
 
@@ -66,11 +66,7 @@ static int frame_print(char* dst, size_t dst_siz, const OurFrame& d,
 
     ///////////////////////////////////////////////
     frame_hex_fill(d, "");
-    if (view_mask.test(bit++) && ct >= 0) {
-      auto p = std::min(dst_max, dst + ct);
-      auto l = std::max(ssize_t(0), dst_size - ct);
-      ct += snprintf(p, l, "%02u: %s\n", bit, frame_hex);
-    }
+    diag_printf("%s\n", frame_hex);
     ///////////////////////////////////////////////
 
     diag_printf("%6d %s\n", d.get_frame_count(), _("Frame-Count"));
