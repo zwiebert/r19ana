@@ -63,25 +63,28 @@ int main(int argc, char** argv) {
       "Usage: xr25-hex2human  [OPTION...]\n"
       "\n"
       "  -i, --infile=FILE\n"
+      "  -p, --line-prefix=PREFIX (default: \"01 \")\n"
       "  -o, --outfile=FILE\n"
       "  -m, --model=MODEL (x53b-740|raw|exp)\n"
       "\n";
 
   constexpr struct option long_options[] = {
       {"infile", required_argument, 0, 'i'},
+      {"line-prefix", required_argument, 0, 'p'},
       {"outfile", required_argument, 0, 'o'},
       {"model", required_argument, 0, 'm'},
       {"help", no_argument, 0, 'h'},
       {}};
 
-  constexpr const char* short_options = "i:m:o:h";
+  constexpr const char* short_options = "i:p:m:o:h";
 
   int c;
   int digit_optind = 0;
 
-  const char* hexfile_name = nullptr;
+  const char* infile_name = nullptr;
   const char* outfile_name = nullptr;
   const char* model_name = "73PS";
+  const char *line_prefix = "01 ";
 
   while (1) {
     int this_option_optind = optind ? optind : 1;
@@ -98,13 +101,16 @@ int main(int argc, char** argv) {
         break;
 
       case 'i':
-        hexfile_name = optarg;
+        infile_name = optarg;
+        break;
+
+      case 'p':
+        line_prefix = optarg;
         break;
 
       case 'o':
         outfile_name = optarg;
         break;
-
 
       case 'm':
         model_name = optarg;
@@ -129,11 +135,11 @@ int main(int argc, char** argv) {
   }
 
   select_model(model_name);
-  std::ifstream* is = nullptr;
-  std::ofstream* os = nullptr;
+  std::unique_ptr<std::ifstream> is;
+  std::unique_ptr<std::ofstream> os;
 
-  if (hexfile_name) {
-    is = new std::ifstream(hexfile_name);
+  if (infile_name) {
+    is = std::unique_ptr<std::ifstream>(new std::ifstream(infile_name));
     if (!is && *is) {
       return EXIT_FAILURE;
     }
@@ -141,22 +147,25 @@ int main(int argc, char** argv) {
   }
 
   if (outfile_name) {
-    os = new std::ofstream(outfile_name);
+    os = std::unique_ptr<std::ofstream>(new std::ofstream(outfile_name));
     if (!os && *os) {
       return EXIT_FAILURE;
     }
     std::cout.rdbuf(os->rdbuf());
   }
 
-  XR25Frame::voc_t voc;
+  XR25Frame::voc_t voc {};
   for (std::string line; std::getline(std::cin, line);) {
-    const char* cline = line.c_str();
+    if (!line.starts_with(line_prefix)) {
+         continue;
+    }
+    const char* cline = line.c_str() + strlen(line_prefix);
 
     if (true) {  // validate line
       ++voc.counter;
     }
 
-    hex2voc(voc, line.c_str());
+    hex2voc(voc, cline);
     print_car_diag->push_frame(voc);
 
     char* dst = 0;
@@ -167,5 +176,4 @@ int main(int argc, char** argv) {
     free(dst);
     continue;
   }
-  delete is;
 }
