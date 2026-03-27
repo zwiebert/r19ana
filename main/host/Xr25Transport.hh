@@ -10,10 +10,12 @@ class Xr25Transport : public Transport {
   using thread_fun_t = void (*)(ReadCallback cb, bool& keep_running);
 
  public:
-  Xr25Transport(thread_fun_t thread_fun = read_data_thread)
-      : m_thread_fun(read_data_thread) {}
+  Xr25Transport(thread_fun_t thread_fun = read_thread_fun)
+      : m_thread_fun(read_thread_fun) {}
+
   ~Xr25Transport() { stop(); }
-  static void read_data_thread(ReadCallback cb, bool& keep_running) {
+
+  static void read_thread_fun(ReadCallback cb, bool& keep_running) {
     if (std::ifstream is("data/r19data.bin", std::ifstream::binary); is) {
       char buf[16];
       for (; is && keep_running;
@@ -34,7 +36,7 @@ class Xr25Transport : public Transport {
   void stop() override {
     if (!keep_running) return;
     keep_running = false;
-    m_thread.join();
+    if (m_thread.joinable()) m_thread.join();
   }
 
  private:

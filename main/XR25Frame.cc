@@ -4,8 +4,9 @@
 #include <iomanip>
 #include <sstream>
 
-
 bool XR25Frame::add(uint8_t b) {
+  if (m_frames_rb.getFree() == 0) return false;
+
   if (b == 0xff && !m_last_byte_was_ff) {
     m_last_byte_was_ff = true;
     return true;
@@ -29,24 +30,9 @@ bool XR25Frame::add(uint8_t b) {
   return true;
 }
 
-bool XR25Frame::append(const std::vector<uint8_t>& data) {
-  for (auto b : data)
-    if (!add(b)) return false;
-
-  return true;
-}
-
-bool XR25Frame::append(const std::vector<uint8_t>& data, int nmb) {
-  for (int i = 0; i < nmb; ++i)
-    if (!add(data[i])) return false;
-
-  return true;
-}
-
-bool XR25Frame::append(const std::uint8_t* data, size_t data_len) {
+unsigned XR25Frame::append(const std::uint8_t* data, size_t data_len) {
   for (unsigned i = 0; i < data_len; ++i)
-    if (!add(data[i])) return false;
+    if (!add(data[i])) return i;
 
-  return true;
+  return data_len;
 }
-

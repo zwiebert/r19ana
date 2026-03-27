@@ -15,6 +15,7 @@ add_compile_options("-std=c++20")
 include_directories("." ".." "host")
 add_executable(main_test ${srcs} ${srcs_host} host/main_test.cc)
 add_executable(xr25-hex2human ${srcs} ${srcs_host} host/xr25-hex2human.cc)
+add_executable(xr25-bin2human ${srcs} ${srcs_host} host/xr25-bin2human.cc)
 endif()
 
 

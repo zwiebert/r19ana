@@ -26,9 +26,7 @@ class XR25Frame {
   XR25Frame() : m_frames_rb(RINGBUFFER_LENGTH) {}
 
   bool add(uint8_t b);
-  bool append(const std::vector<uint8_t>& data);
-  bool append(const std::vector<uint8_t>& data, int nmb);
-  bool append(const std::uint8_t* data, size_t data_len);
+  unsigned append(const std::uint8_t* data, size_t data_len);
   unsigned get_buffered_frame_count() const { return m_frames_rb.getOccupied(); }
   std::string toString() const;
 

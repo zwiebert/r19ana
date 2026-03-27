@@ -17,8 +17,7 @@ class FrameProcessor {
   explicit FrameProcessor(UpdateCallback);
   ~FrameProcessor();
 
-  void feedBytes(const std::vector<uint8_t>& data);
-  void feedBytes(const uint8_t* data, std::size_t data_len);
+  unsigned feedBytes(const uint8_t* data, std::size_t data_len, bool block = false);
 
   void test() { xr25.test(); }
 
@@ -32,6 +31,7 @@ class FrameProcessor {
   std::thread m_update_thread;
   std::mutex m_update_thread_mutex;
   std::condition_variable m_update_thread_cv;
+  std::condition_variable m_update_thread_cv2;
   bool m_update_thread_keep_running = false;
   int m_last_xr25_frame_number = 0;
 };

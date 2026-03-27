@@ -28,19 +28,28 @@ void FrameProcessor::update_thread_fun() {
       if (!m_nmb_frames_waiting) continue;
       if (!xr25.pull_voc(frame)) continue;
     }
+
+    m_update_thread_cv2.notify_one();
     if (callback) callback(frame);
   }
 }
 
-void FrameProcessor::feedBytes(const uint8_t* data, const size_t data_len) {
-  {
-    std::lock_guard<std::mutex> lk(m_update_thread_mutex);
-    xr25.append(data, data_len);
-    m_nmb_frames_waiting = xr25.get_buffered_frame_count();
-  }
-  m_update_thread_cv.notify_one();
-}
+unsigned FrameProcessor::feedBytes(const uint8_t* data, const size_t data_len,
+                                   bool block) {
+  unsigned len = 0;
 
-void FrameProcessor::feedBytes(const std::vector<uint8_t>& data) {
-  return feedBytes(&data[0], data.size());
+  do {
+    {
+      std::unique_lock<std::mutex> lock(m_update_thread_mutex);
+      if (len && m_nmb_frames_waiting == XR25Frame::RINGBUFFER_LENGTH) {
+        m_update_thread_cv2.wait_for(lock, std::chrono::seconds(2), [this]() {
+          return m_nmb_frames_waiting < XR25Frame::RINGBUFFER_LENGTH;
+        });
+      }
+      len += xr25.append(data + len, data_len - len);
+      m_nmb_frames_waiting = xr25.get_buffered_frame_count();
+    }
+    m_update_thread_cv.notify_one();
+  } while (block && len < data_len);
+  return len;
 }
