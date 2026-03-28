@@ -1,8 +1,9 @@
 ########################## use variables as commandline args #################################
 
-if (!exists("datafile")) { datafile='deine_daten.txt' }
+use_prefilter = (exists("start") || exists("end") || exists("span") || exists("skip") || !exists("datafile"))
 
-use_prefilter = (exists("start") || exists("end") || exists("span") || exists("skip"))
+if (!exists("datafile")) { datafile='-' } #read from stdin by default
+
 
 #1. Configuration (Set these via -e or defaults)
 
