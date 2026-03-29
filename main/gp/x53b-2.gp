@@ -16,6 +16,8 @@ if (exists("png")) {
 set terminal pngcairo size 1920,1080
 set output png 
 }
+fix_yrange = 0
+if (exists("details")) fix_yrange = !details
 
 print "end_block: ", end_block
 print "start_block: ", start_block
@@ -56,52 +58,28 @@ print "end_block: ", end_block
 print "start_block: ", start_block
 print "skip_blocks: ", skip_blocks
 
-################## Calculations #############################
-
-# 2. Use them in your loop or titles
-#current_sec = to_sec(real_id)
-#set title sprintf("Block %d | Time %s", real_id, to_hms(current_sec))
-
-
-
-
 ############################ loop to fill $DATA ##############
 $DATA << EOD
+# Block, 6, 7, 8, 10, 14, 18  (block and line numbers)
 EOD
+
+# 1. Initialize an array for 20 values
+array val[20]
 
 set datafile separator whitespace
 
+# 3. The High-Speed Loop
 do for [i=0:n_blocks-1] {
+    # SINGLE PASS: Use Column 1 (your 1-20 numbers) to index the array
+    # Use Column 2 for the actual data value
+    stats datafile index i using (val[int(real($1))] = $2, 0) nooutput
 
-    # 'nooutput' prevents the terminal from getting messy
-    stats datafile index i using 1:2 nooutput
-    
-    # Only plot if Gnuplot found actual records in this index
-    if (STATS_records > 0) {
-
-    stats datafile index i every ::2::2 using 2  nooutput
-    val3 = (STATS_columns > 0) ? STATS_min : NaN
-    stats datafile index i every ::18::18 using 2  nooutput
-    val19 = (STATS_columns > 0) ? STATS_min : NaN
-
-    stats datafile index i every ::3::3 using 2  nooutput
-    val4 = (STATS_columns > 0) ? STATS_min : NaN
-    stats datafile index i every ::4::4 using 2  nooutput
-    val5 = (STATS_columns > 0) ? STATS_min : NaN
-
-    stats datafile index i every ::14::14 using 2  nooutput
-    val15 = (STATS_columns > 0) ? STATS_min : NaN
-    stats datafile index i every ::19::19 using 2  nooutput
-    val20 = (STATS_columns > 0) ? STATS_min : NaN
-
+    # 4. Append to Summary in your custom "Uniform" order
     set print $DATA append
-    print sprintf("%d %f %f %f %f %f %f", i, val3, val19, val4, val5, val15, val20)
+    print sprintf("%-10d %-10.4f %-10.4f %-10.4f %-10.4f %-10.4f %-10.4f", \
+                  i, val[3], val[19], val[4], val[5], val[15], val[11])
     set print
-    } else {
-        print sprintf("Warning: Index %d is empty!", i)
-    }
 }
-
 
 
 ################## Plot content of $DATA now ##################################
@@ -131,7 +109,11 @@ set y2tics (0, 1)
 # 1. Force the range to match your blocks exactly
 set xrange [start_block : end_block]
 set autoscale xfix  # Prevents Gnuplot from adding 'buffer' space
-
+set yrange [*:*]
+set y2range [*:*]
+if (fix_yrange) {
+set yrange [7 : 16]
+}
 set format x ""       # Versteckt die Zahlen der X-Achse
 
 magic = "(column(-2)*skip_blocks + start_block + $1 * skip_blocks)"
@@ -147,7 +129,8 @@ set xlabel ""
 set ytics mirror
 set ylabel "Celsius"
 set y2label ""
-
+set yrange [-30 : 130]
+set y2range [-30 : 130]
 plot $DATA u @magic:4 with lines lc "blue" title "Engine Coolant Temp", \
      $DATA u @magic:5 axes x1y2 with lines lc "red" title "Intake Air Temp"
 
@@ -158,17 +141,22 @@ set format x "%g"     # Aktiviert die Zahlen wieder (Standard-Format)
 
 set ylabel ""
 
+set yrange [*:*]
+set y2range [*:*]
+
 set ytics nomirror
-set y2label ""
+set y2tics 
+set y2label "???"
 
 
 plot $DATA u @magic:6 with lines lc "dark-grey" title "Knocking", \
      $DATA u @magic:7 axes x1y2 with lines lc "brown" title "Knock-Corr-Delay"
 
+
+
+#######################
 unset multiplot
 
 if (exists("png")) {
 unset output
 }
-
-

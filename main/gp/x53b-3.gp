@@ -1,11 +1,9 @@
 ########################## use variables as commandline args #################################
+
 use_prefilter = (exists("start") || exists("end") || exists("span") || exists("skip") || !exists("datafile"))
 
 if (!exists("datafile")) { datafile='-' } #read from stdin by default
 
-#if (!exists("datafile")) { datafile='deine_daten.txt' }
-
-use_prefilter = (exists("start") || exists("end") || exists("span") || exists("skip"))
 
 #1. Configuration (Set these via -e or defaults)
 
@@ -18,7 +16,6 @@ if (exists("png")) {
 set terminal pngcairo size 1920,1080
 set output png 
 }
-
 fix_yrange = 0
 if (exists("details")) fix_yrange = !details
 
@@ -50,10 +47,7 @@ datafile = tempfile
 }
 
 
-data = "datafile"
-
-
-stats @data nooutput
+stats datafile nooutput
 
 n_blocks = STATS_blocks
 end_block = (n_blocks - 1) * skip_blocks + start_block;
@@ -64,7 +58,6 @@ print "end_block: ", end_block
 print "start_block: ", start_block
 print "skip_blocks: ", skip_blocks
 
-
 ############################ loop to fill $DATA ##############
 $DATA << EOD
 # Block, 6, 7, 8, 10, 14, 18  (block and line numbers)
@@ -72,6 +65,8 @@ EOD
 
 # 1. Initialize an array for 20 values
 array val[20]
+
+set datafile separator whitespace
 
 # 3. The High-Speed Loop
 do for [i=0:n_blocks-1] {
@@ -82,17 +77,15 @@ do for [i=0:n_blocks-1] {
     # 4. Append to Summary in your custom "Uniform" order
     set print $DATA append
     print sprintf("%-10d %-10.4f %-10.4f %-10.4f %-10.4f %-10.4f %-10.4f", \
-                  i, val[6], val[7], val[8], val[14], val[10], val[18])
+                  i, val[11], val[12], val[13], val[9], val[16], val[20])
     set print
 }
-
-
-
 
 
 ################## Plot content of $DATA now ##################################
 model = "R19 X53B F3N-740"
 our_title = sprintf("Model: %s | Blocks: %d | Start-Time: %s | Duration: %s " , model, count_blocks, to_hms(to_sec(start_block)), to_hms(to_sec(count_blocks)))
+
 set multiplot layout 3,1 title our_title
 
 # Breite der Ränder in Zeichen-Einheiten (oder Screen-Einheiten) festlegen
@@ -100,62 +93,67 @@ set lmargin 12   # Linker Rand (genug Platz für die längste Zahl + Label)
 set rmargin 10   # Rechter Rand (Platz für y2-Label, falls genutzt)
 
 
-
+############## diagram 1 #####################
 set xlabel ""
-set ylabel "RPM"
-set y2label "mBar"
-if (fix_yrange) {
-set yrange [0 : 8000]
-set y2range [0 : 1200]
-}
+
+set ylabel "Volt"
+
 # Erlaube eine separate Skalierung für die rechte Achse
 set ytics nomirror
 set y2tics
+set y2label "???"
+set y2range [* : *]
 
 
 # 1. Force the range to match your blocks exactly
 set xrange [start_block : end_block]
 set autoscale xfix  # Prevents Gnuplot from adding 'buffer' space
-
+set yrange [*:*]
+set y2range [*:*]
+if (fix_yrange) {
+set yrange [7 : 16]
+}
 set format x ""       # Versteckt die Zahlen der X-Achse
 
-plot $DATA u (column(-2)*skip_blocks + start_block + $1 * skip_blocks):2 with lines lc "grey" title "RPM", \
-     $DATA u (column(-2)*skip_blocks + start_block + $1 * skip_blocks):3 axes x1y2 with lines title "MAP"
+magic = "(column(-2)*skip_blocks + start_block + $1 * skip_blocks)"
+
+plot $DATA u @magic:2 with lines lc "grey" title "Adapt Air/Fuel", \
+     $DATA u @magic:3 axes x1y2 with lines title "Adapt Drive"
+
+unset y2range
+
+############## diagram 2 #####################
 
 set xlabel ""
-set ylabel "Degree"
-set y2label "mV"
-set y2range [-100 : 1000]
-unset yrange
+set ytics mirror
+set ylabel ""
+set y2label ""
+plot $DATA u @magic:4 with lines lc "blue" title "Adapt Idle", \
+     $DATA u @magic:5 axes x1y2 with lines lc "red" title "???"
 
-#plot $DATA u 1:4 with lines lc "gold" title "Advance", \
-#  $DATA u 1:5 axes x1y2 with lines lc "red" title "Oxygen"
+############## diagram 3 #####################
 
-plot $DATA u (column(-2)*skip_blocks + start_block + $1 * skip_blocks):4 with lines lc "gold" title "Advance", \
-     $DATA u (column(-2)*skip_blocks + start_block + $1 * skip_blocks):5 axes x1y2 with lines lc "red" title "Oxygen"
-
-set xlabel "Block Nummer (1 Block alle 15ms)"
-set ylabel "ms"
-set y2label "boolean"
-
-# make boolean graph more visible
-set yrange
-set y2range [-0.1 : 1.1]
-set y2tics (0, 1)
-
+set xlabel "Block Number (1 Block per 15ms)"
 set format x "%g"     # Aktiviert die Zahlen wieder (Standard-Format)
 
+set ylabel ""
+
+set yrange [*:*]
+set y2range [*:*]
+
+set ytics nomirror
+set y2tics 
+set y2label "???"
+
+
+plot $DATA u @magic:6 with lines lc "dark-grey" title "??? (16)", \
+     $DATA u @magic:7 axes x1y2 with lines lc "brown" title "??? (20)"
 
 
 
-
-plot $DATA u (column(-2)*skip_blocks + start_block + $1 * skip_blocks):6 with lines lc "blue" title "Inj-Duration", \
-     $DATA u (column(-2)*skip_blocks + start_block + $1 * skip_blocks):7 axes x1y2 with lines lc "brown" title "Throttle-Idle"
-
+#######################
 unset multiplot
 
 if (exists("png")) {
 unset output
 }
-
-
