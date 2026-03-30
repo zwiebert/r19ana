@@ -13,7 +13,7 @@ class X53b740Frame : CarModelBase {
   // }
 
  public:
-#define OLD_FORMULAS 1
+#define OLD_FORMULAS 0
   static constexpr int FRAME_SIZE = 29;
   using frame_data_t = std::array<uint8_t, FRAME_SIZE>;
 
@@ -146,7 +146,7 @@ class X53b740Frame : CarModelBase {
 
   bool is_oxygen_sensor_loop_closed() const { return X(idx_t::flags4) & 0x08; }
   bool is_vacuum_provided_to_egr_valve() const {
-    return X(idx_t::flags4) & 0x20;
+    return !(X(idx_t::flags7) & 0x20);
   }
 
   /**

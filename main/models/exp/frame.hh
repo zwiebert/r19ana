@@ -62,6 +62,24 @@ class ExpFrame : CarModelBase {
     return int(X(idx_t::MAP) * 4);
 #endif
   }
+
+  uint8_t get_flags_0() const { return X(idx_t::flags0); }
+  uint8_t get_flags_1() const { return X(idx_t::flags1); }
+  uint8_t get_flags_2() const { return X(idx_t::flags2); }
+  uint8_t get_flags_3() const { return X(idx_t::flags3); }
+  uint8_t get_flags_4() const { return X(idx_t::flags4); }
+  uint8_t get_flags_5() const { return X(idx_t::flags5); }
+  uint8_t get_flags_6() const { return X(idx_t::flags6); }
+  uint8_t get_flags_7() const { return X(idx_t::flags7); }
+
+  bool get_flag_0(uint8_t bit) const { return X(idx_t::flags0) & (1 << bit); }
+  bool get_flag_1(uint8_t bit) const { return X(idx_t::flags1) & (1 << bit); }
+  bool get_flag_2(uint8_t bit) const { return X(idx_t::flags2) & (1 << bit); }
+  bool get_flag_3(uint8_t bit) const { return X(idx_t::flags3) & (1 << bit); }
+  bool get_flag_4(uint8_t bit) const { return X(idx_t::flags4) & (1 << bit); }
+  bool get_flag_5(uint8_t bit) const { return X(idx_t::flags5) & (1 << bit); }
+  bool get_flag_6(uint8_t bit) const { return X(idx_t::flags6) & (1 << bit); }
+  bool get_flag_7(uint8_t bit) const { return X(idx_t::flags7) & (1 << bit); }
   int get_engine_coolant_temperature_Celsius() const {
     return int(X(idx_t::ECT) * 0.625f - 40.0f);
   }
@@ -143,7 +161,7 @@ class ExpFrame : CarModelBase {
 
   bool is_oxygen_sensor_loop_closed() const { return X(idx_t::flags4) & 0x08; }
   bool is_vacuum_provided_to_egr_valve() const {
-    return X(idx_t::flags4) & 0x20;
+    return !(X(idx_t::flags7) & 0x20);
   }
 
   /**

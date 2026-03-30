@@ -91,7 +91,7 @@ int PrintDiagX53b740::snprint_diag(char* dst, size_t dst_siz,
                 _("Throttle Idle"));
     diag_printf("%6d %s\n", d.is_fuel_pump_on(), _("Fuel-Pump"));
 
-#if 0  // no idea which index, if any
+#if 1  // no idea which index, if any
     diag_printf("%6d %s\n", (d.is_vacuum_provided_to_egr_valve()),
                 _("EGR+EVap enabled"));
     diag_printf("%6d %s\n", (d.is_oxygen_sensor_loop_closed()),

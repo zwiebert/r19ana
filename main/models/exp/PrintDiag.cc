@@ -7,13 +7,14 @@
 
 using OurFrame = class ExpFrame;
 
-#define diag_printf(fmt, ...)                               \
-  do {                                                      \
-    if (view_mask.test(bit++) && ct >= 0) {                 \
-      auto p = std::min(dst_max, dst + ct);                 \
-      auto l = std::max(ssize_t(0), dst_size - ct);         \
+#define diag_printf(fmt, ...)                              \
+  do {                                                     \
+    bit++; \
+    if (ct >= 0) {                \
+      auto p = std::min(dst_max, dst + ct);                \
+      auto l = std::max(ssize_t(0), dst_size - ct);        \
       ct += snprintf(p, l, "%02u " fmt, bit, __VA_ARGS__); \
-    }                                                       \
+    }                                                      \
   } while (0)
 
 static int tohex(const uint8_t* in, size_t insz, char* out, size_t outsz,
@@ -88,18 +89,20 @@ int PrintDiagExp::snprint_diag(char* dst, size_t dst_siz,
     diag_printf("%6d %s\n", d.get_engine_knocking(), _("Engine-Knock"));
     diag_printf("%6d mBar %s\n", d.get_atmospheric_pressure_mBar(),
                 _("Atmosphere"));
-    diag_printf("   [%s] %s\n", btoa(d.is_throttle_fully_open()),
+    diag_printf("%6d %s\n", (d.is_throttle_fully_open()),
                 _("Throttle Full-Power"));
-    diag_printf("   [%s] %s\n", btoa(d.is_throttle_fully_closed()),
-                _("Throttle Idle"));
-    diag_printf("   [%s] %s\n", btoa(d.is_fuel_pump_on()), _("Fuel-Pump"));
+    diag_printf("%6d %s\n", (d.is_throttle_fully_closed()), _("Throttle Idle"));
+    diag_printf("%6d %s\n", d.is_fuel_pump_on(), _("Fuel-Pump"));
+
+#if 1  // no idea which index, if any
+    diag_printf("%6d %s\n", (d.is_vacuum_provided_to_egr_valve()),
+                _("EGR+EVap enabled"));
+    diag_printf("%6d %s\n", (d.is_oxygen_sensor_loop_closed()),
+                _("O2 sensor loop"));
+#endif
+    diag_printf("%6d °D %s (26)\n", d[28], _("Knock-Delay"));
+
     ///////////////////////////////////////////////
-    frame_hex_fill(d.get_frame());
-    diag_printf(" 00-05 %.*s\n", 17, frame_hex + 18 * 0);
-    diag_printf(" 06-11 %.*s\n", 17, frame_hex + 18 * 1);
-    diag_printf(" 12-17 %.*s\n", 17, frame_hex + 18 * 2);
-    diag_printf(" 18-23 %.*s\n", 17, frame_hex + 18 * 3);
-    diag_printf(" 24-28 %.*s\n", 14, frame_hex + 18 * 4);
     ///////////////////////////////////////////////
 
 #if 0  // no idea which index, if any
@@ -111,9 +114,15 @@ int PrintDiagExp::snprint_diag(char* dst, size_t dst_siz,
     /////////////////////////// experimental
     /////////////// try and error confirmed /////////////
     // fuel pump (can be heard when ignition turns on)
-    diag_printf("   [%s] %s\n", btoa(d[23] & 0x08), _("21-0x08"));
-    diag_printf("   [%s] %s\n", btoa(d[23] & 0x20), _("21-0x20"));
-    diag_printf("   [%s] %s\n", btoa(d[23] & 0x80), _("21-0x80"));
+    for (uint8_t i = 0; i < 8; ++i) diag_printf("%6d flags0-bit: %u\n", d.get_flag_0(i), i);
+    for (uint8_t i = 0; i < 8; ++i) diag_printf("%6d flags1-bit: %u\n", d.get_flag_1(i), i);
+    for (uint8_t i = 0; i < 8; ++i) diag_printf("%6d flags2-bit: %u\n", d.get_flag_2(i), i);
+    for (uint8_t i = 0; i < 8; ++i) diag_printf("%6d flags3-bit: %u\n", d.get_flag_3(i), i);
+    for (uint8_t i = 0; i < 8; ++i) diag_printf("%6d flags4-bit: %u\n", d.get_flag_4(i), i);
+    for (uint8_t i = 0; i < 8; ++i) diag_printf("%6d flags5-bit: %u\n", d.get_flag_5(i), i);
+    for (uint8_t i = 0; i < 8; ++i) diag_printf("%6d flags6-bit: %u\n", d.get_flag_6(i), i);
+    for (uint8_t i = 0; i < 8; ++i) diag_printf("%6d flags7-bit: %u\n", d.get_flag_7(i), i);
+
     /////////////////////////////////////////////////////
 #if 0
     diag_printf("%6d %s\n", d.get_idle_regulation(), _("Idle-Regulation"));
@@ -132,10 +141,6 @@ int PrintDiagExp::snprint_diag(char* dst, size_t dst_siz,
     diag_printf("%6d ??? %s\n", int(d[27] | (d[28] << 8)) - 0x8182,
                 _("(26,25) - 0x8182"));
     //  unknown: 17, 23, 24, 25, 29, 30, 31
-    diag_printf("???    15=%02x,21=%02x,22=%02x,23=%02x\n", d[17], d[23], d[24],
-                d[25]);
-    diag_printf("???    26=%02x,27=%02x,28=%02x,2=%02x\n", d[28], d[29], d[30],
-                d[4]);
 
     /////////////////////// end experimental ///////////////////////////
 
