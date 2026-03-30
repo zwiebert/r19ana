@@ -64,7 +64,7 @@ $DATA << EOD
 EOD
 
 # 1. Initialize an array for 20 values
-array val[20]
+array val[32]
 
 set datafile separator whitespace
 
@@ -86,11 +86,13 @@ do for [i=0:n_blocks-1] {
 model = "R19 X53B F3N-740"
 our_title = sprintf("Model: %s | Blocks: %d | Start-Time: %s | Duration: %s " , model, count_blocks, to_hms(to_sec(start_block)), to_hms(to_sec(count_blocks)))
 
-set multiplot layout 3,1 title our_title
+if (!exists("singleplot")) set multiplot layout 3,1 title our_title
 
 # Breite der Ränder in Zeichen-Einheiten (oder Screen-Einheiten) festlegen
 set lmargin 12   # Linker Rand (genug Platz für die längste Zahl + Label)
 set rmargin 10   # Rechter Rand (Platz für y2-Label, falls genutzt)
+
+set border linewidth 0.75 dashtype 3
 
 
 ############## diagram 1 #####################
@@ -118,6 +120,7 @@ set format x ""       # Versteckt die Zahlen der X-Achse
 
 magic = "(column(-2)*skip_blocks + start_block + $1 * skip_blocks)"
 
+if (!exists("singleplot") || (singleplot == 1)) \
 plot $DATA u @magic:2 with lines lc "grey" title "Battery", \
      $DATA u @magic:3 axes x1y2 with lines title "Fuel-Pump"
 
@@ -131,6 +134,8 @@ set ylabel "Celsius"
 set y2label ""
 set yrange [-30 : 130]
 set y2range [-30 : 130]
+
+if (!exists("singleplot") || (singleplot == 2)) \
 plot $DATA u @magic:4 with lines lc "blue" title "Engine Coolant Temp", \
      $DATA u @magic:5 axes x1y2 with lines lc "red" title "Intake Air Temp"
 
@@ -149,14 +154,12 @@ set y2tics
 set y2label "???"
 
 
+if (!exists("singleplot") || (singleplot == 3)) \
 plot $DATA u @magic:6 with lines lc "dark-grey" title "Knocking", \
      $DATA u @magic:7 axes x1y2 with lines lc "brown" title "Knock-Corr-Delay"
 
 
 
 #######################
-unset multiplot
-
-if (exists("png")) {
-unset output
-}
+if (!exists("singleplot")) unset multiplot
+if (exists("png")) unset output

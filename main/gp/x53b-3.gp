@@ -64,7 +64,7 @@ $DATA << EOD
 EOD
 
 # 1. Initialize an array for 20 values
-array val[20]
+array val[32]
 
 set datafile separator whitespace
 
@@ -77,7 +77,7 @@ do for [i=0:n_blocks-1] {
     # 4. Append to Summary in your custom "Uniform" order
     set print $DATA append
     print sprintf("%-10d %-10.4f %-10.4f %-10.4f %-10.4f %-10.4f %-10.4f", \
-                  i, val[11], val[12], val[13], val[9], val[16], val[20])
+                  i, val[11], val[12], val[13], val[6], val[16], val[20])
     set print
 }
 
@@ -86,17 +86,18 @@ do for [i=0:n_blocks-1] {
 model = "R19 X53B F3N-740"
 our_title = sprintf("Model: %s | Blocks: %d | Start-Time: %s | Duration: %s " , model, count_blocks, to_hms(to_sec(start_block)), to_hms(to_sec(count_blocks)))
 
-set multiplot layout 3,1 title our_title
+if (!exists("singleplot")) set multiplot layout 3,1 title our_title
 
 # Breite der Ränder in Zeichen-Einheiten (oder Screen-Einheiten) festlegen
 set lmargin 12   # Linker Rand (genug Platz für die längste Zahl + Label)
 set rmargin 10   # Rechter Rand (Platz für y2-Label, falls genutzt)
 
+set border linewidth 0.75 dashtype 3
 
 ############## diagram 1 #####################
 set xlabel ""
 
-set ylabel "Volt"
+set ylabel ""
 
 # Erlaube eine separate Skalierung für die rechte Achse
 set ytics nomirror
@@ -110,14 +111,12 @@ set xrange [start_block : end_block]
 set autoscale xfix  # Prevents Gnuplot from adding 'buffer' space
 set yrange [*:*]
 set y2range [*:*]
-if (fix_yrange) {
-set yrange [7 : 16]
-}
 set format x ""       # Versteckt die Zahlen der X-Achse
 
 magic = "(column(-2)*skip_blocks + start_block + $1 * skip_blocks)"
 
-plot $DATA u @magic:2 with lines lc "grey" title "Adapt Air/Fuel", \
+if (!exists("singleplot") || (singleplot == 1)) \
+plot $DATA u @magic:2 with lines lc "violet" title "Adapt Air/Fuel", \
      $DATA u @magic:3 axes x1y2 with lines title "Adapt Drive"
 
 unset y2range
@@ -127,9 +126,11 @@ unset y2range
 set xlabel ""
 set ytics mirror
 set ylabel ""
-set y2label ""
+set y2label "RPM"
+
+if (!exists("singleplot") || (singleplot == 2)) \
 plot $DATA u @magic:4 with lines lc "blue" title "Adapt Idle", \
-     $DATA u @magic:5 axes x1y2 with lines lc "red" title "???"
+     $DATA u @magic:5 axes x1y2 with lines lc "red" title "Engine Speed
 
 ############## diagram 3 #####################
 
@@ -146,14 +147,12 @@ set y2tics
 set y2label "???"
 
 
+if (!exists("singleplot") || (singleplot == 3)) \
 plot $DATA u @magic:6 with lines lc "dark-grey" title "??? (16)", \
      $DATA u @magic:7 axes x1y2 with lines lc "brown" title "??? (20)"
 
 
 
 #######################
-unset multiplot
-
-if (exists("png")) {
-unset output
-}
+if (!exists("singleplot")) unset multiplot
+if (exists("png")) unset output

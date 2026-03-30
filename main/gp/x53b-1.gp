@@ -71,7 +71,7 @@ $DATA << EOD
 EOD
 
 # 1. Initialize an array for 20 values
-array val[20]
+array val[32]
 
 # 3. The High-Speed Loop
 do for [i=0:n_blocks-1] {
@@ -93,17 +93,21 @@ do for [i=0:n_blocks-1] {
 ################## Plot content of $DATA now ##################################
 model = "R19 X53B F3N-740"
 our_title = sprintf("Model: %s | Blocks: %d | Start-Time: %s | Duration: %s " , model, count_blocks, to_hms(to_sec(start_block)), to_hms(to_sec(count_blocks)))
-set multiplot layout 3,1 title our_title
+
+if (!exists("singleplot")) set multiplot layout 3,1 title our_title
 
 # Breite der Ränder in Zeichen-Einheiten (oder Screen-Einheiten) festlegen
 set lmargin 12   # Linker Rand (genug Platz für die längste Zahl + Label)
 set rmargin 10   # Rechter Rand (Platz für y2-Label, falls genutzt)
 
 
+set border linewidth 0.75 dashtype 3
+set mouse format "%.4f"
+set mouse mouseformat 3  # Shows X, Y1, and Y2
 
 set xlabel ""
 set ylabel "RPM"
-set y2label "mBar"
+set y2label "mBar (absolute)"
 if (fix_yrange) {
 set yrange [0 : 8000]
 set y2range [0 : 1200]
@@ -119,18 +123,25 @@ set autoscale xfix  # Prevents Gnuplot from adding 'buffer' space
 
 set format x ""       # Versteckt die Zahlen der X-Achse
 
-plot $DATA u (column(-2)*skip_blocks + start_block + $1 * skip_blocks):2 with lines lc "grey" title "RPM", \
+# Syntax: set offsets <top>, <bottom>, <left>, <right>
+set autoscale y noextend
+set autoscale y2 noextend
+set y2range [* : *] noextend reverse
+
+if (!exists("singleplot") || (singleplot == 1)) \
+plot $DATA u (column(-2)*skip_blocks + start_block + $1 * skip_blocks):2 with lines lc "violet" title "RPM", \
      $DATA u (column(-2)*skip_blocks + start_block + $1 * skip_blocks):3 axes x1y2 with lines title "MAP"
 
 set xlabel ""
 set ylabel "Degree"
 set y2label "mV"
-set y2range [-100 : 1000]
+set y2range [-100 : 1000] noreverse
 unset yrange
 
 #plot $DATA u 1:4 with lines lc "gold" title "Advance", \
 #  $DATA u 1:5 axes x1y2 with lines lc "red" title "Oxygen"
 
+if (!exists("singleplot") || (singleplot == 2)) \
 plot $DATA u (column(-2)*skip_blocks + start_block + $1 * skip_blocks):4 with lines lc "gold" title "Advance", \
      $DATA u (column(-2)*skip_blocks + start_block + $1 * skip_blocks):5 axes x1y2 with lines lc "red" title "Oxygen"
 
@@ -149,13 +160,12 @@ set format x "%g"     # Aktiviert die Zahlen wieder (Standard-Format)
 
 
 
+if (!exists("singleplot") || (singleplot == 3)) \
 plot $DATA u (column(-2)*skip_blocks + start_block + $1 * skip_blocks):6 with lines lc "blue" title "Inj-Duration", \
      $DATA u (column(-2)*skip_blocks + start_block + $1 * skip_blocks):7 axes x1y2 with lines lc "brown" title "Throttle-Idle"
 
-unset multiplot
 
-if (exists("png")) {
-unset output
-}
+if (!exists("singleplot")) unset multiplot
+if (exists("png")) unset output
 
 
