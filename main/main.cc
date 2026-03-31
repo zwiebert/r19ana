@@ -36,7 +36,7 @@ bool cli_parse_and_execute_cmdline(char* src) {
 int r19_alloc_and_print(char*& dst, const PrintCarDiag& print_diag,
                         const PrintCarDiag::line_view_mask_t& mask) {
   const char prepend_txt[] = "\n\n";  // "\x1B[2J";
-  const char append_txt[] = "";     // "\x1B[2J";
+  const char append_txt[] = "";       // "\x1B[2J";
   const size_t prepend_txt_len = sizeof prepend_txt - 1;
   const size_t append_txt_len = sizeof append_txt - 1;
 
@@ -69,4 +69,27 @@ int r19_alloc_and_print(char*& dst, const PrintCarDiag& print_diag,
     return buf_len + prepend_txt_len + append_txt_len;
   }
   return -1;
+}
+
+int bin2hex(const uint8_t* in, size_t insz, char* out, size_t outsz,
+            const char* sep) {
+  const auto sep_len = strlen(sep);
+  const unsigned char* pin = in;
+  const char* hex = "0123456789ABCDEF";
+  const int req_size = insz * (2 + sep_len) - sep_len;
+
+  char* pout = out;
+  for (; pin < in + insz; pout += 2 + sep_len, pin++) {
+    pout[0] = hex[(*pin >> 4) & 0xF];
+    pout[1] = hex[*pin & 0xF];
+    memcpy(&pout[2], sep, sep_len);
+    if (pout + 2 + sep_len - out > outsz) {
+      /* Better to truncate output string than overflow buffer */
+      /* it would be still better to either return a status */
+      /* or ensure the target buffer is large enough and it never happen */
+      break;
+    }
+  }
+  pout[-sep_len] = '\0';
+  return req_size;
 }

@@ -4,52 +4,29 @@
 
 #include "frame.hh"
 #include "i18n.hh"
+#include "main.hh"
 
 using OurFrame = class ExpFrame;
 
 #define diag_printf(fmt, ...)                              \
   do {                                                     \
-    bit++;                                                 \
-    if (ct >= 0) {                                         \
+    if (view_mask.test(bit++) && ct >= 0) {                \
       auto p = std::min(dst_max, dst + ct);                \
       auto l = std::max(ssize_t(0), dst_size - ct);        \
       ct += snprintf(p, l, "%02u " fmt, bit, __VA_ARGS__); \
     }                                                      \
   } while (0)
 
-static int tohex(const uint8_t* in, size_t insz, char* out, size_t outsz,
-                 const char* sep = "") {
-  const auto sep_len = strlen(sep);
-  const unsigned char* pin = in;
-  const char* hex = "0123456789ABCDEF";
-  const int req_size = insz * (2 + sep_len) - sep_len;
-
-  char* pout = out;
-  for (; pin < in + insz; pout += 2 + sep_len, pin++) {
-    pout[0] = hex[(*pin >> 4) & 0xF];
-    pout[1] = hex[*pin & 0xF];
-    memcpy(&pout[2], sep, sep_len);
-    if (pout + 2 + sep_len - out > outsz) {
-      /* Better to truncate output string than overflow buffer */
-      /* it would be still better to either return a status */
-      /* or ensure the target buffer is large enough and it never happen */
-      break;
-    }
-  }
-  pout[-sep_len] = '\0';
-  return req_size;
-}
-
 static char frame_hex[OurFrame::FRAME_SIZE * 3];
 static void frame_hex_fill(const OurFrame::frame_data_t& frame,
                            const char* sep = ",") {
-  tohex(&frame[0], frame.size(), frame_hex, sizeof frame_hex, sep);
+  bin2hex(&frame[0], frame.size(), frame_hex, sizeof frame_hex, sep);
 }
 
 inline const char* btoa(bool v) { return v ? "X" : " "; }
 
 int PrintDiagExp::snprint_diag(char* dst, size_t dst_siz,
-                               line_view_mask_t view_mask) const {
+                               const line_view_mask_t& view_mask) const {
   const OurFrame& d = m_frame;
   using idx_t = OurFrame::idx_t;
 
@@ -60,25 +37,15 @@ int PrintDiagExp::snprint_diag(char* dst, size_t dst_siz,
     unsigned bit = 0;
     auto dst_max = dst + dst_size - 1;
 
-    ///////////////////////////////////////////////
+    // line 1 always is the complete hex-string of the data-frame
     frame_hex_fill(d.get_frame(), "");
     diag_printf("%s\n", frame_hex);
-    ///////////////////////////////////////////////
 
-
+    // print every byte, line numbers should match byte-indexes to avoid
+    // confusion
     for (int i = 2; i < 30; ++i) diag_printf("%6d R%d\n", d.R(i), i);
 
-    ///////////////////////////////////////////////
-
-#if 0  // no idea which index, if any
-    diag_printf("   [%s] %s\n", btoa(d.is_vacuum_provided_to_egr_valve()),
-                _("EGR+EVap enabled"));
-    diag_printf("   [%s] %s\n", btoa(d.is_oxygen_sensor_loop_closed()),
-                _("O2 sensor loop"));
-#endif
-    /////////////////////////// experimental
-    /////////////// try and error confirmed /////////////
-    // fuel pump (can be heard when ignition turns on)
+    // print every bit from the status bits on a separate line
     for (uint8_t i = 0; i < 8; ++i)
       diag_printf("%6d flags0-bit: %u\n", d.get_flag_0(i), i);
     for (uint8_t i = 0; i < 8; ++i)
@@ -95,27 +62,6 @@ int PrintDiagExp::snprint_diag(char* dst, size_t dst_siz,
       diag_printf("%6d flags6-bit: %u\n", d.get_flag_6(i), i);
     for (uint8_t i = 0; i < 8; ++i)
       diag_printf("%6d flags7-bit: %u\n", d.get_flag_7(i), i);
-
-    /////////////////////////////////////////////////////
-#if 0
-    diag_printf("%6d %s\n", d.get_idle_regulation(), _("Idle-Regulation"));
-    diag_printf("%6d %s\n", d.get_idle_period(), _("Idle-Period"));
-    diag_printf("%6d mBar %s\n", (4 * (~d[29] & 0xff)), _("Atmosphere"));
-
-    diag_printf("%02x%02x%02x %s (27,19,18)\n", d[27], d[19], d[18],
-                _("Fault-Flags"));
-
-#endif
-
-    diag_printf("%6d °D %s (26)\n", d[28], _("Knock-Delay"));
-
-    diag_printf("     %02x %s (26)\n", d[26], _("Fault-Fugitive"));
-    diag_printf("%6d ??? %s\n", int(d[27]) - 0x82, _("(25) - 0x82"));
-    diag_printf("%6d ??? %s\n", int(d[27] | (d[28] << 8)) - 0x8182,
-                _("(26,25) - 0x8182"));
-    //  unknown: 17, 23, 24, 25, 29, 30, 31
-
-    /////////////////////// end experimental ///////////////////////////
 
     if (ct >= 0) {
       auto p = std::min(dst_max, dst + ct);

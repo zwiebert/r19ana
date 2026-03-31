@@ -4,49 +4,27 @@
 
 #include "frame.hh"
 #include "i18n.hh"
+#include "main.hh"
 
 using OurFrame = X53b740Frame;
 
-#define diag_printf(fmt, ...)                               \
-  do {                                                      \
-    if (view_mask.test(bit++) && ct >= 0) {                 \
-      auto p = std::min(dst_max, dst + ct);                 \
-      auto l = std::max(ssize_t(0), dst_size - ct);         \
+#define diag_printf(fmt, ...)                              \
+  do {                                                     \
+    if (view_mask.test(bit++) && ct >= 0) {                \
+      auto p = std::min(dst_max, dst + ct);                \
+      auto l = std::max(ssize_t(0), dst_size - ct);        \
       ct += snprintf(p, l, "%02u " fmt, bit, __VA_ARGS__); \
-    }                                                       \
+    }                                                      \
   } while (0)
-
-static int tohex(const uint8_t* in, size_t insz, char* out, size_t outsz,
-                 const char* sep = "") {
-  const auto sep_len = strlen(sep);
-  const unsigned char* pin = in;
-  const char* hex = "0123456789ABCDEF";
-  const int req_size = insz * (2 + sep_len) - sep_len;
-
-  char* pout = out;
-  for (; pin < in + insz; pout += 2 + sep_len, pin++) {
-    pout[0] = hex[(*pin >> 4) & 0xF];
-    pout[1] = hex[*pin & 0xF];
-    memcpy(&pout[2], sep, sep_len);
-    if (pout + 2 + sep_len - out > outsz) {
-      /* Better to truncate output string than overflow buffer */
-      /* it would be still better to either return a status */
-      /* or ensure the target buffer is large enough and it never happen */
-      break;
-    }
-  }
-  pout[-sep_len] = '\0';
-  return req_size;
-}
 
 static char frame_hex[OurFrame::FRAME_SIZE * 3];
 static void frame_hex_fill(const OurFrame::frame_data_t& frame,
                            const char* sep = ",") {
-  tohex(&frame[0], frame.size(), frame_hex, sizeof frame_hex, sep);
+  bin2hex(&frame[0], frame.size(), frame_hex, sizeof frame_hex, sep);
 }
 
 int PrintDiagX53b740::snprint_diag(char* dst, size_t dst_siz,
-                                   line_view_mask_t view_mask) const {
+                                   const line_view_mask_t& view_mask) const {
   const OurFrame& d = m_frame;
   using idx_t = OurFrame::idx_t;
 
@@ -72,10 +50,12 @@ int PrintDiagX53b740::snprint_diag(char* dst, size_t dst_siz,
     diag_printf("%6d mBar %s\n", d.get_manifold_absolute_pressure_mBar(),
                 _("Manifold"));
     diag_printf("%6d °D %s\n", d.get_ignition_advance_deg(), _("Advance"));
-    diag_printf("%6d °D %s\n", d.get_detonation_correction_deg(), _("Detonation Correction"));
+    diag_printf("%6d °D %s\n", d.get_detonation_correction_deg(),
+                _("Detonation Correction"));
     diag_printf("%6.02f ms %s\n", d.get_injection_duration_ms(),
                 _("Injection Duration"));
-    diag_printf("%6d %s\n", int(d[idx_t::richness_regulation]) - 128, _("Short-Term-Fuel-Trim"));
+    diag_printf("%6d %s\n", int(d[idx_t::richness_regulation]) - 128,
+                _("Short-Term-Fuel-Trim"));
     diag_printf("%6d %s\n", int(d[idx_t::richness_adaption_avg2high]) - 128,
                 _("Long-Term-Fuel-Trim mod-high load"));
     diag_printf("%6d %s\n", int(d[idx_t::richness_adaption_idle2low]) - 128,
@@ -87,8 +67,7 @@ int PrintDiagX53b740::snprint_diag(char* dst, size_t dst_siz,
                 _("Atmosphere"));
     diag_printf("%6d %s\n", (d.is_throttle_fully_open()),
                 _("Throttle Full-Power"));
-    diag_printf("%6d %s\n", (d.is_throttle_fully_closed()),
-                _("Throttle Idle"));
+    diag_printf("%6d %s\n", (d.is_throttle_fully_closed()), _("Throttle Idle"));
     diag_printf("%6d %s\n", d.is_fuel_pump_on(), _("Fuel-Pump"));
 
 #if 1  // no idea which index, if any
@@ -98,8 +77,6 @@ int PrintDiagX53b740::snprint_diag(char* dst, size_t dst_siz,
                 _("O2 sensor loop"));
 #endif
     diag_printf("%6d °D %s (26)\n", d[28], _("Knock-Delay"));
-
-
 
     if (ct >= 0) {
       auto p = std::min(dst_max, dst + ct);

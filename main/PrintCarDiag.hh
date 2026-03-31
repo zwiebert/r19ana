@@ -10,7 +10,7 @@
  */
 class PrintCarDiag {
  public:
-  using line_view_mask_t = std::bitset<64U>;
+  using line_view_mask_t = std::bitset<128U>;
 
  public:
   virtual ~PrintCarDiag() = default;
@@ -29,6 +29,6 @@ class PrintCarDiag {
    * the terminating null.
    */
   virtual int snprint_diag(char* dst, size_t dst_size,
-                           line_view_mask_t show_lines) const = 0;
+                           const line_view_mask_t &show_lines) const = 0;
   virtual void push_frame(const XR25Frame::voc_t& xr25_frame) = 0;
 };
