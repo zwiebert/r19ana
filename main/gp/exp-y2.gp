@@ -14,6 +14,9 @@ if (!exists("end"))   end_block = 5000000  else end_block = end # maximal end bl
 if (exists("span"))  end_block = start_block + span  # end block relative to start block
 if (!exists("skip")) skip_blocks = 1 else skip_blocks = skip # skip = 1 # skip every Nth-block using a fast awk script 
 
+if (!exists("line_a")) line_a = 2
+if (!exists("line_b")) line_b = 3
+
 if (exists("png")) {
 set terminal pngcairo size 1920,1080
 set output png 
@@ -70,30 +73,27 @@ $DATA << EOD
 # Block, 6, 7, 8, 10, 14, 18  (block and line numbers)
 EOD
 
-# 1. Initialize an array for 20 values
-array val[32]
-
 # 3. The High-Speed Loop
 do for [i=0:n_blocks-1] {
-    # SINGLE PASS: Use Column 1 (your 1-20 numbers) to index the array
-    # Use Column 2 for the actual data value
-    stats datafile index i using (val[int(real($1))] = $2, 0) nooutput
-
+     stats datafile index i every ::(line_a-1)::(line_a-1) u 2 nooutput
+     val_a = STATS_min
+     stats datafile index i every ::(line_b-1)::(line_b-1) u 2 nooutput
+     val_b = STATS_min
     # 4. Append to Summary in your custom "Uniform" order
     set print $DATA append
-    print sprintf("%-10d %-10.4f %-10.4f %-10.4f %-10.4f %-10.4f %-10.4f", \
-                  i, val[8], val[3], val[17], val[7], val[16], val[22])
-#              block,   rpm,    MAP,    addv,     o2, advance, throttle-idle
+    print sprintf("%-10d %-10.4f %-10.4f", \
+                  i, val_a, val_b)
     set print
 }
 
-
+singleplot=1
 
 
 
 ################## Plot content of $DATA now ##################################
 model = "R19 X53B F3N-740"
 our_title = sprintf("Model: %s | Blocks: %d | Start-Time: %s | Duration: %s " , model, count_blocks, to_hms(to_sec(start_block)), to_hms(to_sec(count_blocks)))
+
 
 if (!exists("singleplot")) set multiplot layout 3,1 title our_title
 
@@ -103,69 +103,28 @@ set rmargin 10   # Rechter Rand (Platz für y2-Label, falls genutzt)
 
 
 set border linewidth 0.75 dashtype 3
-set mouse format "%.4f"
-set mouse mouseformat 3  # Shows X, Y1, and Y2
 
-set xlabel ""
-set ylabel "RPM"
-set y2label "mBar (absolute)"
-if (fix_yrange) {
-set yrange [0 : 8000]
-set y2range [0 : 1200]
-}
+set title our_title 
+set xlabel "Block Number (1 Block each 15ms)"
+set ylabel ""
+set y2label ""
 # Erlaube eine separate Skalierung für die rechte Achse
 set ytics nomirror
-set y2tics nomirror
+set y2tics
 
 
 # 1. Force the range to match your blocks exactly
 set xrange [start_block : end_block]
 set autoscale xfix  # Prevents Gnuplot from adding 'buffer' space
 
-set format x ""       # Versteckt die Zahlen der X-Achse
-
 # Syntax: set offsets <top>, <bottom>, <left>, <right>
 set autoscale y noextend
 set autoscale y2 noextend
-set y2range [*:*] noextend noreverse
+set y2range [* : *] noextend
 
 if (!exists("singleplot") || (singleplot == 1)) \
-plot $DATA u (column(-2)*skip_blocks + start_block + $1 * skip_blocks):2 with lines lc "violet" title "RPM", \
-     $DATA u (column(-2)*skip_blocks + start_block + $1 * skip_blocks):3 axes x1y2 with lines title "MAP"
-
-
-set xlabel ""
-set ylabel "Degree"
-set y2label "mV"
-set y2range [-100 : 1300] noreverse
-unset yrange
-
-#plot $DATA u 1:4 with lines lc "gold" title "Advance", \
-#  $DATA u 1:5 axes x1y2 with lines lc "red" title "Oxygen"
-
-if (!exists("singleplot") || (singleplot == 2)) \
-plot $DATA u (column(-2)*skip_blocks + start_block + $1 * skip_blocks):4 with lines lc "gold" title "Advance", \
-     $DATA u (column(-2)*skip_blocks + start_block + $1 * skip_blocks):5 axes x1y2 with lines lc "red" title "Oxygen"
-
-set xlabel "Block Nummer (1 Block alle 15ms)"
-set ylabel "ms"
-set y2label "boolean"
-
-# make boolean graph more visible
-set yrange
-set y2range [-0.1 : 1.1]
-set y2tics (0, 1)
-
-set format x "%g"     # Aktiviert die Zahlen wieder (Standard-Format)
-
-
-
-
-
-if (!exists("singleplot") || (singleplot == 3)) \
-plot $DATA u (column(-2)*skip_blocks + start_block + $1 * skip_blocks):6 with lines lc "blue" title "Inj-Duration", \
-     $DATA u (column(-2)*skip_blocks + start_block + $1 * skip_blocks):7 axes x1y2 with lines lc "brown" title "Throttle-Idle"
-
+plot $DATA u (column(-2)*skip_blocks + start_block + $1 * skip_blocks):2 with lines lc "violet" title sprintf("line %02d", line_a), \
+     $DATA u (column(-2)*skip_blocks + start_block + $1 * skip_blocks):3 axes x1y2 with lines title sprintf("line %02d", line_b) 
 
 if (!exists("singleplot")) unset multiplot
 if (exists("png")) unset output

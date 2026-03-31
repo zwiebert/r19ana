@@ -42,47 +42,57 @@ int PrintDiagX53b740::snprint_diag(char* dst, size_t dst_siz,
 
     // analog-values
     diag_printf("%6d N    xx  \"Frame-Count\"\n", d.get_frame_count());
-    diag_printf("%6.02f V    #4  \"%s\"\n", d.get_battery_voltage_V(), _("Battery"));
-    diag_printf("%6d °C   #5  \"%s\"\n", d.get_intake_air_temperature_Celsius(),
+    diag_printf("%6d mBar #1  \"%s\"\n",
+                d.get_manifold_absolute_pressure_mBar(), _("Manifold"));
+    diag_printf("%6d °C   #2  \"%s\"\n",
+                d.get_engine_coolant_temperature_Celsius(), _("Coolant"));
+    diag_printf("%6d °C   #3  \"%s\"\n", d.get_intake_air_temperature_Celsius(),
                 _("Intake Air"));
-    diag_printf("%6d °C   #4  \"%s\"\n", d.get_engine_coolant_temperature_Celsius(),
-                _("Coolant"));
-    diag_printf("%6d rpm  #6  \"%s\"\n", d.get_engine_speed_RPM(), _("Crankshaft"));
-    diag_printf("%6d mBar #1  \"%s\"\n", d.get_manifold_absolute_pressure_mBar(),
-                _("Manifold"));
-    diag_printf("%6d °D   #51 \"%s\"\n", d.get_ignition_advance_deg(), _("Advance"));
-    diag_printf("%6d °D   #15 \"%s\"\n", d.get_detonation_correction_deg(), _("Knock-Delay"));
-    diag_printf("%6.02f ms   #50 \"%s\"\n", d.get_injection_duration_ms(),
-                _("Injection Duration"));
-
-    diag_printf("%6d N    #35 \"%s\"\n", int(d[idx_t::richness_regulation]) - 128,
-                _("Richness-Regulation (STFT)"));
-    diag_printf("%6d N    #31 \"%s\"\n", int(d[idx_t::richness_adaption_avg2high]) - 128,
-                _("Richness-Adaption avg and high load (LTFT)"));
-    diag_printf("%6d N    #30 \"%s\"\n", int(d[idx_t::richness_adaption_idle2low]) - 128,
-                _("Richness-Adaption idle and low load (LTFT)"));
-              
+    diag_printf("%6.02f V    #4  \"%s\"\n", d.get_battery_voltage_V(),
+                _("Battery"));
     diag_printf("%6d mV   #5  \"%s\"\n", d.get_oxygen_sensor_voltage_mV(),
                 _("O2 Sensor"));
-
-    diag_printf("%6d N    #13 \"%s\"\n", d.get_engine_knocking(), _("Engine-Knock"));
-    diag_printf("%6d °D   #15 \"%s\"\n", d.get_detonation_correction_deg(),
-                _("Detonation Correction"));
+    diag_printf("%6d rpm  #6  \"%s\"\n", d.get_engine_speed_RPM(),
+                _("Crankshaft"));
 
     diag_printf("%6d N    #12 \"%s\"\n", d.get_idle_regulation(),
                 _("Idle Regulation"));
+    diag_printf("%6d N    #13 \"%s\"\n", d.get_engine_knocking(),
+                _("Engine-Knock"));
+    diag_printf("%6d °D   #15 \"%s\"\n", d.get_detonation_correction_deg(),
+                _("Detonation Correction"));
+
     diag_printf("%6d N    #21 \"%s\"\n", d.get_idle_adaption(),
                 _("Idle Adaption"));
 
+
+    diag_printf("%6d N    #30 \"%s\"\n",
+                int(d[idx_t::richness_adaption_idle2low]) - 128,
+                _("Richness-Adaption idle and low load (LTFT)"));
+    diag_printf("%6d N    #31 \"%s\"\n",
+                int(d[idx_t::richness_adaption_avg2high]) - 128,
+                _("Richness-Adaption avg and high load (LTFT)"));
+    diag_printf("%6d N    #35 \"%s\"\n",
+                int(d[idx_t::richness_regulation]) - 128,
+                _("Richness-Regulation (STFT)"));
+
+    diag_printf("%6.02f ms   #50 \"%s\"\n", d.get_injection_duration_ms(),
+                _("Injection Duration"));
+    diag_printf("%6d °D   #51 \"%s\"\n", d.get_ignition_advance_deg(),
+                _("Advance"));
+
+
     // static values?
     diag_printf("%6d N    VER \"Version\"\n", d.X(idx_t::program_version));
-    diag_printf("%6d N    CAL \"Calibration\"\n", d.X(idx_t::calibration_version));
+    diag_printf("%6d N    CAL \"Calibration\"\n",
+                d.X(idx_t::calibration_version));
     diag_printf("%6d N    ID  \"Renault-ID\"\n", d.get_id());
 
     // boolean status bits
     diag_printf("%6d bool PG \"%s\"\n", (d.is_throttle_fully_open()),
                 _("Throttle Full-Power"));
-    diag_printf("%6d bool PL \"%s\"\n", (d.is_throttle_fully_closed()), _("Throttle Idle"));
+    diag_printf("%6d bool PL \"%s\"\n", (d.is_throttle_fully_closed()),
+                _("Throttle Idle"));
     diag_printf("%6d bool FUEL \"%s\"\n", d.is_fuel_pump_on(), _("Fuel-Pump"));
 
 #if 1  // no idea which index, if any
