@@ -46,22 +46,12 @@ int PrintDiagExp::snprint_diag(char* dst, size_t dst_siz,
     for (int i = 2; i < 30; ++i) diag_printf("%6d R%d\n", d.R(i), i);
 
     // print every bit from the status bits on a separate line
-    for (uint8_t i = 0; i < 8; ++i)
-      diag_printf("%6d flags0-bit: %u\n", d.get_flag_0(i), i);
-    for (uint8_t i = 0; i < 8; ++i)
-      diag_printf("%6d flags1-bit: %u\n", d.get_flag_1(i), i);
-    for (uint8_t i = 0; i < 8; ++i)
-      diag_printf("%6d flags2-bit: %u\n", d.get_flag_2(i), i);
-    for (uint8_t i = 0; i < 8; ++i)
-      diag_printf("%6d flags3-bit: %u\n", d.get_flag_3(i), i);
-    for (uint8_t i = 0; i < 8; ++i)
-      diag_printf("%6d flags4-bit: %u\n", d.get_flag_4(i), i);
-    for (uint8_t i = 0; i < 8; ++i)
-      diag_printf("%6d flags5-bit: %u\n", d.get_flag_5(i), i);
-    for (uint8_t i = 0; i < 8; ++i)
-      diag_printf("%6d flags6-bit: %u\n", d.get_flag_6(i), i);
-    for (uint8_t i = 0; i < 8; ++i)
-      diag_printf("%6d flags7-bit: %u\n", d.get_flag_7(i), i);
+    for (idx_t flags = idx_t::flags1; flags <= idx_t::flags7;
+         flags = idx_t(flags + 1)) {
+      uint8_t flag_mnb = 1 + flags - idx_t::flags1;
+      for (uint8_t i = 0; i < 8; ++i)
+        diag_printf("%6d bool flags=%u,bit=%u\n", getbit(d.R(flags), i), flag_mnb, i);
+    }
 
     if (ct >= 0) {
       auto p = std::min(dst_max, dst + ct);

@@ -47,7 +47,7 @@ if (use_prefilter) {
 # 2. Pre-filter once into RAM (super fast)
 # We use /dev/shm/ because it's a RAM disk—no SSD wear, instant access.
 tempfile = "/dev/shm/gnuplot_preview.txt"
-cmd = sprintf("grep -v ':' %s | awk -v s=%d -v e=%d -v k=%d 'BEGIN {RS=\"\\n\\n\\n\"; ORS=\"\\n\\n\\n\"} (NR>=s && NR<=e && (NR-s)%%k==0)'  | head -n -2 > %s",datafile,  start_block, end_block, skip_blocks, tempfile)
+cmd = sprintf("cat %s | awk -v s=%d -v e=%d -v k=%d 'BEGIN {RS=\"\\n\\n\\n\"; ORS=\"\\n\\n\\n\"} (NR>=s && NR<=e && (NR-s)%%k==0)'  | head -n -2 > %s",datafile,  start_block, end_block, skip_blocks, tempfile)
 system(cmd)
 datafile = tempfile
 }
@@ -79,7 +79,7 @@ do for [i=0:n_blocks-1] {
      val_a = STATS_min
      stats datafile index i every ::(line_b-1)::(line_b-1) u 2 nooutput
      val_b = STATS_min
-    # 4. Append to Summary in your custom "Uniform" order
+
     set print $DATA append
     print sprintf("%-10d %-10.4f %-10.4f", \
                   i, val_a, val_b)

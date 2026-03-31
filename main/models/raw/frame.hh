@@ -7,7 +7,7 @@
 #include "models/settings.hh"
 
 /// @brief
-class RawFrame : CarModelBase {
+class RawFrame : public CarModelBase {
  public:
   static constexpr int FRAME_SIZE = XR25Frame::FRAME_MAX_SIZE;
   using frame_data_t = std::array<uint8_t, FRAME_SIZE>;
@@ -32,6 +32,4 @@ class RawFrame : CarModelBase {
   RawFrame() = default;
 
   uint8_t operator[](int idx) const { return data[idx - 2]; }
-
-  std::string getDataAsText() const;
 };

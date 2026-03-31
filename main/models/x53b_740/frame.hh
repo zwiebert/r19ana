@@ -4,10 +4,11 @@
 #include <string>
 
 #include "XR25Frame.hh"
+#include "main.hh"
 #include "models/settings.hh"
 
 /// @brief
-class X53b740Frame : CarModelBase {
+class X53b740Frame : public CarModelBase {
  public:
   // virtual void get_defaults(settings_model_specific_t& dst) const override {
   // }
@@ -36,13 +37,15 @@ class X53b740Frame : CarModelBase {
     detonation_correction,  // 14, #15 (knocking retardation)
     o2_integrator,          // 15,
     flags1,                 // 16 static 0x88
-    flags2,         // 17   Flags2	Idle Control	Low-bit jitter (stepper), // high-bit spike at end.
-    flags3,         // 18 	Enrichment/Purge	Wake-up at 10m, heavy // spiking/toggling.
-    flags4,         // 19 static 0x00  Error memory
-    flags5,         // 20 static 0x0a
-    flags6,         // 21   fuel-pump...
-    flags7,         // 22
-    idle_adaption,  // 23, #21
+    flags2,  // 17   Flags2	Idle Control	Low-bit jitter (stepper), //
+             // high-bit spike at end.
+    flags3,  // 18   Enrichment/Purge,	Wakes-up at warm engine, heavy //
+             // spiking/toggling.
+    flags4,  // 19 static 0x00  Error memory
+    flags5,  // 20 static 0x0a
+    flags6,  // 21   fuel-pump...
+    flags7,  // 22
+    idle_adaption,               // 23, #21
     richness_adaption_idle2low,  // 24, #31
     richness_regulation,         // 25, #35
     richness_adaption_avg2high,  // 26, #30
@@ -56,6 +59,7 @@ class X53b740Frame : CarModelBase {
   uint8_t f3x(uint8_t data_idx_plus3) const { return data[data_idx_plus3 - 3]; }
   uint8_t X(uint8_t data_idx_plus3) const { return data[data_idx_plus3 - 3]; }
   uint8_t X(idx_t col) const { return data[col]; }
+  uint8_t R(uint8_t data_idx) const { return data[data_idx]; }
   // unknown indexes
   // 15, 17, 18, 19, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31
   int get_manifold_absolute_pressure_mBar() const {
@@ -101,19 +105,20 @@ class X53b740Frame : CarModelBase {
   int get_detonation_correction_deg() const {
     return X(idx_t::detonation_correction);
   }
-  int get_idle_regulation() const { return int(X(idx_t::idle_regulation)) - 128; }
-  int get_idle_adaption() const { return int(X(idx_t::idle_adaption)); }
-  int get_richness_regulation() const { return int(X(idx_t::richness_regulation)) - 128; }
-  int get_richness_adaption_idle_and_low() const { return int(X(idx_t::richness_adaption_idle2low)) - 128; }
-  int get_richness_adaption_moderate_and_high() const { return int(X(idx_t::richness_adaption_avg2high)) - 128; }
-
-  int get_atmospheric_pressure_mBar() const {
-#if OLD_FORMULAS
-    return 1090 - X(21);
-#else
-    return (~X(21) & 0xff) * 4;
-#endif
+  int get_idle_regulation() const {
+    return int(X(idx_t::idle_regulation)) - 128;
   }
+  int get_idle_adaption() const { return int(X(idx_t::idle_adaption)); }
+  int get_richness_regulation() const {
+    return int(X(idx_t::richness_regulation)) - 128;
+  }
+  int get_richness_adaption_idle_and_low() const {
+    return int(X(idx_t::richness_adaption_idle2low)) - 128;
+  }
+  int get_richness_adaption_moderate_and_high() const {
+    return int(X(idx_t::richness_adaption_avg2high)) - 128;
+  }
+
   int get_idle_period() const { return X(22); }  // TODO
 
   bool is_evap_canister_open_to_intake() const {
@@ -147,12 +152,11 @@ class X53b740Frame : CarModelBase {
 
   bool is_flags3_bit2() const { return X(idx_t::flags3 & 0x02); }
 
-  // flags4
-
-  bool is_oxygen_sensor_loop_closed() const { return X(idx_t::flags4) & 0x08; }
+  bool is_oxygen_sensor_loop_closed() const { return X(idx_t::flags3) & 0x08; }
   bool is_vacuum_provided_to_egr_valve() const {
-    return !(X(idx_t::flags7) & 0x20);
+    return getbit(X(idx_t::flags3), 5);
   }
+  // flags4
 
   /**
    * @brief for f3n-741. is automatic in park/neutral
@@ -164,8 +168,7 @@ class X53b740Frame : CarModelBase {
   // flags6
 
   // flags7
-
-  bool is_fuel_pump_on() const { return X(idx_t::flags7) & 0x10; }
+  bool is_fuel_pump_on() const { return getbit(X(idx_t::flags6), 4); }
 
  public:
   const frame_data_t& get_frame() const { return data; }

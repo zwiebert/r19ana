@@ -26,3 +26,8 @@ int r19_alloc_and_print(char*& dst, const PrintCarDiag& print_diag,
  */
 int bin2hex(const uint8_t* src, size_t src_len, char* dst, size_t dst_size,
             const char* separator = "");
+
+template <typename T>
+inline bool getbit(T n, uint8_t pos) {
+  return n & (T(1) << pos);
+}
