@@ -101,7 +101,12 @@ class X53b740Frame : CarModelBase {
   int get_detonation_correction_deg() const {
     return X(idx_t::detonation_correction);
   }
-  int get_idle_regulation() const { return X(17); }  // TODO
+  int get_idle_regulation() const { return int(X(idx_t::idle_regulation)) - 128; }
+  int get_idle_adaption() const { return int(X(idx_t::idle_adaption)); }
+  int get_richness_regulation() const { return int(X(idx_t::richness_regulation)) - 128; }
+  int get_richness_adaption_idle_and_low() const { return int(X(idx_t::richness_adaption_idle2low)) - 128; }
+  int get_richness_adaption_moderate_and_high() const { return int(X(idx_t::richness_adaption_avg2high)) - 128; }
+
   int get_atmospheric_pressure_mBar() const {
 #if OLD_FORMULAS
     return 1090 - X(21);
