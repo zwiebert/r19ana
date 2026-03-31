@@ -35,3 +35,27 @@ The framework identifies mechanical failures by monitoring logical "Floor" and "
 
 ---
 *Disclaimer: This is an open-source reverse-engineering project. Always cross-reference data with original Bendix/Renix Monopoint service manuals.*
+
+
+----
+The following part of this Readme is human-written:
+
+## Building the Software
+* the ESP32 firmware is an ESP-IDF project and should be build with "idf.py" the normal way from root folder.
+* the tools for converting from bin or hex to human/gnuplot-friendly output are build with cmake from main folder
+* the graphs are generated from the output of the tools or the firmware using some .gp files. these files handle the prefiltering using standard tools like grep and awk.
+
+## Using the Software
+* The ESP32 has to bei bluetooth-paired with the smart-phone or other devices which run the bluetooth terminal. Bluetooth Classic SPP is currently used.  BLE may be added later. You can switch models and filter output-lines interactively in the bluetooth-terminal app.
+* the tools have some commandline options. call them with --help option to learn more.
+* the gnuplot files can take the data from standard input. there are several options depending on the .gp file, for data-thinning (skip), range-selection (start, span, end). The .gp file for the "exp" model can take two line numbers (line_a, line_b) which will produce a diagram with 2 graphs.  the line number for the exp model are 1:1 the byte index in the frame (byte 0 is the program_version byte, the start bytes 0xff,0x00 are not counted). >t starts with line numer 2 and byte 2. the line number 1 is, like always the hex-string of the complete data frame.
+  
+## Building the Hardware
+* This is optional. The ESP32 is there to capture data from the diagnose port, format it into live view data which is then passed to a bluetooth terminal.
+*  If you already have a means to capture the binary diagnose data sent from your ECU, then you can pipe this data to the gnuplot files by using the tool xr25-bin2human on your PC.
+ 
+```
+build/xr25-bin2human --infile "YourData.bin" --model "x53b-740" | gnuplot -e "skip=100" -p gp/x53b-1.gp
+```
+* The ESP32 hardware is just a normal development board with a standard ESP32 (the first version).  Then build the well known interface between the car and the ESP32 UART2-RX pin. this is usual one transistor, one LED, a diode and some resistors.
+* buy an adaptor cable "renault-12pin to obd2-16 pin" and let the obd2 connector hang out at the passenger foot well, if the 12pin connector is located there.  also buy an adaptor obd2 to open wires which you can solder to the universal circuit board which contains your esp32 board and the logic-level-adapter transistor circuit. You can get the  supply voltage for the ESP32 from an USB cable to cigarette-lighter adaptor or you take the 12 Volt from the diagnose port and use a buck-stepdown convertor to generate the 5V from it.
