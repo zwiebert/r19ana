@@ -19,35 +19,35 @@ class X53b740Frame : CarModelBase {
 
  public:
   enum idx_t : uint8_t {
-    program_version, // 0
-    calibration_version, // 1
-    flags0, // 2
-    MAP, // 3
-    ECT, // 4
-    IAT, //5
-    battery, // 6
-    oxygen,// 7
-    engine_speed_lb, // 8
-    engine_speed_hb, // 9
-    engine_knocking, // 10
-    injection_duration_hb, // 11
-    injection_duration_lb, // 12
-    ignition_advance, // 13
-    detonation_correction, // 14
-    o2_integrator, // 15
-    flags1, // 16 static 0x88 
-    flags2, // 17   Flags2	Idle Control	Low-bit jitter (stepper), high-bit spike at end.
-    flags3, // 18 	Enrichment/Purge	Wake-up at 10m, heavy spiking/toggling.
-    flags4, // 19 static 0x00  Error memory 
-    flags5, // 20 static 0x0a
-    flags6, // 21   fuel-pump...
-    flags7, // 22  
-    idle_adaption, // 23 !!!
-    richness_adaption_idle2low,  // 24 #31
-    richness_regulation, // 25, #35
-    richness_adaption_avg2high, // 26 #30
-    idle_regulation, // 27  #12
-    id, // 28
+    program_version,        // 0
+    calibration_version,    // 1
+    flags0,                 // 2, input (on/off-switches)
+    MAP,                    // 3, #1
+    ECT,                    // 4, #2
+    IAT,                    // 5, #3
+    battery,                // 6, #4
+    oxygen,                 // 7, #5
+    engine_speed_lb,        // 8, #6 low-byte
+    engine_speed_hb,        // 9, #6 high-byte
+    injection_duration_lb,  // 12, #50 low-byte
+    injection_duration_hb,  // 11, #50 high-byte
+    engine_knocking,        // 10, #13
+    ignition_advance,       // 13, #51
+    detonation_correction,  // 14, #15 (knocking retardation)
+    o2_integrator,          // 15,
+    flags1,                 // 16 static 0x88
+    flags2,         // 17   Flags2	Idle Control	Low-bit jitter (stepper), // high-bit spike at end.
+    flags3,         // 18 	Enrichment/Purge	Wake-up at 10m, heavy // spiking/toggling.
+    flags4,         // 19 static 0x00  Error memory
+    flags5,         // 20 static 0x0a
+    flags6,         // 21   fuel-pump...
+    flags7,         // 22
+    idle_adaption,  // 23, #21
+    richness_adaption_idle2low,  // 24, #31
+    richness_regulation,         // 25, #35
+    richness_adaption_avg2high,  // 26, #30
+    idle_regulation,             // 27  #12
+    id,                          // 28
   };
 
  public:
