@@ -39,11 +39,11 @@ class ExpFrame : CarModelBase {
     flags6,
     flags7,
     c22,
-    adaption_AFR,
+    richness_regulation,
     c24,
-    adaption_running,
+    richness_adaption_avg2high,
     c26,
-    adaption_stationary,
+    richness_adaption_idle2low,
     id,
   };
 
@@ -53,6 +53,7 @@ class ExpFrame : CarModelBase {
   uint8_t f3x(uint8_t data_idx_plus3) const { return data[data_idx_plus3 - 3]; }
   uint8_t X(uint8_t data_idx_plus3) const { return data[data_idx_plus3 - 3]; }
   uint8_t X(idx_t col) const { return data[col]; }
+  uint8_t R(uint8_t data_idx) const { return data[data_idx]; }
   // unknown indexes
   // 15, 17, 18, 19, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31
   int get_manifold_absolute_pressure_mBar() const {

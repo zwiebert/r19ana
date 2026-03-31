@@ -75,11 +75,11 @@ int PrintDiagX53b740::snprint_diag(char* dst, size_t dst_siz,
     diag_printf("%6d °D %s\n", d.get_detonation_correction_deg(), _("Detonation Correction"));
     diag_printf("%6.02f ms %s\n", d.get_injection_duration_ms(),
                 _("Injection Duration"));
-    diag_printf("%6d %s\n", d[idx_t::adaption_AFR], _("Adaption Air/Fuel"));
-    diag_printf("%6d %s\n", d[idx_t::adaption_running],
-                _("Adaption Running (Driving)"));
-    diag_printf("%6d %s\n", d[idx_t::adaption_stationary],
-                _("Adaption Stationary (Idle)"));
+    diag_printf("%6d %s\n", int(d[idx_t::richness_regulation]) - 128, _("Short-Term-Fuel-Trim"));
+    diag_printf("%6d %s\n", int(d[idx_t::richness_adaption_avg2high]) - 128,
+                _("Long-Term-Fuel-Trim mod-high load"));
+    diag_printf("%6d %s\n", int(d[idx_t::richness_adaption_idle2low]) - 128,
+                _("Long-Term-Fuel-Trim idle-low load"));
     diag_printf("%6d mV %s\n", d.get_oxygen_sensor_voltage_mV(),
                 _("O2 Sensor"));
     diag_printf("%6d %s\n", d.get_engine_knocking(), _("Engine-Knock"));

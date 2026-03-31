@@ -9,8 +9,8 @@ using OurFrame = class ExpFrame;
 
 #define diag_printf(fmt, ...)                              \
   do {                                                     \
-    bit++; \
-    if (ct >= 0) {                \
+    bit++;                                                 \
+    if (ct >= 0) {                                         \
       auto p = std::min(dst_max, dst + ct);                \
       auto l = std::max(ssize_t(0), dst_size - ct);        \
       ct += snprintf(p, l, "%02u " fmt, bit, __VA_ARGS__); \
@@ -65,44 +65,9 @@ int PrintDiagExp::snprint_diag(char* dst, size_t dst_siz,
     diag_printf("%s\n", frame_hex);
     ///////////////////////////////////////////////
 
-    diag_printf("%6d Frame-Count, ID=%d\n", d.get_frame_count(), d.get_id());
-    diag_printf("%6.02f V %s\n", d.get_battery_voltage_V(), _("Battery"));
-    diag_printf("%6d °C %s\n", d.get_intake_air_temperature_Celsius(),
-                _("Intake Air"));
-    diag_printf("%6d °C %s\n", d.get_engine_coolant_temperature_Celsius(),
-                _("Coolant"));
-    diag_printf("%6d rpm %s\n", d.get_engine_speed_RPM(), _("Crankshaft"));
-    diag_printf("%6d mBar %s\n", d.get_manifold_absolute_pressure_mBar(),
-                _("Manifold"));
-    diag_printf("%6d °D %s\n", d.get_ignition_advance_deg(), _("Advance"));
-    diag_printf("%6d °D %s\n", d.get_detonation_correction_deg(),
-                _("Detonation Correction"));
-    diag_printf("%6.02f ms %s\n", d.get_injection_duration_ms(),
-                _("Injection Duration"));
-    diag_printf("%6d %s\n", d[idx_t::adaption_AFR], _("Adaption Air/Fuel"));
-    diag_printf("%6d %s\n", d[idx_t::adaption_running],
-                _("Adaption Running (Driving)"));
-    diag_printf("%6d %s\n", d[idx_t::adaption_stationary],
-                _("Adaption Stationary (Idle)"));
-    diag_printf("%6d mV %s\n", d.get_oxygen_sensor_voltage_mV(),
-                _("O2 Sensor"));
-    diag_printf("%6d %s\n", d.get_engine_knocking(), _("Engine-Knock"));
-    diag_printf("%6d mBar %s\n", d.get_atmospheric_pressure_mBar(),
-                _("Atmosphere"));
-    diag_printf("%6d %s\n", (d.is_throttle_fully_open()),
-                _("Throttle Full-Power"));
-    diag_printf("%6d %s\n", (d.is_throttle_fully_closed()), _("Throttle Idle"));
-    diag_printf("%6d %s\n", d.is_fuel_pump_on(), _("Fuel-Pump"));
 
-#if 1  // no idea which index, if any
-    diag_printf("%6d %s\n", (d.is_vacuum_provided_to_egr_valve()),
-                _("EGR+EVap enabled"));
-    diag_printf("%6d %s\n", (d.is_oxygen_sensor_loop_closed()),
-                _("O2 sensor loop"));
-#endif
-    diag_printf("%6d °D %s (26)\n", d[28], _("Knock-Delay"));
+    for (int i = 2; i < 30; ++i) diag_printf("%6d R%d\n", d.R(i), i);
 
-    ///////////////////////////////////////////////
     ///////////////////////////////////////////////
 
 #if 0  // no idea which index, if any
@@ -114,14 +79,22 @@ int PrintDiagExp::snprint_diag(char* dst, size_t dst_siz,
     /////////////////////////// experimental
     /////////////// try and error confirmed /////////////
     // fuel pump (can be heard when ignition turns on)
-    for (uint8_t i = 0; i < 8; ++i) diag_printf("%6d flags0-bit: %u\n", d.get_flag_0(i), i);
-    for (uint8_t i = 0; i < 8; ++i) diag_printf("%6d flags1-bit: %u\n", d.get_flag_1(i), i);
-    for (uint8_t i = 0; i < 8; ++i) diag_printf("%6d flags2-bit: %u\n", d.get_flag_2(i), i);
-    for (uint8_t i = 0; i < 8; ++i) diag_printf("%6d flags3-bit: %u\n", d.get_flag_3(i), i);
-    for (uint8_t i = 0; i < 8; ++i) diag_printf("%6d flags4-bit: %u\n", d.get_flag_4(i), i);
-    for (uint8_t i = 0; i < 8; ++i) diag_printf("%6d flags5-bit: %u\n", d.get_flag_5(i), i);
-    for (uint8_t i = 0; i < 8; ++i) diag_printf("%6d flags6-bit: %u\n", d.get_flag_6(i), i);
-    for (uint8_t i = 0; i < 8; ++i) diag_printf("%6d flags7-bit: %u\n", d.get_flag_7(i), i);
+    for (uint8_t i = 0; i < 8; ++i)
+      diag_printf("%6d flags0-bit: %u\n", d.get_flag_0(i), i);
+    for (uint8_t i = 0; i < 8; ++i)
+      diag_printf("%6d flags1-bit: %u\n", d.get_flag_1(i), i);
+    for (uint8_t i = 0; i < 8; ++i)
+      diag_printf("%6d flags2-bit: %u\n", d.get_flag_2(i), i);
+    for (uint8_t i = 0; i < 8; ++i)
+      diag_printf("%6d flags3-bit: %u\n", d.get_flag_3(i), i);
+    for (uint8_t i = 0; i < 8; ++i)
+      diag_printf("%6d flags4-bit: %u\n", d.get_flag_4(i), i);
+    for (uint8_t i = 0; i < 8; ++i)
+      diag_printf("%6d flags5-bit: %u\n", d.get_flag_5(i), i);
+    for (uint8_t i = 0; i < 8; ++i)
+      diag_printf("%6d flags6-bit: %u\n", d.get_flag_6(i), i);
+    for (uint8_t i = 0; i < 8; ++i)
+      diag_printf("%6d flags7-bit: %u\n", d.get_flag_7(i), i);
 
     /////////////////////////////////////////////////////
 #if 0

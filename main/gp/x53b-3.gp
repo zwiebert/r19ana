@@ -81,7 +81,6 @@ do for [i=0:n_blocks-1] {
     set print
 }
 
-
 ################## Plot content of $DATA now ##################################
 model = "R19 X53B F3N-740"
 our_title = sprintf("Model: %s | Blocks: %d | Start-Time: %s | Duration: %s " , model, count_blocks, to_hms(to_sec(start_block)), to_hms(to_sec(count_blocks)))
@@ -95,29 +94,25 @@ set rmargin 10   # Rechter Rand (Platz für y2-Label, falls genutzt)
 set border linewidth 0.75 dashtype 3
 
 ############## diagram 1 #####################
+
 set xlabel ""
+set xrange [start_block : end_block]
+set autoscale xfix  # Prevents Gnuplot from adding 'buffer' space
+set format x ""       # Versteckt die Zahlen der X-Achse
 
 set ylabel ""
-
-# Erlaube eine separate Skalierung für die rechte Achse
 set ytics nomirror
+set yrange [-128:128]
+
 set y2tics
 set y2label "???"
 set y2range [* : *]
 
-
-# 1. Force the range to match your blocks exactly
-set xrange [start_block : end_block]
-set autoscale xfix  # Prevents Gnuplot from adding 'buffer' space
-set yrange [*:*]
-set y2range [*:*]
-set format x ""       # Versteckt die Zahlen der X-Achse
-
 magic = "(column(-2)*skip_blocks + start_block + $1 * skip_blocks)"
 
 if (!exists("singleplot") || (singleplot == 1)) \
-plot $DATA u @magic:2 with lines lc "violet" title "Adapt Air/Fuel", \
-     $DATA u @magic:3 axes x1y2 with lines title "Adapt Drive"
+plot $DATA u @magic:2 with lines lc "violet" title "Short-Term-Fuel-Trim", \
+     $DATA u @magic:5 axes x1y2 with lines lc "red" title "Engine Speed"
 
 unset y2range
 
@@ -126,11 +121,13 @@ unset y2range
 set xlabel ""
 set ytics mirror
 set ylabel ""
-set y2label "RPM"
+set y2label ""
+set yrange [-128:128]
+set y2range [-128:128]
 
 if (!exists("singleplot") || (singleplot == 2)) \
-plot $DATA u @magic:4 with lines lc "blue" title "Adapt Idle", \
-     $DATA u @magic:5 axes x1y2 with lines lc "red" title "Engine Speed
+plot $DATA u @magic:4 with lines lc "blue" title "Long-Term-Fuel-Trim idle..low load", \
+     $DATA u @magic:3 axes x1y2 with lines title "Long-Term-Fuel-Trim mod..high load"
 
 ############## diagram 3 #####################
 
@@ -146,12 +143,9 @@ set ytics nomirror
 set y2tics 
 set y2label "???"
 
-
 if (!exists("singleplot") || (singleplot == 3)) \
 plot $DATA u @magic:6 with lines lc "dark-grey" title "??? (16)", \
      $DATA u @magic:7 axes x1y2 with lines lc "brown" title "??? (20)"
-
-
 
 #######################
 if (!exists("singleplot")) unset multiplot
