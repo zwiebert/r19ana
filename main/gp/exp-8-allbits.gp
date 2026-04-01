@@ -110,54 +110,80 @@ do for [i=0:n_blocks-1] {
 }
 
 ################## Plot content of $DATA now ##################################
+set term @GNUTERM title sprintf("flag %d", flagnum) 
 model = "R19 X53B F3N-740"
 our_title = sprintf("Model: %s | Blocks: %d | Start-Time: %s | Duration: %s | 15 ms / block | flag %d" , model, count_blocks, to_hms(to_sec(start_block)), to_hms(to_sec(count_blocks)), flagnum)
 
+
+myBottomMargin = 0.15
+myPlotHeight = (.425 - myBottomMargin)/3
 
 set multiplot layout 8,1 title our_title
 
 # Breite der Ränder in Zeichen-Einheiten (oder Screen-Einheiten) festlegen
 set lmargin 12   # Linker Rand (genug Platz für die längste Zahl + Label)
 set rmargin 10   # Rechter Rand (Platz für y2-Label, falls genutzt)
-set bmargin 0.1
-
+set bmargin 0
 
 set border linewidth 0.75 dashtype 3
 
 set title ""
 set xlabel ""
-unset ytics
 set ylabel ""
 set y2label ""
 
+
+unset ytics
+set grid xtics
 
 # 1. Force the range to match your blocks exactly
 set xrange [start_block : end_block]
 set autoscale xfix  # Prevents Gnuplot from adding 'buffer' space
 
+
+# boolean range
 set yrange [-0.1 : 1.2] noextend
 set y2range [-0.2 : 1.1] noextend
 
+set format x "%g"
+set size 1, myPlotHeight + .02
+
+
+set ylabel "bit 0"
+set origin 0, myBottomMargin+ 0*myPlotHeight
+plot $DATA u (column(-2)*skip_blocks + start_block + $1 * skip_blocks):2 with lines lc "blue" title ""
+
 set format x ""
+set size 1, myPlotHeight
 
-plot $DATA u (column(-2)*skip_blocks + start_block + $1 * skip_blocks):2 with lines lc "violet" title sprintf("bit %d", 0 )
-set tmargin 0.1
-plot $DATA u (column(-2)*skip_blocks + start_block + $1 * skip_blocks):3 axes x1y2 with lines title sprintf("bit %d", 1)
-
-
-plot $DATA u (column(-2)*skip_blocks + start_block + $1 * skip_blocks):4 with lines lc "violet" title sprintf("bit %d", 2)
-plot $DATA u (column(-2)*skip_blocks + start_block + $1 * skip_blocks):5 axes x1y2 with lines title sprintf("bit %d", 3) 
-
-plot $DATA u (column(-2)*skip_blocks + start_block + $1 * skip_blocks):6 with lines lc "violet" title sprintf("bit %d", 4)
-plot $DATA u (column(-2)*skip_blocks + start_block + $1 * skip_blocks):7 axes x1y2 with lines title sprintf("bit %d", 5) 
+set ylabel "bit 1"
+set origin 0, myBottomMargin+ 1*myPlotHeight
+plot $DATA u (column(-2)*skip_blocks + start_block + $1 * skip_blocks):3 axes x1y2 with lines lc "blue" title ""
 
 
-plot $DATA u (column(-2)*skip_blocks + start_block + $1 * skip_blocks):8 with lines lc "violet" title sprintf("bit %d", 6)
+set ylabel "bit 2"
+set origin 0, myBottomMargin+ 2*myPlotHeight
+plot $DATA u (column(-2)*skip_blocks + start_block + $1 * skip_blocks):4 with lines lc "blue" title ""
 
-#set format x "%g"
-#set tmargin 6 
-#set bmargin 6 
-plot $DATA u (column(-2)*skip_blocks + start_block + $1 * skip_blocks):9 axes x1y2 with lines title sprintf("bit %d", 7) 
+set ylabel "bit 3"
+set origin 0, myBottomMargin+ 3*myPlotHeight
+plot $DATA u (column(-2)*skip_blocks + start_block + $1 * skip_blocks):5 axes x1y2 with lines lc "blue" title "" 
+
+set ylabel "bit 4"
+set origin 0, myBottomMargin+ 4*myPlotHeight
+plot $DATA u (column(-2)*skip_blocks + start_block + $1 * skip_blocks):6 with lines lc "blue" title ""
+
+set ylabel "bit 5"
+set origin 0, myBottomMargin+ 5*myPlotHeight
+plot $DATA u (column(-2)*skip_blocks + start_block + $1 * skip_blocks):7 axes x1y2 with lines lc "blue" title "" 
+
+set ylabel "bit 6"
+set origin 0, myBottomMargin+ 6*myPlotHeight
+plot $DATA u (column(-2)*skip_blocks + start_block + $1 * skip_blocks):8 with lines lc "blue" title ""
+
+set ylabel "bit 7"
+set origin 0, myBottomMargin+ 7*myPlotHeight
+plot $DATA u (column(-2)*skip_blocks + start_block + $1 * skip_blocks):9 axes x1y2 with lines lc "blue" title ""
 
 unset multiplot
 if (exists("png")) unset output
