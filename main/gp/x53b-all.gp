@@ -67,7 +67,7 @@ print "skip_blocks: ", skip_blocks
 
 print "creating data table"
 ############################ loop to fill $DATA ##############
-$DATA << EOD
+$DATA1 << EOD
 # Block, 6, 7, 8, 10, 14, 18  (block and line numbers)
 EOD
 $DATA2 << EOD
@@ -82,24 +82,27 @@ array val[32]
 
 # 3. The High-Speed Loop
 do for [i=0:n_blocks-1] {
+
     stats datafile index i using (val[int(real($1))] = $2, 0) nooutput
 
-    set print $DATA append
+    set print $DATA1 append
     print sprintf("%-10d %-10.4f %-10.4f %-10.4f %-10.4f %-10.4f %-10.4f", \
                   i, val[8], val[3], val[17], val[7], val[16], val[22])
     set print
     set print $DATA2 append
     print sprintf("%-10d %-10.4f %-10.4f %-10.4f %-10.4f %-10.4f %-10.4f", \
-                  i, val[3], val[19], val[4], val[5], val[15], val[11])
+                  i, val[6], val[23], val[4], val[5], val[10], val[11])
     set print
     set print $DATA3 append
     print sprintf("%-10d %-10.4f %-10.4f %-10.4f %-10.4f %-10.4f %-10.4f", \
                   i, val[15], val[8], val[13], val[14], val[9], val[12])
     set print
 }
+
 print "starting to plot"
 
-################## Plot content of $DATA now ##################################
+reset 
+################## Plot content of $DATA1 now ##################################
 set term @GNUTERM title "RPM, MAP, Adv., O2, InjDur, NoLoadSwitch" 
 
 
@@ -141,8 +144,8 @@ set autoscale y2 noextend
 set y2range [*:*] noextend noreverse
 
 if (!exists("singleplot") || (singleplot == 1)) \
-plot $DATA u (column(-2)*skip_blocks + start_block + $1 * skip_blocks):2 with lines lc "violet" title "RPM", \
-     $DATA u (column(-2)*skip_blocks + start_block + $1 * skip_blocks):3 axes x1y2 with lines title "MAP"
+plot $DATA1 u (column(-2)*skip_blocks + start_block + $1 * skip_blocks):2 with lines lc "violet" title "RPM", \
+     $DATA1 u (column(-2)*skip_blocks + start_block + $1 * skip_blocks):3 axes x1y2 with lines title "MAP"
 
 
 set xlabel ""
@@ -151,12 +154,12 @@ set y2label "mV"
 set y2range [-100 : 1300] noreverse
 unset yrange
 
-#plot $DATA u 1:4 with lines lc "gold" title "Advance", \
-#  $DATA u 1:5 axes x1y2 with lines lc "red" title "Oxygen"
+#plot $DATA1 u 1:4 with lines lc "gold" title "Advance", \
+#  $DATA1 u 1:5 axes x1y2 with lines lc "red" title "Oxygen"
 
 if (!exists("singleplot") || (singleplot == 2)) \
-plot $DATA u (column(-2)*skip_blocks + start_block + $1 * skip_blocks):4 with lines lc "gold" title "Advance", \
-     $DATA u (column(-2)*skip_blocks + start_block + $1 * skip_blocks):5 axes x1y2 with lines lc "red" title "Oxygen"
+plot $DATA1 u (column(-2)*skip_blocks + start_block + $1 * skip_blocks):4 with lines lc "gold" title "Advance", \
+     $DATA1 u (column(-2)*skip_blocks + start_block + $1 * skip_blocks):5 axes x1y2 with lines lc "red" title "Oxygen"
 
 set xlabel "Block Nummer (1 Block alle 15ms)"
 set ylabel "ms"
@@ -174,13 +177,14 @@ set format x "%g"     # Aktiviert die Zahlen wieder (Standard-Format)
 
 
 if (!exists("singleplot") || (singleplot == 3)) \
-plot $DATA u (column(-2)*skip_blocks + start_block + $1 * skip_blocks):6 with lines lc "blue" title "Inj-Duration", \
-     $DATA u (column(-2)*skip_blocks + start_block + $1 * skip_blocks):7 axes x1y2 with lines lc "brown" title "Throttle-Idle"
+plot $DATA1 u (column(-2)*skip_blocks + start_block + $1 * skip_blocks):6 with lines lc "blue" title "Inj-Duration", \
+     $DATA1 u (column(-2)*skip_blocks + start_block + $1 * skip_blocks):7 axes x1y2 with lines lc "brown" title "Throttle-Idle"
 
 
 if (!exists("singleplot")) unset multiplot
 
-################## Plot content of $DATA now ##################################
+reset 
+################## Plot content of $DATA2 now ##################################
 set term @GNUTERM 1 title "VBAT, Fuel, ECT, IAT, Pink, PinkRetard" 
 model = "R19 X53B F3N-740"
 our_title = sprintf("Model: %s | Blocks: %d | Start-Time: %s | Duration: %s " , model, count_blocks, to_hms(to_sec(start_block)), to_hms(to_sec(count_blocks)))
@@ -220,8 +224,8 @@ set format x ""       # Versteckt die Zahlen der X-Achse
 magic = "(column(-2)*skip_blocks + start_block + $1 * skip_blocks)"
 
 if (!exists("singleplot") || (singleplot == 1)) \
-plot $DATA u @magic:2 with lines lc "grey" title "Battery", \
-     $DATA u @magic:3 axes x1y2 with lines title "Fuel-Pump"
+plot $DATA2 u @magic:2 with lines lc "grey" title "Battery", \
+     $DATA2 u @magic:3 axes x1y2 with lines title "Fuel-Pump"
 
 unset y2range
 
@@ -235,9 +239,10 @@ set yrange [-30 : 130]
 set y2range [-30 : 130]
 
 if (!exists("singleplot") || (singleplot == 2)) \
-plot $DATA u @magic:4 with lines lc "blue" title "Engine Coolant Temp", \
-     $DATA u @magic:5 axes x1y2 with lines lc "red" title "Intake Air Temp"
+plot $DATA2 u @magic:4 with lines lc "blue" title "Engine Coolant Temp", \
+     $DATA2 u @magic:5 axes x1y2 with lines lc "red" title "Intake Air Temp"
 
+unset y2range
 ############## diagram 3 #####################
 
 set xlabel "Block Number (1 Block per 15ms)"
@@ -254,16 +259,18 @@ set y2label "???"
 
 
 if (!exists("singleplot") || (singleplot == 3)) \
-plot $DATA u @magic:6 with lines lc "dark-grey" title "Knocking", \
-     $DATA u @magic:7 axes x1y2 with lines lc "brown" title "Knock-Corr-Delay"
+plot $DATA2 u @magic:6 with lines lc "dark-grey" title "Knocking", \
+     $DATA2 u @magic:7 axes x1y2 with lines lc "brown" title "Knock-Corr-Delay"
 
 
+unset y2range
 
 #######################
 if (!exists("singleplot")) unset multiplot
 
-################## Plot content of $DATA now ##################################
-set term @GNUTERM 2 title "STFT, LTFT-LL, LTFT-HL, IdleReg, IdleAdapt" 
+reset 
+################## Plot content of $DATA3 now ##################################
+set term @GNUTERM 2 title "STFT, RPM, LTFT-LL, LTFT-HL, IdleReg, IdleAdapt" 
 model = "R19 X53B F3N-740"
 our_title = sprintf("Model: %s | Blocks: %d | Start-Time: %s | Duration: %s " , model, count_blocks, to_hms(to_sec(start_block)), to_hms(to_sec(count_blocks)))
 
@@ -286,15 +293,17 @@ set ylabel ""
 set ytics nomirror
 set yrange [-128:128]
 
+set autoscale y2
+set y2tics nomirror
 set y2tics
-set y2label ""
+set y2label "RPM"
 set y2range [0 : *]
 
 magic = "(column(-2)*skip_blocks + start_block + $1 * skip_blocks)"
 
 if (!exists("singleplot") || (singleplot == 1)) \
-plot $DATA u @magic:2 with lines lc "violet" title "Short-Term-Fuel-Trim", \
-     $DATA u @magic:3 axes x1y2 with lines lc "red" title "Engine Speed"
+plot $DATA3 u @magic:2 with lines lc "violet" title "Short-Term-Fuel-Trim", \
+     $DATA3 u @magic:3 axes x1y2 with lines lc "red" title "Engine Speed"
 
 unset y2range
 
@@ -308,9 +317,10 @@ set yrange [-128:128]
 set y2range [-128:128]
 
 if (!exists("singleplot") || (singleplot == 2)) \
-plot $DATA u @magic:4 with lines lc "blue" title "Long-Term-Fuel-Trim idle..low load", \
-     $DATA u @magic:5 axes x1y2 with lines title "Long-Term-Fuel-Trim mod..high load"
+plot $DATA3 u @magic:4 with lines lc "blue" title "Long-Term-Fuel-Trim idle..low load", \
+     $DATA3 u @magic:5 axes x1y2 with lines title "Long-Term-Fuel-Trim mod..high load"
 
+unset y2range
 ############## diagram 3 #####################
 
 set xlabel "Block Number (1 Block per 15ms)"
@@ -326,8 +336,8 @@ set y2tics
 set y2label "???"
 
 if (!exists("singleplot") || (singleplot == 3)) \
-plot $DATA u @magic:6 with lines lc "dark-grey" title "idle regulation", \
-     $DATA u @magic:7 axes x1y2 with lines lc "brown" title "idle adaptation"
+plot $DATA3 u @magic:6 with lines lc "dark-grey" title "idle regulation", \
+     $DATA3 u @magic:7 axes x1y2 with lines lc "brown" title "idle adaptation"
 
 #######################
 if (!exists("singleplot")) unset multiplot

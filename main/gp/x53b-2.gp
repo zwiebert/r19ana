@@ -77,7 +77,7 @@ do for [i=0:n_blocks-1] {
     # 4. Append to Summary in your custom "Uniform" order
     set print $DATA append
     print sprintf("%-10d %-10.4f %-10.4f %-10.4f %-10.4f %-10.4f %-10.4f", \
-                  i, val[3], val[19], val[4], val[5], val[15], val[11])
+                  i, val[6], val[23], val[4], val[5], val[10], val[11])
     set print
 }
 
