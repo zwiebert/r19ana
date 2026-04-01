@@ -77,7 +77,7 @@ do for [i=0:n_blocks-1] {
     # 4. Append to Summary in your custom "Uniform" order
     set print $DATA append
     print sprintf("%-10d %-10.4f %-10.4f %-10.4f %-10.4f %-10.4f %-10.4f", \
-                  i, val[11], val[12], val[13], val[6], val[16], val[20])
+                  i, val[15], val[8], val[13], val[14], val[9], val[12])
     set print
 }
 
@@ -105,14 +105,14 @@ set ytics nomirror
 set yrange [-128:128]
 
 set y2tics
-set y2label "???"
-set y2range [* : *]
+set y2label ""
+set y2range [0 : *]
 
 magic = "(column(-2)*skip_blocks + start_block + $1 * skip_blocks)"
 
 if (!exists("singleplot") || (singleplot == 1)) \
 plot $DATA u @magic:2 with lines lc "violet" title "Short-Term-Fuel-Trim", \
-     $DATA u @magic:5 axes x1y2 with lines lc "red" title "Engine Speed"
+     $DATA u @magic:3 axes x1y2 with lines lc "red" title "Engine Speed"
 
 unset y2range
 
@@ -127,7 +127,7 @@ set y2range [-128:128]
 
 if (!exists("singleplot") || (singleplot == 2)) \
 plot $DATA u @magic:4 with lines lc "blue" title "Long-Term-Fuel-Trim idle..low load", \
-     $DATA u @magic:3 axes x1y2 with lines title "Long-Term-Fuel-Trim mod..high load"
+     $DATA u @magic:5 axes x1y2 with lines title "Long-Term-Fuel-Trim mod..high load"
 
 ############## diagram 3 #####################
 
@@ -144,8 +144,8 @@ set y2tics
 set y2label "???"
 
 if (!exists("singleplot") || (singleplot == 3)) \
-plot $DATA u @magic:6 with lines lc "dark-grey" title "??? (16)", \
-     $DATA u @magic:7 axes x1y2 with lines lc "brown" title "??? (20)"
+plot $DATA u @magic:6 with lines lc "dark-grey" title "idle regulation", \
+     $DATA u @magic:7 axes x1y2 with lines lc "brown" title "idle adaptation"
 
 #######################
 if (!exists("singleplot")) unset multiplot

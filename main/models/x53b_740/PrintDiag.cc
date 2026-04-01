@@ -42,17 +42,17 @@ int PrintDiagX53b740::snprint_diag(char* dst, size_t dst_siz,
 
     // analog-values
     diag_printf("%6d N    xx  \"Frame-Count\"\n", d.get_frame_count());
-    diag_printf("%6d mBar #1  \"%s\"\n",
+    diag_printf("%6d mBar #01 \"%s\"\n",
                 d.get_manifold_absolute_pressure_mBar(), _("Manifold"));
-    diag_printf("%6d °C   #2  \"%s\"\n",
+    diag_printf("%6d °C   #02 \"%s\"\n",
                 d.get_engine_coolant_temperature_Celsius(), _("Coolant"));
-    diag_printf("%6d °C   #3  \"%s\"\n", d.get_intake_air_temperature_Celsius(),
+    diag_printf("%6d °C   #03 \"%s\"\n", d.get_intake_air_temperature_Celsius(),
                 _("Intake Air"));
-    diag_printf("%6.02f V    #4  \"%s\"\n", d.get_battery_voltage_V(),
+    diag_printf("%6.02f V    #04 \"%s\"\n", d.get_battery_voltage_V(),
                 _("Battery"));
-    diag_printf("%6d mV   #5  \"%s\"\n", d.get_oxygen_sensor_voltage_mV(),
+    diag_printf("%6d mV   #05 \"%s\"\n", d.get_oxygen_sensor_voltage_mV(),
                 _("O2 Sensor"));
-    diag_printf("%6d rpm  #6  \"%s\"\n", d.get_engine_speed_RPM(),
+    diag_printf("%6d rpm  #06 \"%s\"\n", d.get_engine_speed_RPM(),
                 _("Crankshaft"));
 
     diag_printf("%6d N    #12 \"%s\"\n", d.get_idle_regulation(),

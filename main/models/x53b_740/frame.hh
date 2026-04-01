@@ -36,12 +36,12 @@ class X53b740Frame : public CarModelBase {
     ignition_advance,       // 13, #51
     detonation_correction,  // 14, #15 (knocking retardation)
     o2_integrator,          // 15,
-    flags1,                 // 16 static 0x88
+    flags1,                 // 16 static 0x88  (bit-5: Closed Loop Readiness (Condition Correction Lambda)!!!)
     flags2,  // 17   Flags2	Idle Control	Low-bit jitter (stepper), //
              // high-bit spike at end.
     flags3,  // 18   Enrichment/Purge,	Wakes-up at warm engine, heavy //
              // spiking/toggling.
-    flags4,  // 19 static 0x00  Error memory
+    flags4,  // 19 static 0x00  Error memory   (rich/lean signal at bit-0 !!!)
     flags5,  // 20 static 0x0a
     flags6,  // 21   fuel-pump...
     flags7,  // 22
@@ -106,11 +106,11 @@ class X53b740Frame : public CarModelBase {
     return X(idx_t::detonation_correction);
   }
   int get_idle_regulation() const {
-    return int(X(idx_t::idle_regulation)) - 128;
+    return int(X(idx_t::idle_regulation));
   }
   int get_idle_adaption() const { return int(X(idx_t::idle_adaption)); }
   int get_richness_regulation() const {
-    return int(X(idx_t::richness_regulation)) - 128;
+    return int(X(idx_t::richness_regulation));
   }
   int get_richness_adaption_idle_and_low() const {
     return int(X(idx_t::richness_adaption_idle2low)) - 128;
@@ -134,7 +134,7 @@ class X53b740Frame : public CarModelBase {
   bool is_aircon_demand() const { return X(idx_t::flags0) & 0x04; }
   bool is_throttle_fully_open() const { return (X(idx_t::flags0) & 0x10) == 0; }
   bool is_throttle_fully_closed() const {
-    return (X(idx_t::flags0) & 0x08) == 0;
+    return !getbit(X(idx_t::flags0), 3);
   }
 
   // flags2
@@ -152,7 +152,7 @@ class X53b740Frame : public CarModelBase {
 
   bool is_flags3_bit2() const { return X(idx_t::flags3 & 0x02); }
 
-  bool is_oxygen_sensor_loop_closed() const { return X(idx_t::flags3) & 0x08; }
+  bool is_oxygen_sensor_loop_closed() const { return getbit(X(idx_t::flags2), 5); }  // plot-verified
   bool is_vacuum_provided_to_egr_valve() const {
     return getbit(X(idx_t::flags3), 5);
   }
