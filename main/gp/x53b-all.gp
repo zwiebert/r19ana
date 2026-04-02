@@ -77,6 +77,34 @@ $DATA3 << EOD
 # Block, 6, 7, 8, 10, 14, 18  (block and line numbers)
 EOD
 
+# Data Record (line numbers are part of the data)
+#
+# 01 1077103ED3B89E004296600807030097FF1140000A380200A8587C01FC
+# 02   1490 N    xx  "Frame-Count"
+# 03    248 mBar #01 "Ansaugkrümmer"
+# 04     91 °C   #02 "Kühlwasser"
+# 05     75 °C   #03 "Ansaugluft"
+# 06  12.93 V    #04 "Batterie"
+# 07      0 mV   #05 "Lambda-Sonde"
+# 08    779 rpm  #06 "Kurbelwelle"
+# 09      1 N    #12 "Idle Regulation"
+# 10      7 N    #13 "Klopfen"
+# 11      0 °D   #15 "Detonation Correction"
+# 12      0 N    #21 "Idle Adaption"
+# 13     40 N    #30 "Richness-Adaption idle and low load (LTFT)"
+# 14     -4 N    #31 "Richness-Adaption avg and high load (LTFT)"
+# 15    -40 N    #35 "Richness-Regulation (STFT)"
+# 16   4.29 ms   #50 "Einspritzdauer"
+# 17      3 °D   #51 "Zündwinkel"
+# 18     16 N    VER "Version"
+# 19    119 N    CAL "Calibration"
+# 20    252 N    ID  "Renault-ID"
+# 21      0 bool PG "DK-Vollgas"
+# 22      1 bool PL "DK-Leerlauf"
+# 23      1 bool FUEL "Kraftstoff-Pumpe"
+# 24      0 bool XXX "AGR aktiviert"
+# 25      0 bool XXX "Lambda Regelschleife"
+
 # 1. Initialize an array for values (array size == block length)
 array val[32]
 
@@ -114,7 +142,7 @@ if (!exists("singleplot")) set multiplot layout 3,1 title our_title
 # Breite der Ränder in Zeichen-Einheiten (oder Screen-Einheiten) festlegen
 set lmargin 12   # Linker Rand (genug Platz für die längste Zahl + Label)
 set rmargin 10   # Rechter Rand (Platz für y2-Label, falls genutzt)
-
+set grid xtics
 
 set border linewidth 0.75 dashtype 3
 set mouse format "%.4f"
@@ -198,6 +226,7 @@ set rmargin 10   # Rechter Rand (Platz für y2-Label, falls genutzt)
 set border linewidth 0.75 dashtype 3
 
 
+set grid xtics
 ############## diagram 1 #####################
 set xlabel ""
 
@@ -215,7 +244,6 @@ set y2tics (0, 1)
 set xrange [start_block : end_block]
 set autoscale xfix  # Prevents Gnuplot from adding 'buffer' space
 set yrange [*:*]
-set y2range [*:*]
 if (fix_yrange) {
 set yrange [7 : 16]
 }
@@ -288,6 +316,7 @@ set xlabel ""
 set xrange [start_block : end_block]
 set autoscale xfix  # Prevents Gnuplot from adding 'buffer' space
 set format x ""       # Versteckt die Zahlen der X-Achse
+set grid xtics
 
 set ylabel ""
 set ytics nomirror

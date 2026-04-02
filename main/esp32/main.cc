@@ -2,6 +2,7 @@
 
 #include "main.hh"
 
+#include <esp_log.h>
 #include <nvs_flash.h>
 #include <stdio.h>
 #include <string.h>
@@ -18,11 +19,12 @@
 #include "select_model.hh"
 
 #define D(x)
+#define TAG "r19anal"
 
 Transport&& xr25_transport = UartTransport(UartTransportArgs{
     .bps = 65000, .uart_port_num = 2, .rx_gpio = 16, .tx_gpio = 17});
 Transport&& mock_loop_transport = UartTransport(UartTransportArgs{
-    .bps = 65000, .uart_port_num = 1, .rx_gpio = 18, .tx_gpio = 19});
+    .bps = 65000, .uart_port_num = 1, .rx_gpio = 35, .tx_gpio = 32});
 Transport&& term_transport = SppTransport();
 
 static void main_init() {
@@ -42,22 +44,41 @@ static void main_init() {
 
 extern "C" int app_main() {
   main_init();
-  assert(print_car_diag);
+
+  if (data_logfile) {
+    if (data_logfile->mount_fs()) {
+      if (data_logfile->set_full_path("xr25-log.bin")) {
+        if (data_logfile->open_file()) {
+          ESP_LOGI(TAG, "sd_card: file opened <%s>",
+                   data_logfile->get_full_path());
+        } else {
+          ESP_LOGE(TAG, "cannot open file <%s>", data_logfile->get_full_path());
+        }
+      } else {
+        ESP_LOGE(TAG, "cannot set path for file");
+      }
+    }
+  }
 
   // processor calls back when it has completed a frame from the chunks of bytes
   // it got from x25_transport. processor has a dedicated thread for doing the
   // callback. its ok to block it.
   FrameProcessor processor([](const XR25Frame::voc_t& frame) {
-    print_car_diag->push_frame(frame);
-    if (!spp_is_connected()) return;
-    char* dst = 0;
-    if (auto dst_len = r19_alloc_and_print(dst, *print_car_diag, Mask);
-        dst_len > 0) {
-      if (term_transport.write((const uint8_t*)dst, dst_len, true)) {
+    if (data_logfile) {
+      data_logfile->write(frame);
+    }
+    if (print_car_diag) {
+      print_car_diag->push_frame(frame);
+      if (!spp_is_connected()) return;
+      char* dst = 0;
+      if (auto dst_len = r19_alloc_and_print(dst, *print_car_diag, Mask);
+          dst_len > 0) {
+        if (term_transport.write((const uint8_t*)dst, dst_len, true)) {
+          free(dst);
+          return;
+        }
         free(dst);
-        return;
       }
-      free(dst);
     }
   });
 

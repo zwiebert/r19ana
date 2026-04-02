@@ -1,10 +1,13 @@
 #pragma once
 #include "PrintCarDiag.hh"
+#include "DataLogFile.hh"
+
 extern class Transport&& term_transport;
 extern class Transport&& xr25_transport;
 extern class Transport&& mock_loop_transport;
 extern class X53b740Frame R19_frame;
 extern PrintCarDiag::line_view_mask_t Mask;
+extern class DataLogFile *data_logfile;
 
 int terminal_puts(const char* s, bool block = false);
 bool cli_parse_and_execute_cmdline(char* src);

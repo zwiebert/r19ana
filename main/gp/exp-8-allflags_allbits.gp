@@ -130,13 +130,16 @@ set autoscale xfix  # Prevents Gnuplot from adding 'buffer' space
 set yrange [-0.1 : 1.2] noextend
 set y2range [-0.2 : 1.1] noextend
 
-set format x "%g"
-set size 1, myPlotHeight + .02
 
 do for [f = 0 : 7] {
+
 set term @GNUTERM f title sprintf("flag %d", f) 
 our_title = sprintf("Model: %s | Blocks: %d | Start-Time: %s | Duration: %s | 15 ms / block | flag %d" ,\
  model, count_blocks, to_hms(to_sec(start_block)), to_hms(to_sec(count_blocks)), f)
+
+set format x "%g"
+set size 1, myPlotHeight + .02
+
 set multiplot layout 8,1 title our_title
 do for[b = 0: 7] {
     if (b == 1) {

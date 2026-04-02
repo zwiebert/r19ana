@@ -1,6 +1,6 @@
 #include "cli.hh"
-#include <iterator>
 
+#include <iterator>
 
 constexpr const char* reply_msg_all_hidden =
     "all entries are now hidden!\n"
@@ -69,9 +69,31 @@ static CliCmd cmds[] = {
      }},
 
 #ifdef ESP_PLATFORM
+    {.name = "sd ",
+     .help_txt = "SD-MMC card functions.\n"
+                 "Connect UART1-TX with UART2-RX to process the data\n",
+
+     .handler = [](CliCmd& cmd) -> bool {
+       for (char *str = cmd.args, *save_ptr = nullptr, *tok;
+            (tok = strtok_r(str, ", \r\n", &save_ptr)); str = nullptr) {
+         if (strcasecmp("help", tok) == 0) {
+           cmd.reply(cmd.help_txt);
+           return true;
+         }
+         if (strcmp(tok, "mount") == 0) {
+           return data_logfile->mount_fs();
+         } else if (strcmp(tok, "umount") == 0) {
+           return data_logfile->umount_fs();
+         } else {
+           return false;  // unknown argument
+         }
+       }
+       return false;
+     }},
     {.name = "mock-loop ",
      .help_txt = "Sends pre-recorded data on UART1.\n"
-                 "Connect UART1-TX with UART2-RX to process the data\n",
+                 "mount\n"
+                 "umount\n",
      .handler = [](CliCmd& cmd) -> bool {
        static std::thread mock_uart_thread;
        static bool keep_running;
@@ -128,5 +150,5 @@ static CliCmd cmds[] = {
      }},
 };
 
-CliCmd *cli_cmds_begin() {return std::begin(cmds);}
-CliCmd *cli_cmds_end() {return std::end(cmds);}
+CliCmd* cli_cmds_begin() { return std::begin(cmds); }
+CliCmd* cli_cmds_end() { return std::end(cmds); }

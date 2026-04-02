@@ -25,16 +25,25 @@ Transport&& term_transport = ConsoleTransport();
 int main() {
   select_model("73ps");
 
+  if (data_logfile) {
+    data_logfile->set_full_path("xr25-log.bin");
+    data_logfile->open_file();
+  }
   FrameProcessor processor([](const XR25Frame::voc_t& frame) {
-    print_car_diag->push_frame(frame);
-    char* dst = 0;
-    if (auto dst_len = r19_alloc_and_print(dst, *print_car_diag, Mask);
-        dst_len > 0) {
-      if (term_transport.write((const uint8_t*)dst, dst_len, true)) {
+    if (data_logfile) {
+      data_logfile->write(frame);
+    }
+    if (print_car_diag) {
+      print_car_diag->push_frame(frame);
+      char* dst = 0;
+      if (auto dst_len = r19_alloc_and_print(dst, *print_car_diag, Mask);
+          dst_len > 0) {
+        if (term_transport.write((const uint8_t*)dst, dst_len, true)) {
+          free(dst);
+          return;
+        }
         free(dst);
-        return;
       }
-      free(dst);
     }
   });
 
