@@ -2,4 +2,4 @@
 
 static DataLogFileStdio logfile;
 
-DataLogFile* data_logfile = &logfile;
+IFileLogger* data_logfile = &logfile;

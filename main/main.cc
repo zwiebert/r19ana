@@ -29,7 +29,7 @@ bool cli_parse_and_execute_cmdline(char* src) {
       return true;
     }
   }
-  terminal_puts("unknown command\n");
+  terminal_puts("command failed or unknown command\n");
   return false;
 }
 

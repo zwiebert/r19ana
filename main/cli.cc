@@ -2,6 +2,8 @@
 
 #include <iterator>
 
+#include "pers_storage.hh"
+
 constexpr const char* reply_msg_all_hidden =
     "all entries are now hidden!\n"
     "Use <hide 0> to unhide all.\n"
@@ -81,9 +83,30 @@ static CliCmd cmds[] = {
            return true;
          }
          if (strcmp(tok, "mount") == 0) {
-           return data_logfile->mount_fs();
+           data_storage->mount_fs();
+           // data_storage->request_mount();
+           return true;
          } else if (strcmp(tok, "umount") == 0) {
-           return data_logfile->umount_fs();
+           data_storage->umount_fs();
+           // data_storage->request_umount();
+           return true;
+         } else if (strcmp(tok, "auto-mount") == 0) {
+           cmd.reply("sd-card will be mounted at MCU restart\n");
+           return pers_stor::set_enable_auto_mount(true);
+         } else if (strcmp(tok, "no-auto-mount") == 0) {
+           cmd.reply("sd-card will NOT be mounted at MCU restart\n");
+           return pers_stor::set_enable_auto_mount(false);
+         } else if (strcmp(tok, "status") == 0) {
+           bool is_mounted = data_storage->is_mounted();
+           bool is_ready = data_logfile->is_ready();
+           char buf[128];
+           if (sizeof buf > snprintf(buf, sizeof buf,
+                                     "status: mount=%d,auto-mount=%d\n",
+                                     data_storage->is_mounted(),
+                                     pers_stor::get_enable_auto_mount())) {
+             cmd.reply(buf);
+           }
+           return is_mounted;
          } else {
            return false;  // unknown argument
          }

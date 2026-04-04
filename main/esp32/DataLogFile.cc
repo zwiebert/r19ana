@@ -3,6 +3,8 @@
 #include <sys/stat.h>
 #include <sys/unistd.h>
 
+#include <atomic>
+
 #include "DataLogFileStdio.hh"
 #include "driver/sdmmc_host.h"
 #include "esp_vfs_fat.h"
@@ -57,12 +59,23 @@ pin_configuration_t config = {
 };
 #endif  // CONFIG_EXAMPLE_DEBUG_PIN_CONNECTIONS
 
-class DataLogfileEsp32 final : public DataLogFileStdio {
+class DataLogfileEsp32 final : public DataLogFileStdio, public IMountable {
  public:
   bool mount_fs() override {
-    esp_err_t ret;
+    constexpr unsigned try_mount_interval_ms = 5000;
 
     if (card) return false;  // already mounted
+
+    if (m_last_mount_try_ms) {
+      auto now = esp_log_timestamp();
+      if (m_last_mount_try_ms + try_mount_interval_ms > now) {
+        return false;
+      }
+      m_last_mount_try_ms = 0;
+    }
+
+    std::lock_guard lock(m_mtx);
+    esp_err_t ret;
 
     // Options for mounting the filesystem.
     // If format_if_mount_failed is set to true, SD card will be partitioned and
@@ -114,7 +127,7 @@ class DataLogfileEsp32 final : public DataLogFileStdio {
     ret = sd_pwr_ctrl_new_on_chip_ldo(&ldo_config, &pwr_ctrl_handle);
     if (ret != ESP_OK) {
       ESP_LOGE(TAG, "Failed to create a new on-chip LDO power control driver");
-      return;
+      goto fail;
     }
     host.pwr_ctrl_handle = pwr_ctrl_handle;
 #endif
@@ -171,18 +184,31 @@ class DataLogfileEsp32 final : public DataLogFileStdio {
         check_sd_card_pins(&config, pin_count);
 #endif
       }
-      return false;
+      goto fail;
     }
     ESP_LOGI(TAG, "Filesystem mounted");
 
     // Card has been initialized, print its properties
     sdmmc_card_print_info(stdout, card);
 
+    m_last_mount_try_ms = 0;
     return true;
+  fail:
+    if (m_last_mount_try_ms == 0) {
+      m_last_mount_try_ms = esp_log_timestamp();
+    }
+
+    return false;
   }
   bool umount_fs() override {
-    if (!card) return false; // not mounted
-    close_file();
+    if (!card) return false;  // not mounted
+    std::lock_guard lock(m_mtx);
+    if (is_open()) {
+      if (!close_file()) {
+        m_flag_request_umount = true;
+        return false;
+      }
+    }
     // All done, unmount partition and disable SDMMC peripheral
     esp_vfs_fat_sdcard_unmount(mount_point, card);
     ESP_LOGI(TAG, "Card unmounted");
@@ -202,15 +228,77 @@ class DataLogfileEsp32 final : public DataLogFileStdio {
 
   bool set_full_path(const char* file_name) override {
     if (!file_name) return false;
+    std::lock_guard lock(m_mtx);
     return sizeof m_full_path > snprintf(m_full_path, sizeof m_full_path,
                                          "%s/%s", mount_point, file_name);
+  }
+
+  bool is_mounted() const override { return card; }
+
+ public:
+  int feed_bytes(const uint8_t* src, unsigned src_len) override {
+    if (m_file_owner_task != xTaskGetCurrentTaskHandle()) {
+      return false;
+    }
+    return DataLogFileStdio::feed_bytes(src, src_len);
+  }
+  bool write(const XR25Frame::voc_t& frame) override {
+    if (m_file_owner_task != xTaskGetCurrentTaskHandle()) {
+      return false;
+    }
+    return DataLogFileStdio::write(frame);
+  }
+  bool open_file() override {
+    if (!DataLogFileStdio::open_file()) return false;
+    m_file_owner_task = xTaskGetCurrentTaskHandle();
+    return true;
+  }
+  bool close_file() override {
+    if (m_file_owner_task != xTaskGetCurrentTaskHandle()) {
+      m_flag_request_close = is_open();
+      return false;
+    }
+    return DataLogFileStdio::close_file();
+  }
+
+ public:
+  void service_logging() override {
+    if (m_flag_request_close) {
+      close_file();
+      m_flag_request_close = false;
+    }
+  }
+
+  void service_mounting() override {
+    if (m_flag_request_umount) {
+      umount_fs();
+      m_flag_request_umount = is_mounted();
+    }
+    if (m_flag_request_mount) {
+      mount_fs();
+      m_flag_request_mount = !is_mounted();
+    }
   }
 
  private:
   const char mount_point[16] = MOUNT_POINT;
   sdmmc_card_t* card = 0;
+  uint32_t m_last_mount_try_ms = 0;
+  TaskHandle_t m_file_owner_task = nullptr;
+
+ public:
+  void request_mount() { m_flag_request_mount = true; }
+  void request_umount() { m_flag_request_umount = true; }
+
+ private:
+  std::atomic<bool> m_flag_request_close = false;
+  std::atomic<bool> m_flag_request_umount = false;
+  std::atomic<bool> m_flag_request_mount = true;
+  public:
+  bool is_ready() const override { return is_mounted(); }
 };
 
 static DataLogfileEsp32 logfile;
 
-DataLogFile* data_logfile = &logfile;
+IFileLogger* data_logfile = &logfile;
+IMountable* data_storage = &logfile;

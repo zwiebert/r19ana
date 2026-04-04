@@ -16,6 +16,7 @@
 #include "SppTransport.hh"
 #include "UartTransport.hh"
 #include "cli.hh"
+#include "pers_storage.hh"
 #include "select_model.hh"
 
 #define D(x)
@@ -40,34 +41,74 @@ static void main_init() {
   ESP_ERROR_CHECK(err);
 
   select_model_init();
+
+  if (data_storage && pers_stor::get_enable_auto_mount()) {
+    data_storage->mount_fs();
+  }
 }
 
 extern "C" int app_main() {
   main_init();
 
-  if (data_logfile) {
-    if (data_logfile->mount_fs()) {
-      if (data_logfile->set_full_path("xr25-log.bin")) {
-        if (data_logfile->open_file()) {
-          ESP_LOGI(TAG, "sd_card: file opened <%s>",
-                   data_logfile->get_full_path());
-        } else {
-          ESP_LOGE(TAG, "cannot open file <%s>", data_logfile->get_full_path());
-        }
-      } else {
-        ESP_LOGE(TAG, "cannot set path for file");
-      }
-    }
-  }
-
   // processor calls back when it has completed a frame from the chunks of bytes
   // it got from x25_transport. processor has a dedicated thread for doing the
   // callback. its ok to block it.
   FrameProcessor processor([](const XR25Frame::voc_t& frame) {
-    if (data_logfile) {
-      data_logfile->write(frame);
+    if (data_logfile &&
+        data_logfile->is_ready()) {  // XXX: is_ready will prevent remounting
+                                     // with current implementation
+      auto& l = *data_logfile;
+      auto& v = *data_storage;
+      static bool is_dirty;
+      static unsigned empty_count;
+
+      if (!v.is_mounted()) {
+        ESP_LOGE(TAG, "logfile: try to mount sdcard");
+        v.mount_fs();
+      }
+
+      if (v.is_mounted()) {
+        // write object to log  file
+        if (frame.frame_len) {
+          empty_count = 0;
+          if (!l.is_open()) {
+            l.set_full_path("xr25.bin");
+            l.open_file();
+            ESP_LOGE(TAG, "logfile: open file just before before writing");
+          }
+          if (!l.write(frame)) {
+            v.umount_fs();  // card may have been removed
+            // try again
+            if (!(v.mount_fs() && l.write(frame))) {
+            }
+          }
+          is_dirty = true;
+
+          // no data, just house keeping
+        } else {
+          v.service_mounting();
+          l.service_logging();
+          if (l.is_open()) {
+            ESP_LOGE(TAG, "logfile: pulse call with empty frame");
+            if (empty_count > 10) {
+              l.close_file();
+              is_dirty = false;
+              ESP_LOGE(TAG, "logfile: close file at timeout");
+              empty_count = 0;
+
+            } else if (is_dirty && empty_count) {
+              ESP_LOGE(TAG, "logfile: flush file at timeout");
+              l.flush();
+              is_dirty = false;
+            }
+
+            ++empty_count;
+          }
+        }
+      }
     }
-    if (print_car_diag) {
+
+    if (frame.frame_len && print_car_diag) {
       print_car_diag->push_frame(frame);
       if (!spp_is_connected()) return;
       char* dst = 0;

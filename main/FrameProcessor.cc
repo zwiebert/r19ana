@@ -1,8 +1,13 @@
 // FrameProcessor.cc
 #include "FrameProcessor.hh"
+#include <esp_pthread.h>
 
-FrameProcessor::FrameProcessor(UpdateCallback cb) : callback(std::move(cb)) {
+FrameProcessor::FrameProcessor(UpdateCallback cb, unsigned upd_pulse_ms)
+    : callback(std::move(cb)), m_upd_pulse(upd_pulse_ms) {
   m_update_thread_keep_running = true;
+    auto cfg = esp_pthread_get_default_config();
+    cfg.stack_size = 8192;
+    esp_pthread_set_cfg(&cfg);
   m_update_thread = std::thread(&FrameProcessor::update_thread_fun, this);
 }
 
@@ -20,16 +25,20 @@ void FrameProcessor::update_thread_fun() {
       std::unique_lock<std::mutex> lock(m_update_thread_mutex);
       if (!(m_nmb_frames_waiting = xr25.get_buffered_frame_count()))
         m_update_thread_cv.wait_for(
-            lock, std::chrono::seconds(2), [frame, this]() {
+            lock, std::chrono::milliseconds(m_upd_pulse), [frame, this]() {
               return m_nmb_frames_waiting || !m_update_thread_keep_running;
             });
       // make copies of frame data and counter while feeder thread is locked by
       // mutex
-      if (!m_nmb_frames_waiting) continue;
-      if (!xr25.pull_voc(frame)) continue;
+      if (!m_nmb_frames_waiting || !xr25.pull_voc(frame)) {
+        // no frame is available, so mark our copy as empty.
+        frame.frame_len = 0;
+      }
+    }
+    if (frame.frame_len) {
+      m_update_thread_cv2.notify_one();
     }
 
-    m_update_thread_cv2.notify_one();
     if (callback) callback(frame);
   }
 }
