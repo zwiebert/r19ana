@@ -72,7 +72,7 @@ extern "C" int app_main() {
         if (frame.frame_len) {
           empty_count = 0;
           if (!l.is_open()) {
-            l.set_full_path("xr25.bin");
+            l.set_full_path(pers_stor::get_log_file_name().c_str());
             l.open_file();
             ESP_LOGE(TAG, "logfile: open file just before before writing");
           }

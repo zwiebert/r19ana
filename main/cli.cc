@@ -70,11 +70,50 @@ static CliCmd cmds[] = {
        return true;
      }},
 
+    {.name = "log ",
+     .help_txt = "data-logger.\n"
+                 "Connect UART1-TX with UART2-RX to process the data\n",
+
+     .handler = [](CliCmd& cmd) -> bool {
+      constexpr unsigned max_args = 6;
+      char *argv[max_args] = {};
+      int argc = 0;
+       for (char *str = cmd.args, *save_ptr = nullptr, *tok;
+            (tok = strtok_r(str, ", \r\n", &save_ptr)); str = nullptr) {
+            if (argc >= max_args)
+               return false;
+             argv[argc++] = tok;
+            }
+        
+      for (int i=0; i < argc; ++i) {
+        auto tok = argv[i]; 
+         if (strcasecmp("help", tok) == 0) {
+           cmd.reply(cmd.help_txt);
+           return true;
+         }
+         if (strcmp(tok, "fname") == 0) {
+          auto name = argv[++i];
+          if (!name) return false;
+          return pers_stor::set_log_file_name(name);
+         } else if (strcmp(tok, "enable") == 0) {
+           return false;
+         } else if (strcmp(tok, "disable") == 0) {
+          return false;
+         } else {
+           return false;  // unknown argument
+         }
+       }
+       return false;
+     }},
 #ifdef ESP_PLATFORM
     {.name = "sd ",
      .help_txt = "SD-MMC card functions.\n"
-                 "Connect UART1-TX with UART2-RX to process the data\n",
-
+    "mount  - mount card and file systeḿ́\n"
+    "umount - unmount card and file system\n"
+    "auto-mount - mounts card at MCU start\n"
+    "no-auto-mount - mounts card NOT at MCU start\n"
+    "status - print some info\n"
+     ,
      .handler = [](CliCmd& cmd) -> bool {
        for (char *str = cmd.args, *save_ptr = nullptr, *tok;
             (tok = strtok_r(str, ", \r\n", &save_ptr)); str = nullptr) {
