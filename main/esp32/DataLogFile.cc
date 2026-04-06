@@ -80,14 +80,14 @@ class DataLogfileEsp32 final : public DataLogFileStdio, public IMountable {
     // Options for mounting the filesystem.
     // If format_if_mount_failed is set to true, SD card will be partitioned and
     // formatted in case when mounting fails.
-    esp_vfs_fat_sdmmc_mount_config_t mount_config = {
+    esp_vfs_fat_sdmmc_mount_config_t mount_config = {};
 #ifdef CONFIG_EXAMPLE_FORMAT_IF_MOUNT_FAILED
-        .format_if_mount_failed = true,
+    mount_config.format_if_mount_failed = true;
 #else
-        .format_if_mount_failed = false,
+    mount_config.format_if_mount_failed = false;
 #endif  // EXAMPLE_FORMAT_IF_MOUNT_FAILED
-        .max_files = 5,
-        .allocation_unit_size = 16 * 1024};
+    mount_config.max_files = 5;
+    mount_config.allocation_unit_size = 16 * 1024;
     ESP_LOGI(TAG, "Initializing SD card");
 
     // Use settings defined above to initialize SD card and mount FAT
@@ -294,7 +294,8 @@ class DataLogfileEsp32 final : public DataLogFileStdio, public IMountable {
   std::atomic<bool> m_flag_request_close = false;
   std::atomic<bool> m_flag_request_umount = false;
   std::atomic<bool> m_flag_request_mount = true;
-  public:
+
+ public:
   bool is_ready() const override { return is_mounted(); }
 };
 

@@ -47,9 +47,10 @@ static void main_init() {
   }
 }
 
+extern "C" void bloat_app_main();
+
 extern "C" int app_main() {
   main_init();
-
   // processor calls back when it has completed a frame from the chunks of bytes
   // it got from x25_transport. processor has a dedicated thread for doing the
   // callback. its ok to block it.
@@ -135,6 +136,7 @@ extern "C" int app_main() {
     cli_parse_and_execute_cmdline((char*)data);
   });
 
+  bloat_app_main();
   // it seems this thread has nothing left to do. Wait here to keep local object
   // <processor> alive
   for (;; std::this_thread::sleep_for(std::chrono::days(1))) {

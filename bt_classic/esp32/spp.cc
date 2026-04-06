@@ -124,7 +124,6 @@ static void spp_write_handle(void* param) {
   int size = 0;
   int fd = (int)param;
   uint8_t* spp_data = NULL;
-  uint16_t i = 0;
 
   spp_data = (uint8_t*)malloc(SPP_DATA_LEN);
   if (!spp_data) {
