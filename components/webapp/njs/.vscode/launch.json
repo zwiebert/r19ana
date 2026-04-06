@@ -52,7 +52,7 @@
             "type": "firefox",
             "request": "launch",
             "reAttach": true,
-            "url": "http://localhost:3002/",
+            "url": "http://localhost:3003/",
             "webRoot": "${workspaceFolder}",
         },
         {
@@ -60,14 +60,14 @@
             "type": "editor-browser",
             "request": "launch",
             "reAttach": true,
-            "url": "http://localhost:3002/",
+            "url": "http://localhost:3003/",
             "webRoot": "${workspaceFolder}",
         },
         {
             "name": "Launch chrome",
             "type": "chrome",
             "request": "launch",
-            "url": "http://localhost:3002/",
+            "url": "http://localhost:3003/",
             "webRoot": "${workspaceFolder}",
         }
     ]

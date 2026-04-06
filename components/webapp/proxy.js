@@ -9,8 +9,8 @@ const expressWs = require('express-ws')
 const livereload = require("livereload");
 
 const args = process.argv.slice(2);
-const ipaddr = args[1] || '192.168.1.71';
-const port = args[2] || 3002;
+const ipaddr = args[1] || '192.168.1.69';
+const port = args[2] || 3003;
 const port_lr = 35730;
 
 const proj_dir=path.dirname(path.dirname(__dirname));
@@ -44,6 +44,10 @@ app.all("/f/cli/*", (req, res) => {
     proxy.web(req, res, { target: mcu });
 });
 
+app.all("/f/sdcard/*", (req, res) => {
+    proxy.web(req, res, { target: mcu });
+});
+
 app.ws("/ws", (req, res) => {
     proxy.web(req, res, { target: mcu_ws });
 });
@@ -53,6 +57,9 @@ server.on('upgrade', function (req, socket, head) {
      });
 
 // serve some files
+app.get("/f/r19data.bin", (req, res) => {
+    res.sendFile('/home/bertw/proj/mcu/r19xr25-esp32/main/data/r19data.bin');
+});
 
 // static files of MCU HTTP server
 app.get("/", (req, res) => {
