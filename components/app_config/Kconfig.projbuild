@@ -1,0 +1,124 @@
+menu "RV Project Configuration"
+
+   config APP_USE_HTTP_SERVE_JS_MAP
+        depends on APP_USE_HTTP
+        bool "Serve wapp.js.map file"
+        default y
+
+    config APP_USE_HTTP_SERVE_CSS_MAP
+        depends on APP_USE_HTTP
+        bool "Serve wapp.css.map file"
+        default n
+
+    config APP_USE_SERIAL
+        bool "Activate SERIAL"
+        default y
+
+    config APP_USE_WDG
+        bool "Activate WDG"
+        default y
+
+    config APP_USE_FS
+        bool "Activate FS"
+        default y
+
+    config APP_USE_HTTP_CLIENT
+        bool "Activate HTTP_CLIENT"
+        default y
+
+    config APP_USE_CLI_MUTEX
+        bool "Activate CLI_MUTEX"
+        default y
+
+        
+    config APP_USE_HTTP
+        depends on APP_USE_NETWORK
+        bool "Compile HTTP server"
+        default y
+
+    config APP_USE_WS
+        depends on APP_USE_HTTP
+        bool "Compile with Websocket support"
+        default y
+
+    config APP_USE_MQTT
+        depends on APP_USE_NETWORK
+        bool "Compile MQTT client"
+        default y
+
+
+    config APP_USE_OTA
+        depends on APP_USE_NETWORK
+        bool "Compile with over-the-air update support"
+        default y
+
+    config APP_USE_POSIX_TIME
+        bool "Compile with Posix time support"
+        default y
+
+    config APP_USE_MUTEX
+        bool "Compile with MUTEX support"
+        default y
+        help
+            If disabled, use a dummy instead of a real Mutex
+            Note: Disable it only for testing/debugging purposes
+
+    config APP_USE_GPIO_PINS
+        bool "Compile with support for user defined GPIOs"
+        default y
+        help
+            The user can define GPIOs from CLI/web-app, which then can be read or set via MQTT
+
+    config APP_USE_FREERTOS
+        bool "Compile FreeRTOS-dependent code in common modules"
+        default y
+
+    config APP_USE_LPH
+        bool "Compile support for liter-per-hour"
+        default y
+
+
+    config APP_USE_EG
+        bool "use EG?"
+        default y
+
+    config APP_GEO_TZ
+        string "POSIX TZ string"
+        default "CET-1CEST-2,M3.5.0,M10.5.0"
+
+    config APP_SETTINGS_PASSWORD
+        string "password for MCU settings"
+        default ""
+
+    config APP_WIFI_AP_SSID
+        string "WIFI/WLAN access-point SSID"
+        default "rv"
+
+    config APP_WIFI_AP_PASSWORD
+        string "WIFI/WLAN access-point password"
+        default "12345678"
+
+    config APP_GPIO_NUMBER_OF_GPIOS
+        int "Number of available GPIOs"
+        default 40
+        help
+            Number of GPIOs this MCU has (ESP32: 40)
+
+    config MAIN_LOOP_PERIOD_MS
+        int "main loop period in milliseconds"
+        default 100
+        help
+            How frequently the main loop is called by timer
+
+    config NETWORK_CHECK_LOOP_PERIOD_S
+        int "network check loop period in seconds"
+        default 15
+        help
+            How frequently the network connection is checked for appearing while disconnected
+
+    config APP_USE_PROTOBUF
+        bool "Compile Protobuf support"
+        default n
+
+
+endmenu

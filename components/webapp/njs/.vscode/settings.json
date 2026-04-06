@@ -1,0 +1,11 @@
+{
+    "git.ignoreLimitWarning": true,
+    "git.countBadge": "tracked",
+    "git.untrackedChanges": "separate",
+    "window.title": "RV_NetMCU_Webapp${separator}${activeEditorLong}",
+    "search.exclude": {
+        "**/build_dev/**": true,
+        "**/build/**": true,
+        "package.lock.json":true
+    },
+}

@@ -1,0 +1,74 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "type": "node",
+            "request": "launch",
+            "name": "Lint via NPM",
+            "runtimeExecutable": "npm",
+            "runtimeArgs": [
+                "run-script",
+                "lint"
+            ],
+            "port": 9229,
+            "skipFiles": [
+                "<node_internals>/**"
+            ]
+        },
+        {
+            "type": "node",
+            "request": "launch",
+            "name": "Build via NPM",
+            "runtimeExecutable": "npm",
+            "runtimeArgs": [
+                "run-script",
+                "build"
+            ],
+            "port": 5858,
+            "skipFiles": [
+                "<node_internals>/**"
+            ]
+        },
+        {
+            "type": "node",
+            "request": "launch",
+            "name": "AutoBuild via NPM",
+            "env": {
+                "useTailwind": "yes"
+            },
+            "runtimeExecutable": "npm",
+            "runtimeArgs": [
+                "run-script",
+                "autobuild"
+            ],
+            "console": "integratedTerminal",
+            "port": 5858,
+            "skipFiles": [
+                "<node_internals>/**"
+            ]
+        },
+        {
+            "name": "Launch firefox",
+            "type": "firefox",
+            "request": "launch",
+            "reAttach": true,
+            "url": "http://localhost:3002/",
+            "webRoot": "${workspaceFolder}",
+        },
+        {
+            "name": "Launch editor-browser",
+            "type": "editor-browser",
+            "request": "launch",
+            "reAttach": true,
+            "url": "http://localhost:3002/",
+            "webRoot": "${workspaceFolder}",
+        },
+        {
+            "name": "Launch chrome",
+            "type": "chrome",
+            "request": "launch",
+            "url": "http://localhost:3002/",
+            "webRoot": "${workspaceFolder}",
+        }
+    ]
+}

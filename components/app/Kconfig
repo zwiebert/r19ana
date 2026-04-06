@@ -1,0 +1,32 @@
+menu "zwiebert: rv_netmcu"
+  config APP_PING_THE_GATEWAY
+        bool "Check network connection by sending a ping to the gateway."
+        default n
+        help
+           This no longer works. Leave it disabled.
+           
+  config APP_FA_NAMES_MAX_LEN
+        int "Maximal length of names for valves, groups, etc in full automation"
+        default 32
+
+  config APP_MAX_ZONES
+        int "Number of possible valves this system can control"
+        default 14
+              
+  config APP_FA_MAX_WEATHER_ADAPTERS
+        int "Max possible number of weather adapters for full automatiion"
+        default 16
+
+  config RV_ENABLE_WATCHDOG
+        bool "Enable sending back alive messages"
+        default y
+        
+  config RV_NETMCU_DEBUG
+        bool "Enable debug messages"
+        default n
+
+  config RV_NETMCU_FORCED_REBOOT
+        bool "Enable rebooting once a day to increase stability"
+        default n
+
+endmenu

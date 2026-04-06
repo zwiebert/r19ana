@@ -1,0 +1,59 @@
+{
+	"name": "rv-netmcu",
+	"version": "0.51.0",
+	"scripts": {
+		"build": "useTailwind=yes rollup -c",
+		"autobuild": "useTailwind=yes rollup -c -w",
+		"lint": "eslint . --ext .js,.svelte",
+		"start": "echo publix",
+		"dev": "nollup -c"
+	},
+	"devDependencies": {
+		"@rollup/plugin-alias": "^5.1.0",
+		"@rollup/plugin-commonjs": "^25.0.7",
+		"@rollup/plugin-json": "^6.1.0",
+		"@rollup/plugin-node-resolve": "^15.2.3",
+		"@rollup/plugin-replace": "^5.0.5",
+		"@rollup/plugin-strip": "^3.0.4",
+		"eslint-plugin-svelte": "^2.35.1",
+		"js-base64": "^3.7.7",
+		"nollup": "^0.21.0",
+		"postcss": "^8.4.38",
+		"postcss-load-config": "^5.0.3",
+		"rollup": "^4.12.0",
+		"rollup-plugin-css-only": "^4.5.2",
+		"rollup-plugin-eslint": "^7.0.0",
+		"rollup-plugin-livereload": "^2.0.5",
+		"rollup-plugin-svelte": "^7.1.6",
+		"sass": "^1.71.0",
+		"sirv-cli": "^2.0.2",
+		"svelte": "^4.2.12",
+		"svelte-i18n": "^4.0.0",
+		"svelte-preprocess": "^5.1.3",
+		"sveltejs-tippy": "^3.0.0",
+		"tailwindcss": "^3.4.1"
+	},
+	"jshintConfig": {
+		"esversion": 6,
+		"-W097": true,
+		"-W083": true,
+		"globals": {
+			"document": true,
+			"console": true,
+			"localStorage": true,
+			"WebSocket": true,
+			"window": true,
+			"setTimeout": true,
+			"clearInterval": true,
+			"setInterval": true,
+			"clearTimeout": true,
+			"fetch": true,
+			"location": true
+		}
+	},
+	"dependencies": {
+		"@wwa/rollup-plugin-terser": "^1.1.2",
+		"autoprefixer": "^10.4.19",
+		"svelte-icons": "^2.1.0"
+	}
+}
