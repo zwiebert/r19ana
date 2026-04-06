@@ -13,10 +13,11 @@ set(srcs_host  host/pers_storage.cc ../bt_classic/host/mock.cc)
 if(COMMAND idf_component_register)
 idf_component_register(SRCS ${srcs} ${srcs_esp32}
                     REQUIRES bt nvs_flash vfs esp_driver_uart esp_driver_gpio pthread fatfs sdmmc sd_card
+                             net net_http_server
                     EMBED_FILES data/r19data.bin
                     INCLUDE_DIRS "." ".." "esp32")
 
-component_compile_options("-Wno-error=missing-field-initializers")
+component_compile_options("-Wno-error=missing-field-initializers" "-Wno-error=type-limits")
 
 else()
 

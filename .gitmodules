@@ -1,0 +1,18 @@
+[submodule "external/mbed-net-lib"]
+	path = external/mbed-net-lib
+	url = ../mbed-net-lib.git
+[submodule "external/mbed-uout"]
+	path = external/mbed-uout
+	url = ../mbed-uout.git
+[submodule "external/util-components"]
+	path = external/util-components
+	url = ../util-components.git
+[submodule "external/mbed-mainloop"]
+	path = external/mbed-mainloop
+	url = ../mbed-mainloop.git
+[submodule "external/components-misc"]
+	path = external/components-misc
+	url = ../components-misc.git
+[submodule "external/mbed-jsoneat"]
+	path = external/mbed-jsoneat
+	url = ../mbed-jsoneat.git
