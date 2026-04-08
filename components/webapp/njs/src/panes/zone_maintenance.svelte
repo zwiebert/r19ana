@@ -1,4 +1,6 @@
 <script>
+  import uPlot from "uplot";
+  import "uplot/dist/uPlot.min.css";
   import { onMount } from "svelte";
   import MyPlot from "./plot_test.svelte";
 
@@ -187,6 +189,10 @@
     return X(22);
   } // TODO
 
+  function get_id() {
+    return X(idx_t.id);
+  }
+
   function is_evap_canister_open_to_intake() {
     return is_vacuum_provided_to_egr_valve();
   }
@@ -200,8 +206,14 @@
   function is_throttle_fully_closed() {
     return !getbit(X(idx_t.flags0), 3);
   }
-  function get_id() {
-    return X(idx_t.id);
+  function is_fuel_pump_on() {
+    return getbit(X(idx_t.flags6), 4);
+  }
+  function is_oxygen_sensor_loop_closed() {
+    return getbit(X(idx_t.flags2), 5);
+  } // plot-verified
+  function is_vacuum_provided_to_egr_valve() {
+    return getbit(X(idx_t.flags3), 5);
   }
 
   let data_frame = [];
@@ -209,28 +221,71 @@
     return data_frame[idx];
   }
 
-  let yn_arr = $state([[], [], [], [], [], []]);
+  const syncKey = uPlot.sync("zoom_group");
+  const nmbGraphs = 18;
+  //let yn_arr = $state([[], [], [], [], [], [],[], [], [], [], [], [],[], [], [], [], [], [],]);
+  let yn_arr = $state(
+    Array(nmbGraphs)
+      .fill()
+      .map((e) => []),
+  );
+  let yn_show = $state(
+    Array(nmbGraphs)
+      .fill()
+      .map((e) => true),
+  );
 
-  let y_arr = $state([1, 2, 3, 4, 5]);
-  let y2_arr = $state([5, 4, 3, 2, 1]);
+  let yn_labels = $state([
+    { y_series_label: "Engine-Speed", y_axis_label: "RPM" },
+    { y_series_label: "MAP", y_axis_label: "mBar" },
+    { y_series_label: "Spark Advance", y_axis_label: "Degree" },
+    { y_series_label: "Oxygen Sensor", y_axis_label: "mV" },
+    { y_series_label: "Injection Duration", y_axis_label: "ms" },
+    { y_series_label: "Throttle Closed", y_axis_label: "boolean" },
 
-  let y3_arr = $state([1, 2, 3, 4, 5]);
-  let y4_arr = $state([5, 4, 3, 2, 1]);
+    { y_series_label: "Battery Voltage", y_axis_label: "V" },
+    { y_series_label: "Fuel Pump", y_axis_label: "boolean" },
+    { y_series_label: "ECT", y_axis_label: "Celsius" },
+    { y_series_label: "IAT", y_axis_label: "Celsius" },
+    { y_series_label: "Engine Pinking", y_axis_label: "N" },
+    { y_series_label: "Detonation Correction", y_axis_label: "Degree" },
+
+    { y_series_label: "Mix regulation", y_axis_label: "N" },
+    { y_series_label: "Engine Speed", y_axis_label: "RPM" },
+    { y_series_label: "Mix adapt low", y_axis_label: "N" },
+    { y_series_label: "Mix adapt high", y_axis_label: "N" },
+    { y_series_label: "Idle regulation", y_axis_label: "" },
+    { y_series_label: "Idle adapt", y_axis_label: "" },
+  ]);
 
   function process_frame(arr, ct) {
     if (ct == 0) {
-      yn_arr = [[], [], [], [], [], []];
-      y_arr = [];
-      y2_arr = [];
+      yn_arr = Array(nmbGraphs)
+        .fill()
+        .map((e) => []);
     }
     data_frame = arr;
-    yn_arr[0].push(get_engine_speed_RPM());
-    yn_arr[1].push(get_manifold_absolute_pressure_mBar());
-    yn_arr[2].push(get_ignition_advance_deg());
-    yn_arr[3].push(get_oxygen_sensor_voltage_mV());
-    yn_arr[4].push(get_injection_duration_ms());
-    yn_arr[5].push(is_throttle_fully_closed());
-
+    let idx = 0;
+    yn_arr[idx++].push(get_engine_speed_RPM());
+    yn_arr[idx++].push(get_manifold_absolute_pressure_mBar());
+    yn_arr[idx++].push(get_ignition_advance_deg());
+    yn_arr[idx++].push(get_oxygen_sensor_voltage_mV());
+    yn_arr[idx++].push(get_injection_duration_ms());
+    yn_arr[idx++].push(is_throttle_fully_closed());
+    ////////////////////////
+    yn_arr[idx++].push(get_battery_voltage_V());
+    yn_arr[idx++].push(is_fuel_pump_on());
+    yn_arr[idx++].push(get_engine_coolant_temperature_Celsius());
+    yn_arr[idx++].push(get_intake_air_temperature_Celsius());
+    yn_arr[idx++].push(get_engine_knocking());
+    yn_arr[idx++].push(get_detonation_correction_deg());
+    ////////////////////////
+    yn_arr[idx++].push(get_richness_regulation());
+    yn_arr[idx++].push(get_engine_speed_RPM());
+    yn_arr[idx++].push(get_richness_adaption_idle_and_low());
+    yn_arr[idx++].push(get_richness_adaption_moderate_and_high());
+    yn_arr[idx++].push(get_idle_regulation());
+    yn_arr[idx++].push(get_idle_adaption());
   }
 
   onMount(() => {
@@ -259,6 +314,9 @@
   }}>run</button
 >
 
-<MyPlot array1={yn_arr[0]} array2={yn_arr[1]} />
-<MyPlot array1={yn_arr[2]} array2={yn_arr[3]} />
-<MyPlot array1={yn_arr[4]} array2={yn_arr[5]} />
+{#each [0, 2, 4, 6, 8, 10, 12, 14, 16] as i}
+  <label> <input type="checkbox" bind:checked={yn_show[i]} />Chart for {yn_labels[i].y_series_label} and {yn_labels[i + 1].y_series_label}</label>
+  <div style="display:{yn_show[i] ? 'block' : 'none'}">
+    <MyPlot array1={yn_arr[i]} array2={yn_arr[i + 1]} labels1={yn_labels[i]} labels2={yn_labels[i + 1]} {syncKey} } />
+  </div>
+{/each}
