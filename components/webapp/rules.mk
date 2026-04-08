@@ -27,7 +27,7 @@ $(autobuild_out): $(autobuild_src) $(BUILDERS) $(SDKCONFIG_JS)
 	cd njs && BUILD_DIR=$(JS_BLD_DIR_DEV) NODE_ENV=development npm run autobuild
 
 
-$(BUILD_DIR)/wapp.html: ./wapp.html
+$(BUILD_DIR)/wapp.html: $(JS_BLD_DIR)/index.html
 	cp -p "$<" "$@"
 
 $(BUILD_DIR)/wapp.%: $(JS_BLD_DIR)/wapp.%

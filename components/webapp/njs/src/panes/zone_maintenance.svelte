@@ -5,7 +5,7 @@
   import MyPlot from "./plot_test.svelte";
 
   let dataArray = [];
-  let error = null;
+  let error = $state(null);
 
   async function fetchBinaryData() {
     // 1. Declare variables at the top of the function scope
