@@ -165,6 +165,10 @@ int process_parmMcu(clpar p[], int len, class UoutWriter &td) {
         const uint32_t fhs = esp_get_free_heap_size();
         td.so().print("free-heap-size", fhs);
       }
+    } else  if (strcmp(key, "ipaddr") == 0) {
+        if (*val == '?') {
+          soMsg_INET_PRINT_ADDRESS(td);
+        }
 #endif
     } else {
       cli_warning_optionUnknown(td, key);

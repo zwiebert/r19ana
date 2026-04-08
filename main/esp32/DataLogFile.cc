@@ -17,7 +17,7 @@
 
 static const char* TAG = "example";
 
-#define MOUNT_POINT "/sdcard"
+#define MOUNT_POINT "/f/mnt/sdcard"
 #define EXAMPLE_IS_UHS1                      \
   (CONFIG_EXAMPLE_SDMMC_SPEED_UHS_I_SDR50 || \
    CONFIG_EXAMPLE_SDMMC_SPEED_UHS_I_DDR50)

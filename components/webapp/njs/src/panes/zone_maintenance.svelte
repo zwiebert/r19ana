@@ -14,7 +14,7 @@
 
     try {
       // 2. Assign the result to your lowercase 'response' variable
-      response = await fetch("/f/r19data.bin");
+      response = await fetch("/f/mnt/sdcard/xr25.bin");
 
       if (!response.ok) throw new Error("Network response was not ok");
 
@@ -31,7 +31,7 @@
     }
   }
 
-  const processed = $derived.by(() => {
+  $effect(() => {
     process_data(dataArray);
   });
 
@@ -315,8 +315,12 @@
 >
 
 {#each [0, 2, 4, 6, 8, 10, 12, 14, 16] as i}
-  <label> <input type="checkbox" bind:checked={yn_show[i]} />Chart for {yn_labels[i].y_series_label} and {yn_labels[i + 1].y_series_label}</label>
-  <div style="display:{yn_show[i] ? 'block' : 'none'}">
-    <MyPlot array1={yn_arr[i]} array2={yn_arr[i + 1]} labels1={yn_labels[i]} labels2={yn_labels[i + 1]} {syncKey} } />
+  <div class="text-left">
+    <label class="text-left">
+      <input type="checkbox" bind:checked={yn_show[i]} />Chart for {yn_labels[i].y_series_label} and {yn_labels[i + 1].y_series_label}</label
+    >
+    <div style="display:{yn_show[i] ? 'block' : 'none'};touch-action: pan-y; width: 100%;">
+      <MyPlot array1={yn_arr[i]} array2={yn_arr[i + 1]} labels1={yn_labels[i]} labels2={yn_labels[i + 1]} {syncKey} } />
+    </div>
   </div>
 {/each}

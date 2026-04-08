@@ -118,38 +118,6 @@ void soMsg_KVS_end(class UoutWriter &td) {
 
 
 /////////////////////////////////////////////////////////////////////////////////
-void soMsg_RVE_begin(class UoutWriter &td) {
-  td.so().x_open("rve");
-}
-
-void soMsg_RVE_PUMP(class UoutWriter &td, const so_arg_on_t *state) {
-  io_mqtt_publish_pump_status(state->on);
-  uoAPp_publish_on_off_state_change("pump", state->on);
-}
-
-void soMsg_RVE_RAIN(class UoutWriter &td, const so_arg_on_t *state) {
-  io_mqtt_publish_rain_sensor_status(state->on);
-  uoAPp_publish_on_off_state_change("rain", state->on);
-}
-
-void soMsg_RVE_PRESS_CTL(class UoutWriter &td, const so_arg_on_t *state) {
-  uoAPp_publish_on_off_state_change("pc", state->on);
-}
-
-void soMsg_RVE_VALVES(class UoutWriter &td, const so_arg_valves_t *valves) {
-  u32 mask = valves->changed_bits;
-  for (uint8_t i = 0; mask; ++i, (mask >>= 1)) {
-    if (mask & 1) {
-      uoAPp_publish_valve_change({i, GET_BIT(valves->state_bits, i)});
-    }
-  }
-}
-
-void soMsg_RVE_end(class UoutWriter &td) {
-  td.so().x_close();
-}
-
-/////////////////////////////////////////////////////////////////////////////////
 void soMsg_CFGPASSWD_OK(class UoutWriter &td) {
 // io_puts("password ok\n");
 }
@@ -179,7 +147,7 @@ void soMsg_INET_PRINT_ADDRESS(class UoutWriter &td) {
 #if defined CONFIG_APP_USE_LAN || defined CONFIG_APP_USE_WLAN
   char buf[20];
   ipnet_addr_as_string(buf, 20);
-  td.write("tf: ipaddr: "), td.write(buf), td.write(";\n");
+  td.so().print("ipaddr", buf);
 #endif
 }
 
