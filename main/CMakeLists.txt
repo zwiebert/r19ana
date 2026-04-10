@@ -36,6 +36,7 @@ include_directories("." ".." "host")
 add_executable(main_test  ${srcs_host} host/main_test.cc host/DataLogFile.cc)
 add_executable(xr25-hex2human  ${srcs_host} host/xr25-hex2human.cc)
 add_executable(xr25-bin2human  ${srcs_host} host/xr25-bin2human.cc)
+add_executable(xr25-hex2bin  ${srcs_host} host/xr25-hex2bin.cc)
 
 endif()
 

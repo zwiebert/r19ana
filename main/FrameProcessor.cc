@@ -1,13 +1,17 @@
 // FrameProcessor.cc
 #include "FrameProcessor.hh"
-#include <esp_pthread.h>
+#ifdef ESP_PLATFORM
+ #include <esp_pthread.h>
+#endif
 
 FrameProcessor::FrameProcessor(UpdateCallback cb, unsigned upd_pulse_ms)
     : callback(std::move(cb)), m_upd_pulse(upd_pulse_ms) {
   m_update_thread_keep_running = true;
+#ifdef ESP_PLATFORM
     auto cfg = esp_pthread_get_default_config();
     cfg.stack_size = 8192;
     esp_pthread_set_cfg(&cfg);
+#endif
   m_update_thread = std::thread(&FrameProcessor::update_thread_fun, this);
 }
 

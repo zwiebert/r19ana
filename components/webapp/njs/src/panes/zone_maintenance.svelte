@@ -202,7 +202,7 @@
     return is_vacuum_provided_to_egr_valve();
   }
   function getbit(n, pos) {
-    return n & (1 << pos);
+    return (n & (1 << pos)) != 0;
   }
 
   function is_throttle_fully_open() {
