@@ -5,7 +5,10 @@
   // Props or state
   let { array1, array2, labels1 = {}, labels2 = {}, syncKey = null } = $props();
   let chart;
+
+  // svelte-ignore state_referenced_locally
   let opts1 = Object.assign({ y_series_label: "Data Set 1", y_axis_label: "Left Axis" }, labels1);
+  // svelte-ignore state_referenced_locally
   let opts2 = Object.assign({ y_series_label: "Data Set 2", y_axis_label: "Right Axis" }, labels2);
   let chartContainer;
 
@@ -19,6 +22,10 @@
     series: [{}, { stroke: "red" }, { stroke: "blue" }]
   };
   */
+ 
+  
+
+  // svelte-ignore state_referenced_locally
   let options = {
     width: 600,
     height: 400,
@@ -59,9 +66,9 @@
 
   if (opts2.y_axis_label == "boolean") {
     options.scales.y2 = { auto: false, range: (u, min, max) => [-.1, 1.1], };
-    options.axes[2] = { };
   }
 
+  // svelte-ignore state_referenced_locally
   if (syncKey)
     options.cursor = {
       // 2. Link the charts using the sync key

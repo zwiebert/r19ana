@@ -7,15 +7,41 @@
   import { DiagDataBuffer } from "../store/diag-data.js";
 
   let error = $state(null);
+  let gh_samples = $state([]);
 
-  async function fetchBinaryData() {
+  async function getGithubSamples() {
+    const user = "zwiebert";
+    const repo = "r19xr25-esp32";
+    const folder = "main/data"; // the folder where your .bin files sit
+
+    const url = `https://api.github.com/repos/${user}/${repo}/contents/${folder}`;
+
+    try {
+        const response = await fetch(url);
+        const files = await response.json();
+console.log("files: ", files);
+        // This returns an array of objects with 'name' and 'download_url'
+        return files
+            .filter(file => file.name.endsWith('.bin'))
+            .map(file => ({
+                name: file.name,
+                url: file.download_url // This is the raw URL to the file
+            }));
+    } catch (e) {
+        console.error("Could not scan GitHub samples", e);
+        return [];
+    }
+}
+
+
+  async function fetchBinaryData(url) {
     // 1. Declare variables at the top of the function scope
     let response;
     let buffer;
 
     try {
       // 2. Assign the result to your lowercase 'response' variable
-      response = await fetch("/f/mnt/sdcard/xr25.bin");
+      response = await fetch(url);
 
       if (!response.ok) throw new Error("Network response was not ok");
 
@@ -201,9 +227,8 @@
   function is_evap_canister_open_to_intake() {
     return is_vacuum_provided_to_egr_valve();
   }
-  function getbit(n, pos) {
-    return (n & (1 << pos)) != 0;
-  }
+  
+  const getbit = (n, pos) => (n >>> pos) & 1;
 
   function is_throttle_fully_open() {
     return !getbit(X(idx_t.flags0), 4);
@@ -296,10 +321,29 @@
     yn_arr[idx++].push(get_idle_adaption());
   }
 
-  onMount(() => {
-    // fetchBinaryData();
+  onMount(async () => {
+    const data = await getGithubSamples();
+    gh_samples = data;
+    console.log("gh_samples: ", gh_samples);
+    //fetchBinaryData();
   });
 </script>
+
+
+{#each gh_samples as sample}
+    <button onclick={() => fetchBinaryData(sample.url)}>
+        {sample.name}
+    </button>
+{/each}
+{#await getGithubSamples()}
+    <p>Loading samples...</p>
+{:then list}
+    <select>
+        {#each list as sample}
+            <option value={sample.url}>{sample.name}</option>
+        {/each}
+    </select>
+{/await}
 
 {#if error}
   <p style="color: red;">Error: {error}</p>
@@ -318,7 +362,7 @@
 <DropFile />
 <button
   onclick={() => {
-    fetchBinaryData();
+    fetchBinaryData("/f/mnt/sdcard/xr25.bin");
   }}>fetch</button
 >
 <button
