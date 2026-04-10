@@ -13,22 +13,6 @@ import {
   McuTime,
 } from "../store/mcu_firmware.js";
 import { McuDocs } from "../store/mcu_docs.js";
-import {
-  ZonesAuto,
-  PastWeatherData,
-  WeatherAdapters,
-  ZoneLPHs,
-  ZoneDataMsg,
-  ZoneCountMax,
-  ZoneNames,
-  ZoneRemainingSeconds,
-  ZoneDurations,
-  ZoneTimers,
-  PressControlStatus,
-  WaterPumpStatus,
-  RainSensorStatus,
-  Stm32Time,
-} from "../store/zones.js";
 
 export function http_handleResponses(obj) {
   if (!("mcu" in obj && "time" in obj.mcu))

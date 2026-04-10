@@ -2,7 +2,6 @@
 import * as appDebug from "../app/app_debug.js";
 import * as httpResp from "../app/http_resp.js";
 import { ws_isOpen } from "../net/conn_ws";
-import { ZoneTimers } from "../store/zones";
 
 let bit = 1;
 export const FETCH_CONFIG = bit;

@@ -1,5 +1,5 @@
 <script>
-import { DiagDataBuffer } from "../store/diag-data.js"
+  let {diag_data = (data_array) => {}} = $props();
   let dragOver = $state(false); // Svelte 5 state for styling
   let fileName = $state("");
 
@@ -15,7 +15,7 @@ import { DiagDataBuffer } from "../store/diag-data.js"
     
     // Read the file as binary data
     const buffer = await file.arrayBuffer();
-    DiagDataBuffer.set(new Uint8Array(buffer));
+    diag_data(new Uint8Array(buffer));
   }
 
 </script>

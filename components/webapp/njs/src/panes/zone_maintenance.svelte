@@ -4,7 +4,9 @@
   import { onMount, untrack } from "svelte";
   import MyPlot from "./plot_test.svelte";
   import DropFile from "../components/drop-file.svelte";
-  import { DiagDataBuffer } from "../store/diag-data.js";
+  //import { DiagDataBuffer } from "../store/diag-data.js";
+
+  let {diag_data=[], chart_index = 0} = $props();
 
   let error = $state(null);
   let gh_samples = $state([]);
@@ -47,9 +49,10 @@ console.log("files: ", files);
 
       // 3. Use the lowercase 'response' variable here
       buffer = await response.arrayBuffer();
-      DiagDataBuffer.set(new Uint8Array(buffer));
+      diag_data = new Uint8Array(buffer);
 
-      console.log("Binary data loaded into array:", $DiagDataBuffer);
+
+      console.log("Binary data loaded into array:", diag_data);
     } catch (e) {
       // Note: Do NOT try to access 'response' here if fetch failed
       error = e.message;
@@ -57,7 +60,7 @@ console.log("files: ", files);
   }
 
   $effect(() => {
-    let data = $DiagDataBuffer;
+    let data = diag_data;
     if (data && data.length > 0) {
       untrack(() => {
         process_data(data);
@@ -252,7 +255,8 @@ console.log("files: ", files);
     return data_frame[idx];
   }
 
-  const syncKey = uPlot.sync("zoom_group");
+  // svelte-ignore state_referenced_locally
+  const syncKey = uPlot.sync("zoom_group" + chart_index);
   const nmbGraphs = 18;
   let yn_arr = $state.raw(
     Array(nmbGraphs)
@@ -329,6 +333,7 @@ console.log("files: ", files);
   });
 </script>
 
+<h3>Chart {chart_index + 1}</h3>
 
 {#each gh_samples as sample}
     <button onclick={() => fetchBinaryData(sample.url)}>
@@ -347,19 +352,19 @@ console.log("files: ", files);
 
 {#if error}
   <p style="color: red;">Error: {error}</p>
-{:else if $DiagDataBuffer.length > 0}
+{:else if diag_data.length > 0}
   <ul>
-    {#each $DiagDataBuffer.slice(0, 10) as byte}
+    {#each diag_data.slice(0, 4) as byte}
       <li>Byte value: {byte}</li>
     {/each}
-    {#if $DiagDataBuffer.length > 10}
-      <li>...and {$DiagDataBuffer.length - 10} more bytes</li>
+    {#if diag_data.length > 10}
+      <li>...and {diag_data.length - 10} more bytes</li>
     {/if}
   </ul>
 {:else}
   <p>Loading binary data...</p>
 {/if}
-<DropFile />
+<DropFile diag_data={(data_array) => diag_data = data_array}/>
 <button
   onclick={() => {
     fetchBinaryData("/f/mnt/sdcard/xr25.bin");
@@ -367,7 +372,7 @@ console.log("files: ", files);
 >
 <button
   onclick={() => {
-    process_data($DiagDataBuffer);
+    process_data(diag_data);
   }}>run</button
 >
 
