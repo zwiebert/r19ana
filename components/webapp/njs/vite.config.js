@@ -44,15 +44,6 @@ export default defineConfig(({ mode }) => {
     server: {
       port: 3003,
       watch: {
-        // 1. Manually set the CWD so ignored paths resolve correctly
-        cwd: process.cwd(),
-        // 2. Use global double-star patterns
-        ignored: [
-          "**/node_modules/**",
-          "**/.git/**",
-          "**/dist/**",
-          // Add any other large folders (like an /assets/ or /data/ folder)
-        ],
       },
       proxy: {
         // JSON files and /f/ paths

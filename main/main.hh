@@ -34,5 +34,5 @@ int bin2hex(const uint8_t* src, size_t src_len, char* dst, size_t dst_size,
 
 template <typename T>
 inline bool getbit(T n, uint8_t pos) {
-  return n & (T(1) << pos);
+  return (n & (T(1) << pos)) != 0;
 }

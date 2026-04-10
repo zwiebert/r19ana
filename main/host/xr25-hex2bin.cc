@@ -14,49 +14,13 @@
 #include "UartTransport.hh"
 #include "Xr25Transport.hh"
 #include "cli.hh"
+#include "hex2voc.hh"
 #include "main.hh"
 #include "select_model.hh"
 
 #define D(x)
 
 Transport&& term_transport = ConsoleTransport();
-
-static int hex_nibble(char c) {
-  if (c >= '0' && c <= '9') return c - '0';
-  if (c >= 'a' && c <= 'f') return c - 'a' + 10;
-  if (c >= 'A' && c <= 'F') return c - 'A' + 10;
-  return -1;
-}
-
-void hex2voc(XR25Frame::voc_t& voc, const char* src) {
-  voc.frame_len = 0;
-  if (!src) return;
-
-  unsigned dst_idx = 0;
-  int high_nibble = -1;
-
-  for (const char* p = src; *p != '\0'; ++p) {
-    int val = hex_nibble(*p);
-    if (val < 0) {
-      // invalid char, abort and reset
-      voc.frame_len = 0;
-      return;
-    }
-    if (high_nibble < 0) {
-      high_nibble = val;
-      continue;
-    }
-    // complete byte
-    if (dst_idx >= XR25Frame::FRAME_MAX_SIZE) {
-      break;
-    }
-    voc.frame[dst_idx++] = static_cast<uint8_t>((high_nibble << 4) | val);
-    high_nibble = -1;
-  }
-
-  // ignore final nibble if odd length
-  voc.frame_len = dst_idx;
-}
 
 int main(int argc, char** argv) {
   constexpr const char* usage_txt =
@@ -161,13 +125,9 @@ int main(int argc, char** argv) {
     }
     const char* cline = line.c_str() + strlen(line_prefix);
 
-    if (true) {  // validate line
-      ++voc.counter;
-    }
+    if (!hex2voc(voc, cline)) continue;
 
-    hex2voc(voc, cline);
-    if (voc.frame_len != 29)  // XXX: hard coded r19-x53b-740
-      continue;
+    ++voc.counter;
 
     os->put('\xff');
     os->put('\x00');

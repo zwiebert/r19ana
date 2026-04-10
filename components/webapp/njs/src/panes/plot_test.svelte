@@ -26,7 +26,7 @@
     scales: {
       x: { time: false },
       y: {}, // Default left scale
-      y2: {}, // New independent right scale
+      y2: { }, // New independent right scale
     },
     series: [
       {}, // X-axis
@@ -56,6 +56,11 @@
       },
     ],
   };
+
+  if (opts2.y_axis_label == "boolean") {
+    options.scales.y2 = { auto: false, range: (u, min, max) => [-.1, 1.1], };
+    options.axes[2] = { };
+  }
 
   if (syncKey)
     options.cursor = {

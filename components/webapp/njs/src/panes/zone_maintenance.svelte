@@ -33,7 +33,7 @@
   $effect(() => {
     let data = $DiagDataBuffer;
     if (data && data.length > 0) {
-      untrack (() => {
+      untrack(() => {
         process_data(data);
       });
     }
@@ -206,6 +206,7 @@
   }
 
   function is_throttle_fully_open() {
+    return !getbit(X(idx_t.flags0), 4);
     return (X(idx_t.flags0) & 0x10) == 0;
   }
   function is_throttle_fully_closed() {
@@ -296,7 +297,7 @@
   }
 
   onMount(() => {
-   // fetchBinaryData();
+    // fetchBinaryData();
   });
 </script>
 
@@ -316,23 +317,25 @@
 {/if}
 <DropFile />
 <button
-  on:click={() => {
+  onclick={() => {
     fetchBinaryData();
   }}>fetch</button
 >
 <button
-  on:click={() => {
+  onclick={() => {
     process_data($DiagDataBuffer);
   }}>run</button
 >
 
-{#each [0, 2, 4, 6, 8, 10, 12, 14, 16] as i}
-  <div class="text-left">
-    <label class="text-left">
-      <input type="checkbox" bind:checked={yn_show[i]} />Chart for {yn_labels[i].y_series_label} and {yn_labels[i + 1].y_series_label}</label
-    >
-    <div style="display:{yn_show[i] ? 'block' : 'none'};touch-action: pan-y; width: 100%;">
-      <MyPlot array1={yn_arr[i]} array2={yn_arr[i + 1]} labels1={yn_labels[i]} labels2={yn_labels[i + 1]} {syncKey} } />
+<div class="text-left">
+  {#each [0, 2, 4, 6, 8, 10, 12, 14, 16] as i}
+    <div class="text-left">
+      <label class="text-left">
+        <input type="checkbox" bind:checked={yn_show[i]} />Chart for {yn_labels[i].y_series_label} and {yn_labels[i + 1].y_series_label}</label
+      >
+      <div style="display:{yn_show[i] ? 'block' : 'none'};touch-action: pan-y; width: 100%;">
+        <MyPlot array1={yn_arr[i]} array2={yn_arr[i + 1]} labels1={yn_labels[i]} labels2={yn_labels[i + 1]} {syncKey} } />
+      </div>
     </div>
-  </div>
-{/each}
+  {/each}
+</div>
