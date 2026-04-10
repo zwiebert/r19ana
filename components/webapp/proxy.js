@@ -6,12 +6,13 @@ const path = require('path');
 const express = require('express');
 const httpProxy = require('http-proxy');
 const expressWs = require('express-ws')
-const livereload = require("livereload");
+const { createProxyMiddleware, fixRequestBody } = require('http-proxy-middleware');
+
 
 const args = process.argv.slice(2);
-const ipaddr = args[1] || '192.168.1.69';
-const port = args[2] || 3003;
-const port_lr = 35730;
+const ipaddr = args[1] || '192.168.1.96';
+const port = args[2] || 3004;
+const ipaddr_vite = args[3] || 'localhost';
 
 const proj_dir=path.dirname(path.dirname(__dirname));
 const build_dir=proj_dir+"/build/esp32dbg";
@@ -20,77 +21,65 @@ const cont_dir=__dirname
 
 const mcu = 'http://' + ipaddr + ':80';
 const mcu_ws = 'ws://' + ipaddr + ':80';
-
-console.log("njs_build_dir: ", njs_build_dir);
-
-// open livereload high port and start to watch public directory for changes
-const liveReloadServer = livereload.createServer({"port":port_lr});
-liveReloadServer.watch(njs_build_dir);
+const vite = 'http://' + ipaddr_vite + ':3003';
 
 
 let app = express();
- expressWs(app);
-let server = require('http').createServer(app);
+console.log("test is console.log works");
+
+// 1. ESP32 Proxy - Only for specific patterns (e.g., .json or specific names)
+app.use(createProxyMiddleware({
+
+    XXpathFilter: (path, req) => {
+    console.log("path:", path);
+    if (path == "/cmd.json") {
+     console.log("Match /cmd.json for esp32");
+     return true;
+   }
+
+ return false;
+ }, pathFilter:['/*.json', '/f/**'], // Add your ESP32 paths here. Don't mix strings with and without wildcards
+    target: mcu,
+    changeOrigin: true,
+    on: {
+        XproxyReq: (proxyReq, req, res) => {
+            console.log(`[ESP32] Forwarding ${req.method} to: ${proxyReq.path}`);
+            
+            // Clean headers for ESP32
+            proxyReq.removeHeader('origin');
+            proxyReq.removeHeader('referer');
+// 2. STRIP EVERYTHING EXCEPT THE ESSENTIALS
+      // ESP32 servers often 405 if they see 'Sec-' or 'User-Agent' headers they don't like
+      const headersToKeep = ['content-type', 'content-length', 'host', 'connection'];
+      
+      Object.keys(req.headers).forEach(header => {
+        if (!headersToKeep.includes(header.toLowerCase())) {
+          proxyReq.removeHeader(header);
+        }
+      });
+
+         proxyReq.setHeader('Connection', 'close');
+
+        if(req.method == 'POST')
+          fixRequestBody(proxyReq, req);
+      }
+    }
+}));
+
+// 2. Vite Proxy - Catch-all for everything else (UI, assets, etc.)
+app.use(createProxyMiddleware({
+    target: vite, // Standard Vite port
+    changeOrigin: true,
+    on: {
+        XXXproxyReq: (proxyReq, req, res) => {
+            console.log(`[Vite] Forwarding ${req.method} to: ${proxyReq.path}`);
+        }
+    }
+    // No pathFilter means it catches whatever the ESP32 proxy ignored
+}));
 
 
-
-// forward any requests to MCU
-let proxy = httpProxy.createProxyServer({ ws: true });
-
-app.all("/*.json", (req, res) => {
-    proxy.web(req, res, { target: mcu });
-});
-app.all("/f/cli/*", (req, res) => {
-    proxy.web(req, res, { target: mcu });
-});
-
-app.all("/f/sdcard/*", (req, res) => {
-    proxy.web(req, res, { target: mcu });
-});
-
-app.ws("/ws", (req, res) => {
-    proxy.web(req, res, { target: mcu_ws });
-});
-server.on('upgrade', function (req, socket, head) { 
-    console.log('head', JSON.stringify(head));
-     proxy.ws(req, socket, head, { target: mcu_ws });
-     });
-
-// serve some files
-app.get("/f/r19data.bin", (req, res) => {
-    res.sendFile('/home/bertw/proj/mcu/r19xr25-esp32/main/data/r19data.bin');
-});
-
-// static files of MCU HTTP server
-app.get("/", (req, res) => {
-    res.sendFile(cont_dir + '/wapp_dev.html');
-});
-app.get("/wapp_dev.html", (req, res) => {
-    res.sendFile(cont_dir + '/wapp_dev.html');
-});
-app.get("/f/js/wapp.js", (req, res) => {
-    res.sendFile(njs_build_dir+'/wapp.js');
-});
-app.get("/f/js/wapp.js.map", (req, res) => {
-    res.sendFile(njs_build_dir+'/wapp.js.map');
-});
-app.get("/f/css/global.css", (req, res) => {
-    res.sendFile(cont_dir + '/njs/src/app.css');
-});
-app.get("/f/css/wapp.css", (req, res) => {
-    res.sendFile(njs_build_dir+'/wapp.css');
-});
-app.get("/f/css/wapp.css.map", (req, res) => {
-    res.sendFile(njs_build_dir+'/wapp.css.map');
-});
-app.get("/src/", (req, res) => {
-    res.sendFile(cont_dir + '/njs/src/');
-});
-
-
-
-
-server.listen(port);
+app.listen(port);
 
 
 /*

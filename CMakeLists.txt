@@ -65,10 +65,8 @@ else()
 
 ### for idf without presets (prior esp-idf v6), provide locatio of sdkconfig files
 if("${PRESET_NAME}" STREQUAL "")
- if("${SDKCONFIG_DEFAULTS}" STREQUAL "")
     set(CACHE{SDKCONFIG_DEFAULTS} VALUE "configs/esp32-debug/sdkconfig.defaults" )
     set(CACHE{SDKCONFIG} VALUE "configs/esp32-debug/sdkconfig" )
- endif()
 endif()
 
 
@@ -82,7 +80,7 @@ set(COMPONENTS app main webapp esptool_py)
 
 #set environment variables to be used in components
 set(comp_compile_feats cxx_std_20)
-set(comp_compile_opts "-Wno-error=missing-field-initializers")
+set(comp_compile_opts "-Wno-error=missing-field-initializers" "-Wno-error=switch")
 
 
 

@@ -1,10 +1,11 @@
 <script>
   import uPlot from "uplot";
   import "uplot/dist/uPlot.min.css";
-  import { onMount } from "svelte";
+  import { onMount, untrack } from "svelte";
   import MyPlot from "./plot_test.svelte";
+  import DropFile from "../components/drop-file.svelte";
+  import { DiagDataBuffer } from "../store/diag-data.js";
 
-  let dataArray = [];
   let error = $state(null);
 
   async function fetchBinaryData() {
@@ -20,11 +21,9 @@
 
       // 3. Use the lowercase 'response' variable here
       buffer = await response.arrayBuffer();
+      DiagDataBuffer.set(new Uint8Array(buffer));
 
-      // Convert to a typed array
-      dataArray = Array.from(new Uint8Array(buffer));
-
-      console.log("Binary data loaded into array:", dataArray);
+      console.log("Binary data loaded into array:", $DiagDataBuffer);
     } catch (e) {
       // Note: Do NOT try to access 'response' here if fetch failed
       error = e.message;
@@ -32,7 +31,12 @@
   }
 
   $effect(() => {
-    process_data(dataArray);
+    let data = $DiagDataBuffer;
+    if (data && data.length > 0) {
+      untrack (() => {
+        process_data(data);
+      });
+    }
   });
 
   function process_data(arr) {
@@ -63,6 +67,7 @@
       dataFrame.push(b);
       ct++;
     }
+    redraw_charts();
     console.log("ct:", ct, "blocks:", blockCounter);
   }
 
@@ -223,12 +228,14 @@
 
   const syncKey = uPlot.sync("zoom_group");
   const nmbGraphs = 18;
-  //let yn_arr = $state([[], [], [], [], [], [],[], [], [], [], [], [],[], [], [], [], [], [],]);
-  let yn_arr = $state(
+  let yn_arr = $state.raw(
     Array(nmbGraphs)
       .fill()
       .map((e) => []),
   );
+  function redraw_charts() {
+    yn_arr = yn_arr;
+  }
   let yn_show = $state(
     Array(nmbGraphs)
       .fill()
@@ -289,28 +296,33 @@
   }
 
   onMount(() => {
-    fetchBinaryData();
+   // fetchBinaryData();
   });
 </script>
 
 {#if error}
   <p style="color: red;">Error: {error}</p>
-{:else if dataArray.length > 0}
+{:else if $DiagDataBuffer.length > 0}
   <ul>
-    {#each dataArray.slice(0, 10) as byte}
+    {#each $DiagDataBuffer.slice(0, 10) as byte}
       <li>Byte value: {byte}</li>
     {/each}
-    {#if dataArray.length > 10}
-      <li>...and {dataArray.length - 10} more bytes</li>
+    {#if $DiagDataBuffer.length > 10}
+      <li>...and {$DiagDataBuffer.length - 10} more bytes</li>
     {/if}
   </ul>
 {:else}
   <p>Loading binary data...</p>
 {/if}
-
+<DropFile />
 <button
   on:click={() => {
-    process_data(dataArray);
+    fetchBinaryData();
+  }}>fetch</button
+>
+<button
+  on:click={() => {
+    process_data($DiagDataBuffer);
   }}>run</button
 >
 

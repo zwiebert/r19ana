@@ -13,7 +13,6 @@
 #include <thread>
 
 #include "FrameProcessor.hh"
-#include "SppTransport.hh"
 #include "UartTransport.hh"
 #include "cli.hh"
 #include "pers_storage.hh"
@@ -26,7 +25,13 @@ Transport&& xr25_transport = UartTransport(UartTransportArgs{
     .bps = 65000, .uart_port_num = 2, .rx_gpio = 16, .tx_gpio = 17});
 Transport&& mock_loop_transport = UartTransport(UartTransportArgs{
     .bps = 65000, .uart_port_num = 1, .rx_gpio = 35, .tx_gpio = 32});
+#ifdef CONFIG_BT_ENABLED
+#include "SppTransport.hh"
 Transport&& term_transport = SppTransport();
+#else
+#include "host/ConsoleTransport.hh"
+Transport&& term_transport = ConsoleTransport();
+#endif
 
 static void main_init() {
   // Initialize NVS
@@ -48,9 +53,22 @@ static void main_init() {
 }
 
 extern "C" void bloat_app_main();
+void lean_app_main();
 
 extern "C" int app_main() {
+#ifdef CONFIG_LEAN_APP_ENABLED
+  lean__app_main();  // XXX
+#else
+#ifdef CONFIG_BLOAT_APP_ENABLED
+  bloat_app_main();  // XXX
+#endif
+#endif
+  return 0;
+}
+
+void lean_app_main() {
   main_init();
+
   // processor calls back when it has completed a frame from the chunks of bytes
   // it got from x25_transport. processor has a dedicated thread for doing the
   // callback. its ok to block it.
@@ -111,7 +129,9 @@ extern "C" int app_main() {
 
     if (frame.frame_len && print_car_diag) {
       print_car_diag->push_frame(frame);
+#ifdef CONFIG_BT_ENABLED
       if (!spp_is_connected()) return;
+#endif
       char* dst = 0;
       if (auto dst_len = r19_alloc_and_print(dst, *print_car_diag, Mask);
           dst_len > 0) {
@@ -136,7 +156,9 @@ extern "C" int app_main() {
     cli_parse_and_execute_cmdline((char*)data);
   });
 
-  bloat_app_main();
+#ifdef CONFIG_BLOAT_APP_ENABLED
+  bloat_app_main();  // XXX
+#endif
   // it seems this thread has nothing left to do. Wait here to keep local object
   // <processor> alive
   for (;; std::this_thread::sleep_for(std::chrono::days(1))) {
@@ -144,7 +166,6 @@ extern "C" int app_main() {
 
   xr25_transport.stop();
   term_transport.stop();
-  return 0;
 }
 
 void mock_uart_fun(bool& keep_running) {

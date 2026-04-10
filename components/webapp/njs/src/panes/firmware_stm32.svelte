@@ -1,6 +1,6 @@
 <script>
   import { _ } from "../services/i18n";
-  import { req_stm32McuRestart } from "../app/misc.js";
+  import { req_stm32McuRestart, DISTRO } from "../app/misc.js";
   import McuFirmwareUpd from "../app/mcu_firmware_upd.svelte";
   import Stm32McuFirmwareInfo from "../app/stm32_mcu_firmware_info.svelte";
 
@@ -9,7 +9,7 @@
     { name: "latest beta", ota_name: "stm32-github-beta" },
   ];
 
-  if (!misc.DISTRO) {
+  if (!DISTRO) {
     stm32_fwbtns.push({
       name: "from URL",
       ota_name: "stm32_netotaFromURL",

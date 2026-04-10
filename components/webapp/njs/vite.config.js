@@ -1,60 +1,91 @@
-import { defineConfig } from 'vite';
-import { svelte } from '@sveltejs/vite-plugin-svelte';
-
-const build_directory = process.env.BUILD_DIR || "/tmp/rv/njs/build";
-
+import { defineConfig } from "vite";
+import { svelte } from "@sveltejs/vite-plugin-svelte";
 
 // --- CHANGE THIS IP AS NEEDED ---
-const ESP_IP = '192.168.1.96'; 
+const ESP_IP = "192.168.1.69";
+const build_directory = process.env.BUILD_DIR || "/tmp/rv/njs/build";
+const isProduction = process.env.NODE_ENV === "production";
 
 const proxyTarget = `http://${ESP_IP}`;
 const wsTarget = `ws://${ESP_IP}`;
-export default defineConfig(({ mode }) => { 
-  const isGithub = mode === 'github';
- return {
-   define: {
-    isProduction : process.env.NODE_ENV === "production",
-    isDistro : process.env.DISTRO === "1",
-  },
-   plugins: [svelte()],
-   base: isGithub ? '/your-repo-name/' : './', 
-    
+
+export default defineConfig(({ mode }) => {
+  const isGithub = mode === "github";
+  return {
+    define: {
+      isProduction: isProduction,
+      isDistro: process.env.DISTRO === "1",
+    },
+    plugins: [svelte()],
+    base: isGithub ? "/your-repo-name/" : isProduction ? "/f/" : "/",
+
     build: {
-      outDir: isGithub ? 'dist-gh' : build_directory,
+      outDir: isGithub ? "dist-gh" : build_directory,
       sourcemap: true,
       cssCodeSplit: isGithub, // Allow splitting on GitHub for performance
-      
+
       rollupOptions: {
-        output: isGithub 
+        output: isGithub
           ? {
               // Standard GitHub Pages settings (hashed)
-              entryFileNames: 'assets/[name]-[hash].js',
-              chunkFileNames: 'assets/[name]-[hash].js',
-              assetFileNames: 'assets/[name]-[hash][extname]',
+              entryFileNames: "assets/[name]-[hash].js",
+              chunkFileNames: "assets/[name]-[hash].js",
+              assetFileNames: "assets/[name]-[hash][extname]",
             }
           : {
               // ESP32 settings (fixed names, no subfolders)
-              entryFileNames: 'wapp.js',
-              assetFileNames: 'wapp.[ext]',
-              format: 'iife',
-              name: 'wapp',
+              entryFileNames: "wapp.js",
+              assetFileNames: "wapp.[ext]",
+              format: "iife",
+              name: "wapp",
             },
       },
     },
-  server: {
-    port: 3003,
-    proxy: {
-      // JSON files and /f/ paths
-      '^(.*)\\.json$': { target: proxyTarget, changeOrigin: true },
-      '/f': { target: proxyTarget, changeOrigin: true },
-      
-      // WebSockets
-      '/ws': { 
-        target: wsTarget, 
-        ws: true,
-        rewrite: (path) => path // ensures /ws stays /ws
+    server: {
+      port: 3003,
+      watch: {
+        // 1. Manually set the CWD so ignored paths resolve correctly
+        cwd: process.cwd(),
+        // 2. Use global double-star patterns
+        ignored: [
+          "**/node_modules/**",
+          "**/.git/**",
+          "**/dist/**",
+          // Add any other large folders (like an /assets/ or /data/ folder)
+        ],
+      },
+      proxy: {
+        // JSON files and /f/ paths
+        "^(.*)\\.json$": {
+          target: proxyTarget,
+          changeOrigin: true,
+          agent: false,
+          timeout: 5000, // 5 seconds to wait for a response
+          proxyTimeout: 5000, // 5 seconds for the proxy itself
+          headers: {
+            // Tell the ESP32 to close the socket immediately after sending data
+            Connection: "close",
+          },
+        },
+        "/f": {
+          target: proxyTarget,
+          changeOrigin: true,
+          timeout: 5000, // 5 seconds to wait for a response
+          proxyTimeout: 5000, // 5 seconds for the proxy itself
+          agent: false,
+          headers: {
+            // Tell the ESP32 to close the socket immediately after sending data
+            Connection: "close",
+          },
+        },
+
+        // WebSockets
+        "/ws": {
+          target: wsTarget,
+          ws: true,
+          rewrite: (path) => path, // ensures /ws stays /ws
+        },
       },
     },
-  },
-}});
-
+  };
+});

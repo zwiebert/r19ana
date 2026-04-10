@@ -1,4 +1,13 @@
 menu "SPP Example Configuration"
+    config LEAN_APP_ENABLED
+        bool "Enable the new lean bluetooth terminal based app"
+        depends on BT_CLASSIC_ENABLED
+        default y
+
+    config BLOAT_APP_ENABLED
+        bool "Enable the bloated web-server based app"
+        default y
+
     config EXAMPLE_SSP_ENABLED
         bool "Secure Simple Pairing"
         depends on BT_CLASSIC_ENABLED
