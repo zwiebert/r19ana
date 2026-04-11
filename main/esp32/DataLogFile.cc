@@ -17,7 +17,7 @@
 
 static const char* TAG = "example";
 
-#define MOUNT_POINT "/f/mnt/sdcard"
+#define MOUNT_POINT "/sdcard"
 #define EXAMPLE_IS_UHS1                      \
   (CONFIG_EXAMPLE_SDMMC_SPEED_UHS_I_SDR50 || \
    CONFIG_EXAMPLE_SDMMC_SPEED_UHS_I_DDR50)
@@ -228,9 +228,27 @@ class DataLogfileEsp32 final : public DataLogFileStdio, public IMountable {
 
   bool set_full_path(const char* file_name) override {
     if (!file_name) return false;
-    std::lock_guard lock(m_mtx);
-    return sizeof m_full_path > snprintf(m_full_path, sizeof m_full_path,
-                                         "%s/%s", mount_point, file_name);
+    if (strstr(file_name, "/")) {
+       ESP_LOGE(TAG, "Invalid file name (slash not allowed): <%s>", file_name);
+      return false;
+    }
+    if (sizeof m_full_path <= snprintf(m_full_path, sizeof m_full_path, "%s/%s",
+                                       mount_point, file_name)) {
+       ESP_LOGE(TAG, "Invalid file name (too long): <%s>", file_name);
+      return false;
+                                       }
+    m_full_path_valid = true;
+
+    // additional check: try to open and close he file, if fs is already mounted
+    if (is_mounted()) {
+      if (!open_file()) {
+       ESP_LOGE(TAG, "Could not open file: <%s>", m_full_path);
+        m_full_path_valid = false;
+        return false;
+      }
+      close_file();
+    }
+    return true;
   }
 
   bool is_mounted() const override { return card; }
@@ -249,7 +267,10 @@ class DataLogfileEsp32 final : public DataLogFileStdio, public IMountable {
     return DataLogFileStdio::write(frame);
   }
   bool open_file() override {
-    if (!DataLogFileStdio::open_file()) return false;
+    if (!DataLogFileStdio::open_file()) {
+       ESP_LOGE(TAG, "Could not open file: <%s>, %d (%s)", m_full_path, errno, strerror(errno));
+      return false;
+    }
     m_file_owner_task = xTaskGetCurrentTaskHandle();
     return true;
   }

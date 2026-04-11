@@ -50,6 +50,8 @@ static void main_init() {
 
   if (data_storage && pers_stor::get_enable_auto_mount()) {
     data_storage->mount_fs();
+  if (data_logfile)
+       data_logfile->set_full_path(pers_stor::get_log_file_name("xr25.bin").c_str());
   }
 }
 
@@ -92,7 +94,6 @@ void lean_app_main() {
         if (frame.frame_len) {
           empty_count = 0;
           if (!l.is_open()) {
-            l.set_full_path(pers_stor::get_log_file_name("/sdcard/xr25.bin").c_str());
             l.open_file();
             ESP_LOGE(TAG, "logfile: open file just before before writing");
           }

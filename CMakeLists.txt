@@ -75,7 +75,10 @@ set(PROJECT_NAME "rv-netmcu")
 option(LINKER_DEMANGLE "set linker option --demangle" ON)
 
 
-set(COMPONENTS app main webapp esptool_py)
+set(COMPONENTS app main)
+if(CONFIG_APP_USE_NETWORK)
+  list(COMPONENTS APPEND webapp)
+endif()
 #add_compile_options("-Wno-error=missing-field-initializers" "-include" "sdkconfig.h")
 
 #set environment variables to be used in components

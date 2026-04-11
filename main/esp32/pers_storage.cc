@@ -37,12 +37,15 @@ static bool restore(const char* key, T& val) {
 static int restore_str(char* dst, unsigned dst_len, const char* key) {
   nvs_handle_t h;
   size_t len = dst_len;
+  bool success = false;
 
   if (ESP_OK == nvs_open(nvs_namespace, NVS_READONLY, &h)) {
     if (ESP_OK == nvs_get_str(h, key, dst, &len)) {
+      success = true;
     }
     nvs_close(h);
   }
+  if (!success) return -1;
   return int(len);
 }
 
@@ -53,7 +56,9 @@ bool set_model(int model) {
 }
 int get_model(int default_val) {
   int32_t model;
-  return restore<int32_t, nvs_get_i32>("model", model) &&  0 < model ? int(model) : default_val;
+  return restore<int32_t, nvs_get_i32>("model", model) && 0 < model
+             ? int(model)
+             : default_val;
 }
 
 bool set_enable_auto_mount(bool auto_mount) {
@@ -76,7 +81,7 @@ bool set_log_file_name(const char* name) {
   return store<const char*, nvs_set_str>("log_name", name);
 }
 
-std::string get_log_file_name(const char *default_val) {
+std::string get_log_file_name(const char* default_val) {
   char buf[64];
   return (0 < restore_str(buf, sizeof buf, "log_name")) ? buf : default_val;
 }

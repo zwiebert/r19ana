@@ -72,33 +72,43 @@ static CliCmd cmds[] = {
 
     {.name = "log ",
      .help_txt = "data-logger.\n"
-                 "Connect UART1-TX with UART2-RX to process the data\n",
+                 "fname NAME - set log-file name (persistent)\n",
 
      .handler = [](CliCmd& cmd) -> bool {
-      constexpr unsigned max_args = 6;
-      char *argv[max_args] = {};
-      int argc = 0;
+       constexpr unsigned max_args = 6;
+       char* argv[max_args] = {};
+       int argc = 0;
        for (char *str = cmd.args, *save_ptr = nullptr, *tok;
             (tok = strtok_r(str, ", \r\n", &save_ptr)); str = nullptr) {
-            if (argc >= max_args)
-               return false;
-             argv[argc++] = tok;
-            }
-        
-      for (int i=0; i < argc; ++i) {
-        auto tok = argv[i]; 
+         if (argc >= max_args) return false;
+         argv[argc++] = tok;
+       }
+
+       for (int i = 0; i < argc; ++i) {
+         auto tok = argv[i];
          if (strcasecmp("help", tok) == 0) {
            cmd.reply(cmd.help_txt);
            return true;
          }
          if (strcmp(tok, "fname") == 0) {
-          auto name = argv[++i];
-          if (!name) return false;
-          return pers_stor::set_log_file_name(name);
+           auto name = argv[++i];
+           if (!name) return false;
+           if (!pers_stor::set_log_file_name(name)) {
+             cmd.reply("could not store file name");
+             return false;
+           }
+           if (data_logfile) {
+             if (!data_logfile->set_full_path(name)) {
+               cmd.reply("log-file not working (see console)");
+               return false;
+             }
+           }
+           cmd.reply("success: log-file is operational");
+           return true;
          } else if (strcmp(tok, "enable") == 0) {
            return false;
          } else if (strcmp(tok, "disable") == 0) {
-          return false;
+           return false;
          } else {
            return false;  // unknown argument
          }
@@ -108,12 +118,11 @@ static CliCmd cmds[] = {
 #ifdef ESP_PLATFORM
     {.name = "sd ",
      .help_txt = "SD-MMC card functions.\n"
-    "mount  - mount card and file systeḿ́\n"
-    "umount - unmount card and file system\n"
-    "auto-mount - mounts card at MCU start\n"
-    "no-auto-mount - mounts card NOT at MCU start\n"
-    "status - print some info\n"
-     ,
+                 "mount  - mount card and file systeḿ́\n"
+                 "umount - unmount card and file system\n"
+                 "auto-mount - mounts card at MCU start\n"
+                 "no-auto-mount - mounts card NOT at MCU start\n"
+                 "status - print some info\n",
      .handler = [](CliCmd& cmd) -> bool {
        for (char *str = cmd.args, *save_ptr = nullptr, *tok;
             (tok = strtok_r(str, ", \r\n", &save_ptr)); str = nullptr) {

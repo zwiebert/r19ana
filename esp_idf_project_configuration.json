@@ -3,7 +3,7 @@
     "build": {
       "compileArgs": [],
       "ninjaArgs": [],
-      "buildDirectoryPath": "/home/bertw/proj/mcu/r19anal/build/projconf/esp32-release",
+      "buildDirectoryPath": "build/projconf/esp32-release",
       "sdkconfigDefaults": [],
       "sdkconfigFilePath": "configs/esp32-release/sdkconfig"
     },
@@ -27,9 +27,33 @@
     "build": {
       "compileArgs": [],
       "ninjaArgs": [],
-      "buildDirectoryPath": "/home/bertw/proj/mcu/r19anal/build/projconf/esp32-debug",
+      "buildDirectoryPath": "build/projconf/esp32-debug",
       "sdkconfigDefaults": [],
       "sdkconfigFilePath": "configs/esp32-debug/sdkconfig"
+    },
+    "env": {},
+    "flashBaudRate": "",
+    "idfTarget": "esp32",
+    "monitorBaudRate": "",
+    "openOCD": {
+      "debugLevel": -1,
+      "configs": [],
+      "args": []
+    },
+    "tasks": {
+      "preBuild": "",
+      "preFlash": "",
+      "postBuild": "",
+      "postFlash": ""
+    }
+  },
+  "esp32-nonet": {
+    "build": {
+      "compileArgs": [],
+      "ninjaArgs": [],
+      "buildDirectoryPath": "build/projconf/esp32-nonet",
+      "sdkconfigDefaults": [],
+      "sdkconfigFilePath": "configs/esp32-nonet/sdkconfig"
     },
     "env": {},
     "flashBaudRate": "",

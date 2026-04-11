@@ -33,13 +33,6 @@ if(CONFIG_APP_USE_PROTOBUF)
   set(srcs ${srcs}  app_cli/parm_proto_buf.cc)
 endif()
 
-if(CONFIG_APP_USE_WEATHER_AUTO OR TEST_HOST)
-  set(srcs ${srcs}  full_auto/fa_weather.cc full_auto/setup.cc
-     full_auto/automatic_timer.cc
-  )
-set(incdirs ${incdirs} full_auto/include)
-endif()
-
 idf_component_register(
     SRCS ${srcs}
     INCLUDE_DIRS . ${incdirs} app_cli/include app_misc/include app_net/include app_uout/include 
