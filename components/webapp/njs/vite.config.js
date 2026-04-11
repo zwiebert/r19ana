@@ -17,7 +17,7 @@ export default defineConfig(({ mode }) => {
       isDistro: process.env.DISTRO === "1",
     },
     plugins: [svelte()],
-    base: isGithub ? "/your-repo-name/" : isProduction ? "/f/" : "/",
+    base: isGithub ? "/r19xr25-esp32/" : isProduction ? "/f/" : "/",
 
     build: {
       outDir: isGithub ? "dist-gh" : build_directory,
