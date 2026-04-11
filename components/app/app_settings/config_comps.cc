@@ -30,13 +30,13 @@ void config_ext_setup_txtio() {
   config_setup_txtio(&flags);
 }
 
-#ifndef TEST_HOST
+#ifdef CONFIG_APP_USE_NETWORK
 #include <net/comp_glue.hh>
 #endif
 void config_ext_setup_cliTcpServer() {
   uo_flagsT flags;
   flags.evt.uo_evt_flag_valveChange = true;
-#ifndef TEST_HOST
+#ifdef CONFIG_APP_USE_TCPS_TASK
   config_setup_cliTcpServer(&flags);
 #endif
 }

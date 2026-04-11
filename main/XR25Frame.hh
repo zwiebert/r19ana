@@ -9,8 +9,9 @@
 
 class XR25Frame {
  public:
-  static constexpr int FRAME_MAX_SIZE = 64;
-  static constexpr int RINGBUFFER_LENGTH = 32;
+  static constexpr int FRAME_MAX_SIZE = 64;  // cannot store larger frames
+  static constexpr int FRAME_MIN_SIZE = 29; // reject smaller frames
+  static constexpr int RINGBUFFER_LENGTH = 32; // can buffer this number of frames
   using frame_data_t = std::array<uint8_t, FRAME_MAX_SIZE>;
 
   struct voc_t {
@@ -45,6 +46,7 @@ uint8_t*rbuf_end() { return &m_frame[FRAME_MAX_SIZE];}
 void rbuf_clear() {
   m_rbuf_ptr = rbuf_begin();
   m_last_byte_was_ff = false;
+  m_header_found = false;
 }
 void rbuf_push() {
     voc_t voc = {.frame =  m_frame, .frame_len = (unsigned)std::distance(rbuf_begin(), m_rbuf_ptr), .counter = m_frame_counter};
@@ -62,6 +64,8 @@ void rbuf_push() {
   frame_data_t m_frame;
   uint8_t *m_rbuf_ptr = &m_frame[0];
   bool m_last_byte_was_ff = false;
+  bool m_header_found = false;
+  unsigned m_invalid_frame_ct = 0;
 };
 
 #endif  // XR25FRAME_H

@@ -10,6 +10,8 @@
 #define logtag "main"
 
 i32 boot_counter;
+
+#ifdef CONFIG_APP_USE_WLAN
 #define WIFI_AP_SSID "rv"
 #define WIFI_AP_PASSWD "12345678"
 
@@ -28,7 +30,7 @@ void lfa_createWifiAp() {
     hts_setup(&cfg_http);
   }
 }
-
+#endif
 void  mcu_delayedRestart(unsigned delay_ms) {
   printf("mcu_restart()\n");
   vTaskDelay(pdMS_TO_TICKS(delay_ms));

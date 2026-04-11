@@ -17,6 +17,7 @@
 
 #define logtag "main"
 
+#ifdef CONFIG_APP_USE_NTP
 void ntpApp_setup(void) {
   sntp_set_time_sync_notification_cb([](struct timeval *tv) {
     ESP_LOGI(logtag, "ntp synced: %lld", (long long int)time(0));
@@ -31,7 +32,7 @@ void ntpApp_setup(void) {
 
   config_setup_ntpClient();
 }
-
+#endif
 void main_setup_ip_dependent() {
   static int once;
   if (!once) {
@@ -75,14 +76,14 @@ void mcu_init() {
 
   ESP_ERROR_CHECK(esp_event_loop_create_default());
 
-  if constexpr (use_NETWORK) {
-
+#ifdef CONFIG_APP_USE_NETWORK
+  {
     ipnet_CONNECTED_cb = main_setup_ip_dependent;
     enum nwConnection network = config_read_network_connection();
 
-#ifdef CONFIG_APP_USE_AP_FALLBACb
-se=
-bbbbbbbbbbbbbbbbbbbb();
+
+#ifdef CONFIG_APP_USE_AP_FALLBACK
+      esp_netif_init();
 #else
     if (network != nwNone)
       esp_netif_init();
@@ -119,8 +120,8 @@ bbbbbbbbbbbbbbbbbbbb();
 #ifdef CONFIG_APP_USE_HTTP
       hts_setup_content();
 #endif
-
   }
+#endif // Network
   ////Orig
 
   io_puts("\r\n\r\n");

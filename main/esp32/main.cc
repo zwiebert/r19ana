@@ -24,7 +24,8 @@
 Transport&& xr25_transport = UartTransport(UartTransportArgs{
     .bps = 65000, .uart_port_num = 2, .rx_gpio = 16, .tx_gpio = 17});
 Transport&& mock_loop_transport = UartTransport(UartTransportArgs{
-    .bps = 65000, .uart_port_num = 1, .rx_gpio = 35, .tx_gpio = 32});
+    .bps = 65000, .uart_port_num = 1, .rx_gpio = 18, .tx_gpio = 19});
+    //.bps = 65000, .uart_port_num = 1, .rx_gpio = 35, .tx_gpio = 32});
 #ifdef CONFIG_BT_ENABLED
 #include "SppTransport.hh"
 Transport&& term_transport = SppTransport();
@@ -57,7 +58,7 @@ void lean_app_main();
 
 extern "C" int app_main() {
 #ifdef CONFIG_LEAN_APP_ENABLED
-  lean__app_main();  // XXX
+  lean_app_main();  // XXX
 #else
 #ifdef CONFIG_BLOAT_APP_ENABLED
   bloat_app_main();  // XXX
@@ -91,7 +92,7 @@ void lean_app_main() {
         if (frame.frame_len) {
           empty_count = 0;
           if (!l.is_open()) {
-            l.set_full_path(pers_stor::get_log_file_name().c_str());
+            l.set_full_path(pers_stor::get_log_file_name("/sdcard/xr25.bin").c_str());
             l.open_file();
             ESP_LOGE(TAG, "logfile: open file just before before writing");
           }

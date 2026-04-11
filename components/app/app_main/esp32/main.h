@@ -14,6 +14,7 @@
 #include "app_misc/kvstore.h"
 #include "utils_misc/int_macros.h"
 #include "stdint.h"
+#ifdef CONFIG_APP_USE_NETWORK
 #include "net/ethernet_setup.hh"
 #include "net/ipnet.h"
 #include "app_mqtt/mqtt.h"
@@ -21,6 +22,7 @@
 #include "net/tcp_cli_server.h"
 #include "net/wifi_ap_setup.h"
 #include "net/wifi_station_setup.hh"
+#endif
 #include "nvs_flash.h"
 #include "storage/storage.h"
 #include "txtio/inout.h"

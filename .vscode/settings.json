@@ -9,12 +9,12 @@
   "idf.customExtraVars": {
     "IDF_TARGET": "esp32"
   },
-  "clangd.path": "/home/bertw/.espressif/tools/esp-clang/esp-19.1.2_20250312/esp-clang/bin/clangd",
+  "clangd.path": "/home/bertw/.espressif/tools/esp-clang/esp-20.1.1_20250829/esp-clang/bin/clangd",
   "clangd.arguments": [
     "--background-index",
     "--query-driver=**",
-    "--compile-commands-dir=/home/bertw/proj/xr25/r19xr25-esp32/build"
+    "--compile-commands-dir=/home/bertw/proj/mcu/r19anal/build/projconf/esp32-debug"
   ],
   "idf.flashType": "UART",
-  "idf.monitorPort": "/dev/ttyUSB0"
+  "idf.monitorPort": "/dev/ttyUSB1"
 }
