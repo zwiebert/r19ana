@@ -23,5 +23,5 @@
 <div class="area">
   <McuFirmwareUpd {fwbtns} chip="" updSecs="14" />
   <McuFirmwareInfo />
-  <button type="button" on:click={() => req_mcuRestart()}>{$_('app.restartMcu')}</button>
+  <button type="button" onclick={() => req_mcuRestart()}>{$_('app.restartMcu')}</button>
 </div>

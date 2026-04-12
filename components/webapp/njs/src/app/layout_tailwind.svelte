@@ -1,10 +1,10 @@
 <style global lang="scss">
+  @use "../styles/app.scss";
   @tailwind base;
   @tailwind components;
   @tailwind utilities;
   @reference "tailwindcss";
 
-  @import "../styles/app.scss";
 
   button,
   input,

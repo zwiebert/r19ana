@@ -78,7 +78,7 @@ $: {
         <label>
           <button
             type="button"
-            on:click={() => netFirmwareOTA(bt.ota_name)}>
+            onclick={() => netFirmwareOTA(bt.ota_name)}>
             Update to {bt.name}
           </button>
         </label>
@@ -88,7 +88,7 @@ $: {
         <label>
           <button
             type="button"
-            on:click={() => netFirmwareOTA(document.getElementById(bt.ota_name).value)}>
+            onclick={() => netFirmwareOTA(document.getElementById(bt.ota_name).value)}>
             Update {bt.name}
           </button>
           <input type="text" id={bt.ota_name} bind:value={bt.input_value} />
@@ -113,7 +113,7 @@ $: {
       <br />
       <strong>
         Update succeeded
-        <button id="mrtb" type="button" on:click={() => req_mcuRestart()}>
+        <button id="mrtb" type="button" onclick={() => req_mcuRestart()}>
           {$_('app.restartMcu')}
         </button>
         <br />

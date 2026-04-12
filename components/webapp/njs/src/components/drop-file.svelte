@@ -23,9 +23,9 @@
 <div 
   role="region"
   aria-label="File drop zone"
-  on:dragover={(e) => { e.preventDefault(); dragOver = true; }}
-  on:dragleave={() => dragOver = false}
-  on:drop={handleDrop}
+  ondragover={(e) => { e.preventDefault(); dragOver = true; }}
+  ondragleave={() => dragOver = false}
+  ondrop={handleDrop}
   class="drop-zone {dragOver ? 'active' : ''}"
 >
   {#if fileName}

@@ -34,5 +34,5 @@ function shn_fromHtml_toMcu(val) {
 <div class="text-center">
     <label>{$_('app.msg_enterNewName')}</label>
     <br />
-    <input type="text" name="name" bind:value={name} on:change={hChange_Name} />
+    <input type="text" name="name" bind:value={name} onchange={hChange_Name} />
   </div>

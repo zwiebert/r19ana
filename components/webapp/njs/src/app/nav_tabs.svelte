@@ -22,7 +22,7 @@
     <button
       class="p-0 m-1  {($TabIdx[name] || 0) === tab.idx ? 'is-selected' : 'bg-transparent'} text-lg font-medium border-none outline-none tabbt"
       id="tabbt{tab.idx}"
-      on:click={() => setTabIdx(tab.idx)}>
+      onclick={() => setTabIdx(tab.idx)}>
       {tab.name}
     </button>
     {#if vertical}<br />{/if}

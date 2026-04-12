@@ -16,7 +16,7 @@
 </script>
 
 <style lang="scss">
-  @import "../styles/app.scss";
+  @use "../styles/app.scss";
 </style>
 
 <div id="navTabs" class="flex flex-col items-center px-1 border-none">
