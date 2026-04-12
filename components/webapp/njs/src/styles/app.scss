@@ -25,6 +25,8 @@ $color_border_area: color.adjust($color_bg_area, $lightness: -20%, $space: hsl);
 
 $color_border: color.adjust($color_b, $lightness: -5%, $space: hsl);
 
+@layer utilities {
+
 .bg-selected {
   background-color: $color_bg_select;
 }
@@ -206,4 +208,6 @@ input {
 
 .config-input.number {
   width: 5rem;
+}
+
 }

@@ -1,3 +1,5 @@
-<style global lang="scss">
-  @use "../styles/app.scss";
-</style>
+<script>
+import "../styles/app.scss";
+import "../styles/tailwind.css";
+</script>
+
