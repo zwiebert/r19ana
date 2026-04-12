@@ -17,7 +17,18 @@ export default defineConfig(({ mode }) => {
       isProduction: isProduction,
       isDistro: process.env.DISTRO === "1",
     },
-    plugins: [svelte(), tailwindcss()],
+    plugins: [
+      svelte({
+        onwarn: (warning, handler) => {
+          const { code, frame } = warning;
+          // console.log(code); // <= uncomment to check other warnings
+          if (code === "css_unused_selector") return;
+          if (code === "a11y_invalid_attribute") return;
+          handler(warning);
+        },
+      }),
+      tailwindcss(),
+    ],
     base: isGithub ? "/r19xr25-esp32/" : isProduction ? "/f/" : "/",
 
     build: {
@@ -44,8 +55,7 @@ export default defineConfig(({ mode }) => {
     },
     server: {
       port: 3003,
-      watch: {
-      },
+      watch: {},
       proxy: {
         // JSON files and /f/ paths
         "^(.*)\\.json$": {
