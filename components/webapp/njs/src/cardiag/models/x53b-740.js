@@ -62,75 +62,12 @@ function get_null() {
 
 let x53b_740 = {
   data_frame: [],
-  xr25_keys: [
-    get_null,
-    // #1..#6
-    this.get_manifold_absolute_pressure_mBar,
-    this.get_engine_coolant_temperature_Celsius,
-    this.get_intake_air_temperature_Celsius,
-    this.get_battery_voltage_V,
-    this.get_oxygen_sensor_voltage_mV,
-    this.get_engine_speed_RPM,
-    // #7..#11 are empty
-    get_null,
-    get_null,
-    get_null,
-    get_null,
-    get_null,
-    // #12..#15
-    this.get_idle_regulation,
-    this.get_engine_knocking,
-    get_null,
-    this.get_detonation_correction_deg,
-    // #16..#20
-    get_null,
-    get_null,
-    get_null,
-    get_null,
-    get_null,
-    //#21..#29
-    this.get_idle_adaption,
-    get_null,
-    get_null,
-    get_null,
-    get_null,
-    get_null,
-    get_null,
-    get_null,
-    get_null,
-    //#30..
-    this.get_richness_adaption_moderate_and_high,
-    this.get_richness_adaption_idle_and_low,
-    get_null,
-    get_null,
-    get_null,
-    this.get_richness_regulation,
-    //#36..#49
-    get_null,
-    get_null,
-    get_null,
-    get_null,
-    get_null,
-    get_null,
-    get_null,
-    get_null,
-    get_null,
-    get_null,
-    get_null,
-    get_null,
-    get_null,
-    get_null,
-    //#50..
-    this.get_injection_duration_ms,
-    this.get_ignition_advance_deg,
-  ],
-  X: function (idx) {
-    return this.data_frame[idx];
-  },
-
   set_data_frame: function (data) {
     this.data_frame = data;
     return this;
+  },
+  X: function (idx) {
+    return this.data_frame[idx];
   },
 
   get_manifold_absolute_pressure_mBar: function () {
@@ -215,3 +152,66 @@ let x53b_740 = {
     return getbit(this.X(idx_t.flags3), 5);
   },
 };
+
+  x53b_740.xr25_keys =  [
+    get_null,
+    // #1..#6
+    x53b_740.get_manifold_absolute_pressure_mBar.bind(x53b_740),
+    x53b_740.get_engine_coolant_temperature_Celsius.bind(x53b_740),
+    x53b_740.get_intake_air_temperature_Celsius.bind(x53b_740),
+    x53b_740.get_battery_voltage_V.bind(x53b_740),
+    x53b_740.get_oxygen_sensor_voltage_mV.bind(x53b_740),
+    x53b_740.get_engine_speed_RPM.bind(x53b_740),
+    // #7..#11 are empty
+    get_null,
+    get_null,
+    get_null,
+    get_null,
+    get_null,
+    // #12..#15
+    x53b_740.get_idle_regulation.bind(x53b_740),
+    x53b_740.get_engine_knocking.bind(x53b_740),
+    get_null,
+    x53b_740.get_detonation_correction_deg.bind(x53b_740),
+    // #16..#20
+    get_null,
+    get_null,
+    get_null,
+    get_null,
+    get_null,
+    //#21..#29
+    x53b_740.get_idle_adaption.bind(x53b_740),
+    get_null,
+    get_null,
+    get_null,
+    get_null,
+    get_null,
+    get_null,
+    get_null,
+    get_null,
+    //#30..
+    x53b_740.get_richness_adaption_moderate_and_high.bind(x53b_740),
+    x53b_740.get_richness_adaption_idle_and_low.bind(x53b_740),
+    get_null,
+    get_null,
+    get_null,
+    x53b_740.get_richness_regulation.bind(x53b_740),
+    //#36..#49
+    get_null,
+    get_null,
+    get_null,
+    get_null,
+    get_null,
+    get_null,
+    get_null,
+    get_null,
+    get_null,
+    get_null,
+    get_null,
+    get_null,
+    get_null,
+    get_null,
+    //#50..
+    x53b_740.get_injection_duration_ms.bind(x53b_740),
+    x53b_740.get_ignition_advance_deg.bind(x53b_740),
+  ];

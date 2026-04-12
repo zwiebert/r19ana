@@ -2,6 +2,7 @@
   @tailwind base;
   @tailwind components;
   @tailwind utilities;
+  @reference "tailwindcss";
 
   @import "../styles/app.scss";
 

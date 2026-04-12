@@ -1,5 +1,6 @@
 import { defineConfig } from "vite";
 import { svelte } from "@sveltejs/vite-plugin-svelte";
+import tailwindcss from "@tailwindcss/vite";
 
 // --- CHANGE THIS IP AS NEEDED ---
 const ESP_IP = "192.168.1.69";
@@ -16,7 +17,7 @@ export default defineConfig(({ mode }) => {
       isProduction: isProduction,
       isDistro: process.env.DISTRO === "1",
     },
-    plugins: [svelte()],
+    plugins: [svelte(), tailwindcss()],
     base: isGithub ? "/r19xr25-esp32/" : isProduction ? "/f/" : "/",
 
     build: {
