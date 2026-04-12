@@ -438,11 +438,11 @@
   {$_("app.restartMcu")}
 </button>
 <br />
-<div id="config_restart_div" />
+<div id="config_restart_div"></div>
 {#if $ReloadProgress > 0}
   <strong>{$_("app.msg_waitForMcuRestart")}</strong>
   <br />
-  <progress id="reload_progress_bar" value={$ReloadProgress} max="100" />
+  <progress id="reload_progress_bar" value={$ReloadProgress} max="100"></progress>
 {/if}
 
 <style lang="scss">
