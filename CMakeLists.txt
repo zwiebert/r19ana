@@ -75,7 +75,7 @@ set(PROJECT_NAME "rv-netmcu")
 option(LINKER_DEMANGLE "set linker option --demangle" ON)
 
 
-set(COMPONENTS app main)
+set(COMPONENTS app main webapp)
 if(CONFIG_APP_USE_NETWORK)
   list(COMPONENTS APPEND webapp)
 endif()

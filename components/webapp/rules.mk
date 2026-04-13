@@ -68,11 +68,5 @@ $(NJS_DIR)/node_modules:
 clean:
 	-rm -r $(BUILD_DIR)/* $(JS_BLD_DIR)/* ./build
 
-#HTTP PROXY
-#==========
-.PHONY: proxy
-proxy:
-	(while true; do mkdir -p $(JS_BLD_DIR_DEV) && ./proxy.js $(JS_BLD_DIR_DEV) $(MCU_IP_ADDR) $(PROXY_TCP_PORT); done)
-
 build:
 	mkdir -p build

@@ -2,12 +2,15 @@
 	"name": "rv-netmcu",
 	"version": "0.51.0",
 	"scripts": {
-		"autobuild": "vite",
-		"dev": "vite",
-		"build": "vite build",
-		"preview": "vite preview",
+		"autobuild": "vite --mode mcu",
+		"dev": "vite --mode mcu",
+		"build": "vite build --mode mcu",
+		"preview": "vite preview --mode mcu",
+		"build:mcu": "vite build --mode mcu",
+		"preview:mcu": "vite preview --mode mcu",
 		"build:gh": "vite build --mode github",
 		"preview:gh": "vite preview --mode github",
+		"build:host": "vite build --mode host",
 		"lint": "eslint . --ext .js,.svelte",
 		"start": "echo publix"
 	},
@@ -31,7 +34,8 @@
 		"sveltejs-tippy": "^3.0.0",
 		"tailwindcss": "^4.2.2",
 		"uplot": "^1.6.32",
-		"vite": "^8.0.8"
+		"vite": "^8.0.8",
+		"vite-plugin-compression2": "^2.5.3"
 	},
 	"jshintConfig": {
 		"esversion": 6,
