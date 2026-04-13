@@ -6,9 +6,10 @@ import { mount } from "svelte";
 
 export default function init() {
   generate_html();
-  setTimeout(() => {
-    connWs.websocket();
-  }, 1000);
+  if (import.meta.env.MODE === "mcu")
+    setTimeout(() => {
+      connWs.websocket();
+    }, 1000);
 }
 
 function generate_html() {

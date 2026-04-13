@@ -15,17 +15,14 @@
   $: tabIdxCharts = $TabIdx["charts"] || 0;
 </script>
 
-<style lang="scss">
-  @use "../styles/app.scss";
-</style>
 
 <div id="navTabs" class="flex flex-col items-center px-1 border-none">
   <div class="navtab-main">
     <NavTabs nav_tabs={[
-      { name:$_('MCU'), idx:0},
+      ... import.meta.env.MODE === "mcu" ?  [{ name:$_('MCU'), idx:0}] : [],
       { name: $_('Charts'), idx:1} ]} name="main" />
   </div>
-  {#if !tabIdxMain}
+  {#if !tabIdxMain && import.meta.env.MODE === "mcu"}
     <div class="navtab-sub">
       <NavTabs nav_tabs={
         [{name:$_('Settings'),idx:0},
@@ -36,7 +33,7 @@
     {:else if tabIdxCfg === 1}
         <PaneFirmwareEsp32 />
     {/if}
-  {:else if tabIdxMain === 1}
+  {:else if tabIdxMain === 1 || import.meta.env.MODE === "github"}
     <div class="navtab-sub">
       <NavTabs nav_tabs={
         [{name:$_('Chart 1'),idx:0},

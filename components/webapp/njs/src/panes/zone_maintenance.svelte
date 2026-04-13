@@ -7,10 +7,9 @@
   import { get_x53b_740 } from "../cardiag/models/x53b-740.js";
   //import { DiagDataBuffer } from "../store/diag-data.js";
 
-  let {diag_data=[], chart_index = 0} = $props();
+  let { diag_data = [], chart_index = 0 } = $props();
 
   let error = $state(null);
-  let gh_samples = $state([]);
 
   async function getGithubSamples() {
     const user = "zwiebert";
@@ -20,22 +19,21 @@
     const url = `https://api.github.com/repos/${user}/${repo}/contents/${folder}`;
 
     try {
-        const response = await fetch(url);
-        const files = await response.json();
-console.log("files: ", files);
-        // This returns an array of objects with 'name' and 'download_url'
-        return files
-            .filter(file => file.name.endsWith('.bin'))
-            .map(file => ({
-                name: file.name,
-                url: file.download_url // This is the raw URL to the file
-            }));
+      const response = await fetch(url);
+      const files = await response.json();
+      console.log("files: ", files);
+      // This returns an array of objects with 'name' and 'download_url'
+      return files
+        .filter((file) => file.name.endsWith(".bin"))
+        .map((file) => ({
+          name: file.name,
+          url: file.download_url, // This is the raw URL to the file
+        }));
     } catch (e) {
-        console.error("Could not scan GitHub samples", e);
-        return [];
+      console.error("Could not scan GitHub samples", e);
+      return [];
     }
-}
-
+  }
 
   async function fetchBinaryData(url) {
     // 1. Declare variables at the top of the function scope
@@ -51,7 +49,6 @@ console.log("files: ", files);
       // 3. Use the lowercase 'response' variable here
       buffer = await response.arrayBuffer();
       diag_data = new Uint8Array(buffer);
-
 
       console.log("Binary data loaded into array:", diag_data);
     } catch (e) {
@@ -101,8 +98,6 @@ console.log("files: ", files);
     console.log("ct:", ct, "blocks:", blockCounter);
   }
 
-
-
   // svelte-ignore state_referenced_locally
   const syncKey = uPlot.sync("zoom_group" + chart_index);
   const nmbGraphs = 18;
@@ -143,11 +138,15 @@ console.log("files: ", files);
     { y_series_label: "Idle adapt", y_axis_label: "" },
   ]);
 
-  function process_frame(arr, ct) {
-    if (ct == 0) {
+  function clear_parsed_data() {
       yn_arr = Array(nmbGraphs)
         .fill()
         .map((e) => []);
+  }
+
+  function process_frame(arr, ct) {
+    if (ct == 0) {
+      clear_parsed_data();
     }
     let m = get_x53b_740(arr);
     let idx = 0;
@@ -173,30 +172,28 @@ console.log("files: ", files);
     yn_arr[idx++].push(m.get_idle_adaption());
   }
 
-  onMount(async () => {
-    const data = await getGithubSamples();
-    gh_samples = data;
-    console.log("gh_samples: ", gh_samples);
-    //fetchBinaryData();
-  });
 </script>
 
 <h3>Chart {chart_index + 1}</h3>
 
-{#each gh_samples as sample}
-    <button onclick={() => fetchBinaryData(sample.url)}>
-        {sample.name}
-    </button>
-{/each}
 {#await getGithubSamples()}
-    <p>Loading samples...</p>
+  <p>Loading samples URLs...</p>
 {:then list}
-    <select>
-        {#each list as sample}
-            <option value={sample.url}>{sample.name}</option>
-        {/each}
-    </select>
+  <select onchange={(event) => { let url = event.target.value; if (url) fetchBinaryData(url); else clear_parsed_data();}}>
+      <option value="">Fetch sample data from github...</option>
+    {#each list as sample }
+      <option value={sample.url}>{sample.name}</option>
+    {/each}
+  </select>
 {/await}
+
+{#if import.meta.env.MODE === "mcu"}
+  <button
+    onclick={() => {
+      fetchBinaryData("/f/mnt/sdcard/xr25.bin");
+    }}>Fetch Data File From MCU</button
+  >
+{/if}
 
 {#if error}
   <p style="color: red;">Error: {error}</p>
@@ -212,16 +209,12 @@ console.log("files: ", files);
 {:else}
   <p>Loading binary data...</p>
 {/if}
-<DropFile diag_data={(data_array) => diag_data = data_array}/>
-<button
-  onclick={() => {
-    fetchBinaryData("/f/mnt/sdcard/xr25.bin");
-  }}>fetch</button
->
+<DropFile diag_data={(data_array) => (diag_data = data_array)} />
+
 <button
   onclick={() => {
     process_data(diag_data);
-  }}>run</button
+  }}>re-plot</button
 >
 
 <div class="text-left">

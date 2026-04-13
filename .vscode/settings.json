@@ -4,7 +4,7 @@
     "/home/bertw/esp/ft2232.cfg",
     "target/esp32.cfg"
   ],
-  "idf.port": "/dev/ttyUSB1",
+  "idf.port": "/dev/ttyUSB0",
   "idf.currentSetup": "/home/bertw/.espressif/v6.0/esp-idf",
   "idf.customExtraVars": {
     "IDF_TARGET": "esp32"
@@ -13,8 +13,8 @@
   "clangd.arguments": [
     "--background-index",
     "--query-driver=**",
-    "--compile-commands-dir=/home/bertw/proj/mcu/r19anal/build/projconf/esp32-release"
+    "--compile-commands-dir=/home/bertw/proj/mcu/r19anal/build/projconf/esp32-debug"
   ],
   "idf.flashType": "UART",
-  "idf.monitorPort": "/dev/ttyUSB1"
+  "idf.monitorPort": "/dev/ttyUSB0"
 }

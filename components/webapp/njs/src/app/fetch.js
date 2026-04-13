@@ -25,6 +25,8 @@ const FETCHES_REPLY_BY_WS = FETCHES_TARGET_STM32;
 const MAX_RETRY_COUNT = 3;
 
 export function sendCmd(cmd) {
+  if (import.meta.env.MODE !== "mcu")
+    return;
   let url = "/cmd.json";
   let obj = { from: "wapp" };
   obj.cmd = cmd;
@@ -32,6 +34,8 @@ export function sendCmd(cmd) {
 }
 
 export function sendKvs(cmd) {
+  if (import.meta.env.MODE !== "mcu")
+    return;
   let url = "/cmd.json";
   let obj = { from: "wapp", to: "netmcu" };
   obj.kvs = cmd;
@@ -39,12 +43,16 @@ export function sendKvs(cmd) {
 }
 
 export function sendRv(cmdobj) {
+  if (import.meta.env.MODE !== "mcu")
+    return;
   let url = "/cmd.json";
   let obj = { from: "wapp", to: "rv", ...cmdobj };
   http_postRequest(url, obj);
 }
 
 export function http_postCommand(data, state = { retry_count: 0 }) {
+  if (import.meta.env.MODE !== "mcu")
+    return;
   http_postRequest(CMD_URL, data, state);
 }
 
@@ -81,6 +89,8 @@ export function http_postRequest(url = "", data = {}, state = { retry_count: 0 }
 }
 
 export function http_postDocRequest(name) {
+  if (import.meta.env.MODE !== "mcu")
+    return;
   let url = "/doc";
   // Default options are marked with *
   return fetch(url, {
@@ -102,6 +112,8 @@ export function http_postDocRequest(name) {
 
 let fetchMask = 0;
 function async_fetchByMask() {
+  if (import.meta.env.MODE !== "mcu")
+    return;
   let mask = fetchMask;
   fetchMask = 0;
   if (mask & FETCHES_REPLY_BY_WS && !ws_isOpen()) {
@@ -113,6 +125,8 @@ function async_fetchByMask() {
 }
 
 export function http_fetchByMask(mask, synchron) {
+  if (import.meta.env.MODE !== "mcu")
+    return;
   if (!mask) {
     return;
   }
