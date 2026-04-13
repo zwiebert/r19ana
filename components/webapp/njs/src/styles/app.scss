@@ -1,7 +1,7 @@
 @use "sass:color";
 
-$color_a: hsl(70, 30%, 80%);
-$color_b: hsl(100, 50%, 50%);
+$color_a: hsl(240, 2%, 90%);
+$color_b: hsla(221, 36%, 44%, 0.63);
 
 $color_bg_select: $color_b;
 $color_fg_select: color.adjust($color_a, $lightness: 30%, $space: hsl);

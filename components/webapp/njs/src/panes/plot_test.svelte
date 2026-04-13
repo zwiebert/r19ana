@@ -3,13 +3,9 @@
   import "uplot/dist/uPlot.min.css";
 
   // Props or state
-  let { array1, array2, labels1 = {}, labels2 = {}, syncKey = null } = $props();
+  let { array1, array2, labels1 = {}, labels2 = {}, syncKey = null, width = 1600, height = 300 } = $props();
   let chart;
 
-  // svelte-ignore state_referenced_locally
-  let opts1 = Object.assign({ y_series_label: "Data Set 1", y_axis_label: "Left Axis" }, labels1);
-  // svelte-ignore state_referenced_locally
-  let opts2 = Object.assign({ y_series_label: "Data Set 2", y_axis_label: "Right Axis" }, labels2);
   let chartContainer;
 
   // Process data for uPlot format
@@ -22,77 +18,81 @@
     series: [{}, { stroke: "red" }, { stroke: "blue" }]
   };
   */
- 
-  
 
-  // svelte-ignore state_referenced_locally
-  let options = {
-    width: 600,
-    height: 400,
-    plugins: [touchZoomPanPlugin(chartData[0].length)],
-    scales: {
-      x: { time: false },
-      y: {}, // Default left scale
-      y2: { }, // New independent right scale
-    },
-    series: [
-      {}, // X-axis
-      {
-        label: opts1.y_series_label,
-        stroke: "red",
-        scale: "y", // Uses default left scale
-      },
-      {
-        label: opts2.y_series_label,
-        stroke: "blue",
-        scale: "y2", // Uses independent right scale
-      },
-    ],
-    axes: [
-      {}, // Bottom X-axis
-      {
-        scale: "y",
-        side: 3, // Left side (standard)
-        label: opts1.y_axis_label,
-      },
-      {
-        scale: "y2",
-        side: 1, // Right side (standard for secondary axes)
-        label: opts2.y_axis_label,
-        grid: { show: false }, // Optional: hide grid to avoid clutter
-      },
-    ],
-  };
-
-  if (opts2.y_axis_label == "boolean") {
-    options.scales.y2 = { auto: false, range: (u, min, max) => [-.1, 1.1], };
-  }
-
-  // svelte-ignore state_referenced_locally
-  if (syncKey)
-    options.cursor = {
-      // 2. Link the charts using the sync key
-      sync: {
-        key: syncKey.key,
-        setSeries: true, // Optional: syncs series toggling/highlighting
-        setScale: [true, false], // Syncs X scale (index 0), ignores Y scale (index 1)
-      },
-    };
+  let options = {};
 
   $effect(() => {
-    // Initialize
+    let opts1 = $state(Object.assign({ y_series_label: "Data Set 1", y_axis_label: "Left Axis" }, labels1));
+    let opts2 = $state(Object.assign({ y_series_label: "Data Set 2", y_axis_label: "Right Axis" }, labels2));
+    options = {
+      width: width,
+      height: height,
+      plugins: [touchZoomPanPlugin(chartData[0].length)],
+      scales: {
+        x: { time: false },
+        y: {}, // Default left scale
+        y2: {}, // New independent right scale
+      },
+      series: [
+        {}, // X-axis
+        {
+          label: opts1.y_series_label,
+          stroke: "red",
+          scale: "y", // Uses default left scale
+        },
+        {
+          label: opts2.y_series_label,
+          stroke: "blue",
+          scale: "y2", // Uses independent right scale
+        },
+      ],
+      axes: [
+        {}, // Bottom X-axis
+        {
+          scale: "y",
+          side: 3, // Left side (standard)
+          label: opts1.y_axis_label,
+        },
+        {
+          scale: "y2",
+          side: 1, // Right side (standard for secondary axes)
+          label: opts2.y_axis_label,
+          grid: { show: false }, // Optional: hide grid to avoid clutter
+        },
+      ],
+    };
+
+    if (opts2.y_axis_label == "boolean") {
+      options.scales.y2 = { auto: false, range: (u, min, max) => [-0.1, 1.1] };
+    }
+
+    if (syncKey)
+      options.cursor = {
+        // 2. Link the charts using the sync key
+        sync: {
+          key: syncKey.key,
+          setSeries: true, // Optional: syncs series toggling/highlighting
+          setScale: [true, false], // Syncs X scale (index 0), ignores Y scale (index 1)
+        },
+      };
+
     if (!chart) {
       chart = new uPlot(options, chartData, chartContainer);
     } else {
-      // Efficiently update data without destroying the chart
-      chart.setData(chartData);
+      chart.destroy();
+      chart = new uPlot(options, chartData, chartContainer);
     }
-
     // Cleanup
     return () => {
       chart?.destroy();
       chart = null;
     };
+  });
+
+  $effect(() => {
+    if (chart) {
+      chart.setData(chartData);
+    }
   });
 
   function touchZoomPanPlugin(maxBlocks) {
@@ -180,79 +180,10 @@
                 // This often 'wakes up' the other charts in the sync group
                 syncKey.pub("setCursor", u, u.cursor.left, u.cursor.top);
                 // ... after u.setScale("x", { min: newMin, max: newMax }) ...
-
               }
             },
             { passive: false },
           );
-        },
-      },
-    };
-  }
-
-  function touchZoomPanPluginOLD() {
-    return {
-      hooks: {
-        ready: (u) => {
-          let over = u.root.querySelector(".u-over");
-          let rect, xMin, xMax, xRange, initialPinchDist, initialX;
-
-          over.addEventListener(
-            "touchstart",
-            (e) => {
-              rect = over.getBoundingClientRect();
-              xMin = u.scales.x.min;
-              xMax = u.scales.x.max;
-              xRange = xMax - xMin;
-
-              if (e.touches.length === 1) {
-                // Setup for Panning
-                initialX = e.touches[0].clientX;
-              } else if (e.touches.length === 2) {
-                // Setup for Pinch Zoom
-                initialPinchDist = Math.hypot(e.touches[0].clientX - e.touches[1].clientX, e.touches[0].clientY - e.touches[1].clientY);
-              }
-            },
-            { passive: false },
-          );
-
-          over.addEventListener(
-            "touchmove",
-            (e) => {
-              e.preventDefault(); // Stop page scroll
-
-              if (e.touches.length === 1 && initialX != null) {
-                // --- PANNING LOGIC ---
-                let currentX = e.touches[0].clientX;
-                let deltaX = currentX - initialX;
-                let movePct = deltaX / rect.width;
-                let shift = xRange * movePct;
-
-                u.setScale("x", { min: xMin - shift, max: xMax - shift });
-              } else if (e.touches.length === 2 && initialPinchDist > 0) {
-                // --- ZOOMING LOGIC ---
-                let currentDist = Math.hypot(e.touches[0].clientX - e.touches[1].clientX, e.touches[0].clientY - e.touches[1].clientY);
-
-                let zoomFactor = initialPinchDist / currentDist;
-                let newRange = xRange * zoomFactor;
-
-                // Zoom centered on the midpoint between two fingers
-                let centerX = (e.touches[0].clientX + e.touches[1].clientX) / 2 - rect.left;
-                let pctX = centerX / rect.width;
-
-                let newMin = xMin + (xRange - newRange) * pctX;
-                let newMax = newMin + newRange;
-
-                u.setScale("x", { min: newMin, max: newMax });
-              }
-            },
-            { passive: false },
-          );
-
-          over.addEventListener("touchend", () => {
-            initialPinchDist = 0;
-            initialX = null;
-          });
         },
       },
     };

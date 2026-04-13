@@ -51,6 +51,7 @@
       diag_data = new Uint8Array(buffer);
 
       console.log("Binary data loaded into array:", diag_data);
+      error = false;
     } catch (e) {
       // Note: Do NOT try to access 'response' here if fetch failed
       error = e.message;
@@ -139,9 +140,9 @@
   ]);
 
   function clear_parsed_data() {
-      yn_arr = Array(nmbGraphs)
-        .fill()
-        .map((e) => []);
+    yn_arr = Array(nmbGraphs)
+      .fill()
+      .map((e) => []);
   }
 
   function process_frame(arr, ct) {
@@ -172,59 +173,62 @@
     yn_arr[idx++].push(m.get_idle_adaption());
   }
 
+  let width = $state(1000);
+  let height = $state(300);
 </script>
 
-<h3>Chart {chart_index + 1}</h3>
+<h3>{chart_index + 1}</h3>
 
-{#await getGithubSamples()}
-  <p>Loading samples URLs...</p>
-{:then list}
-  <select onchange={(event) => { let url = event.target.value; if (url) fetchBinaryData(url); else clear_parsed_data();}}>
+<div class="text-center">
+  {#await getGithubSamples()}
+    <p>Loading samples URLs...</p>
+  {:then list}
+    <select
+      onchange={(event) => {
+        let url = event.target.value;
+        if (url) fetchBinaryData(url);
+        else clear_parsed_data();
+      }}
+    >
       <option value="">Fetch sample data from github...</option>
-    {#each list as sample }
-      <option value={sample.url}>{sample.name}</option>
-    {/each}
-  </select>
-{/await}
+      {#each list as sample}
+        <option value={sample.url}>{sample.name}</option>
+      {/each}
+    </select>
+  {/await}
 
-{#if import.meta.env.MODE === "mcu"}
+  {#if import.meta.env.MODE === "mcu"}
+    <button
+      onclick={() => {
+        fetchBinaryData("/f/mnt/sdcard/xr25.bin");
+      }}>Fetch Data File From MCU</button
+    >
+  {/if}
+
+  <DropFile diag_data={(data_array) => (diag_data = data_array)} />
+
+  {#if error}
+    <p style="color: red;">Error: {error}</p>
+  {:else if diag_data.length > 0}
+    <p>...{diag_data.length} bytes</p>
+  {/if}
+
   <button
     onclick={() => {
-      fetchBinaryData("/f/mnt/sdcard/xr25.bin");
-    }}>Fetch Data File From MCU</button
+      process_data(diag_data);
+    }}>re-plot</button
   >
-{/if}
-
-{#if error}
-  <p style="color: red;">Error: {error}</p>
-{:else if diag_data.length > 0}
-  <ul>
-    {#each diag_data.slice(0, 4) as byte}
-      <li>Byte value: {byte}</li>
-    {/each}
-    {#if diag_data.length > 10}
-      <li>...and {diag_data.length - 10} more bytes</li>
-    {/if}
-  </ul>
-{:else}
-  <p>Loading binary data...</p>
-{/if}
-<DropFile diag_data={(data_array) => (diag_data = data_array)} />
-
-<button
-  onclick={() => {
-    process_data(diag_data);
-  }}>re-plot</button
->
-
-<div class="text-left">
+</div>
+<div class="text-center">
+  <label>Width: <input type="number" bind:value={width} min={400} max={5000} step={100} /></label>
+  <label>Height: <input type="number" bind:value={height} min={100} max={1000} step={25} /></label>
+</div>
+<div class="text-center">
   {#each [0, 2, 4, 6, 8, 10, 12, 14, 16] as i}
     <div class="text-left">
-      <label class="text-left">
-        <input type="checkbox" bind:checked={yn_show[i]} />Chart for {yn_labels[i].y_series_label} and {yn_labels[i + 1].y_series_label}</label
-      >
-      <div style="display:{yn_show[i] ? 'block' : 'none'};touch-action: pan-y; width: 100%;">
-        <MyPlot array1={yn_arr[i]} array2={yn_arr[i + 1]} labels1={yn_labels[i]} labels2={yn_labels[i + 1]} {syncKey} } />
+      <label> <input type="checkbox" bind:checked={yn_show[i]} />Chart for {yn_labels[i].y_series_label} and {yn_labels[i + 1].y_series_label}</label>
+      <div class="text-center" style="display:{yn_show[i] ? 'block' : 'none'};touch-action: pan-y; width: 100%;">
+        <MyPlot array1={yn_arr[i]} array2={yn_arr[i + 1]} labels1={yn_labels[i]} labels2={yn_labels[i + 1]} {syncKey} {width} {height} } />
       </div>
     </div>
   {/each}
