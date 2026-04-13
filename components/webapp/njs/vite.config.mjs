@@ -36,19 +36,17 @@ export default defineConfig(({ mode }) => {
     compression({
       algorithm: 'gzip',
       exclude: [/\.(br)$/, /\.(gz)$/],
-      include: /\.(html|xml|css|json|js|mjs|svg|map)$/,
-      extensions: ['.js', '.css', '.html', '.map'],
+      include: /\.(html|css||js|map)$/,
     }),
     // Generates .br files
     compression({
       algorithm: 'brotliCompress',
       exclude: [/\.(br)$/, /\.(gz)$/],
-      include: /\.(html|xml|css|json|js|mjs|svg|map)$/,
-      extensions: ['.js', '.css', '.html', '.map'],
+      include: /\.(html|css|js|map)$/,
     }),
 
     ],
-    base: isGithub ? "/r19xr25-esp32/" : isProduction ? "/f/" : "/",
+    base: isGithub ? "./" : isProduction ? "/f/" : "/",
 
     build: {
       outDir: isGithub ? "dist-gh" : build_directory,

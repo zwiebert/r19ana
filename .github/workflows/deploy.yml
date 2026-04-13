@@ -45,7 +45,7 @@ jobs:
         uses: actions/upload-pages-artifact@v3
         with:
           # Path must match your Vite build output (usually 'dist')
-          path: './dist'
+          path: './dist-gh'
 
       - name: Deploy to GitHub Pages
         id: deployment
