@@ -28,15 +28,18 @@ jobs:
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 24
           cache: 'npm'
+          cache-dependency-path: './components/webapp/njs/package-lock.json'
 
 
       - name: Install dependencies
         run: npm install
+        working-directory: './components/webapp/njs'
 
       - name: Build for GitHub Pages
         run: npm run build:gh
+        working-directory: './components/webapp/njs'
 
       - name: Setup Pages
         uses: actions/configure-pages@v5
@@ -45,7 +48,7 @@ jobs:
         uses: actions/upload-pages-artifact@v3
         with:
           # Path must match your Vite build output (usually 'dist')
-          path: './dist-gh'
+          path: './components/webapp/njs/dist-gh'
 
       - name: Deploy to GitHub Pages
         id: deployment
