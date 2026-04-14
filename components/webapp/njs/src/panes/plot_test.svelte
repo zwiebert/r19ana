@@ -89,11 +89,13 @@
     };
   });
 
+  /*
   $effect(() => {
     if (chart) {
-      chart.setData(chartData);
+      chart.setData(chartData); // XXX: this isnot useful. touchZoomPlugin depends on chartData.length and is part of options
     }
   });
+  */
 
   function touchZoomPanPlugin(maxBlocks) {
     return {
@@ -190,4 +192,13 @@
   }
 </script>
 
-<div bind:this={chartContainer}></div>
+
+<!-- This container stays the size of the screen -->
+<div class="w-full overflow-x-auto">
+  
+  <!-- This container holds the actual uPlot and resets alignment -->
+  <div class="text-left flex justify-start items-start">
+     <div bind:this={chartContainer}></div>
+  </div>
+
+</div>

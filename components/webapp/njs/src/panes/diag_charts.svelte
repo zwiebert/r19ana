@@ -8,12 +8,13 @@
   //import { DiagDataBuffer } from "../store/diag-data.js";
 
   let { diag_data = [], chart_index = 0 } = $props();
-
   let error = $state(null);
+
+  onMount(() => {});
 
   async function getGithubSamples() {
     const user = "zwiebert";
-    const repo = "r19xr25-esp32";
+    const repo = "r19ana";
     const folder = "main/data"; // the folder where your .bin files sit
 
     const url = `https://api.github.com/repos/${user}/${repo}/contents/${folder}`;
@@ -173,63 +174,73 @@
     yn_arr[idx++].push(m.get_idle_adaption());
   }
 
-  let width = $state(1000);
+  let width = $state(typeof window !== "undefined" ? window.innerWidth : 1000);
   let height = $state(300);
 </script>
 
 <h3>{chart_index + 1}</h3>
 
-<div class="text-center">
-  {#await getGithubSamples()}
-    <p>Loading samples URLs...</p>
-  {:then list}
-    <select
-      onchange={(event) => {
-        let url = event.target.value;
-        if (url) fetchBinaryData(url);
-        else clear_parsed_data();
-      }}
-    >
-      <option value="">Fetch sample data from github...</option>
-      {#each list as sample}
-        <option value={sample.url}>{sample.name}</option>
-      {/each}
-    </select>
-  {/await}
+<div class="w-fit mx-auto">
+  <div class="flex flex-row items-center">
+    <DropFile diag_data={(data_array) => (diag_data = data_array)} />
+    <div class="flex flex-col">
+      {#await getGithubSamples()}
+        <p>Loading samples URLs...</p>
+      {:then list}
+        <select
+          onchange={(event) => {
+            let url = event.target.value;
+            if (url) fetchBinaryData(url);
+            else clear_parsed_data();
+          }}
+        >
+          <option value="">Fetch sample data from github...</option>
+          {#each list as sample}
+            <option value={sample.url}>{sample.name}</option>
+          {/each}
+        </select>
+      {/await}
 
-  {#if import.meta.env.MODE === "mcu"}
-    <button
-      onclick={() => {
-        fetchBinaryData("/f/mnt/sdcard/xr25.bin");
-      }}>Fetch Data File From MCU</button
-    >
-  {/if}
+      {#if import.meta.env.MODE === "mcu"}
+        <button
+          onclick={() => {
+            fetchBinaryData("/f/mnt/sdcard/xr25.bin");
+          }}>Fetch Data File From MCU</button
+        >
+      {/if}
 
-  <DropFile diag_data={(data_array) => (diag_data = data_array)} />
-
-  {#if error}
-    <p style="color: red;">Error: {error}</p>
-  {:else if diag_data.length > 0}
-    <p>...{diag_data.length} bytes</p>
-  {/if}
-
-  <button
-    onclick={() => {
-      process_data(diag_data);
-    }}>re-plot</button
-  >
-</div>
-<div class="text-center">
-  <label>Width: <input type="number" bind:value={width} min={400} max={5000} step={100} /></label>
-  <label>Height: <input type="number" bind:value={height} min={100} max={1000} step={25} /></label>
-</div>
-<div class="text-center">
-  {#each [0, 2, 4, 6, 8, 10, 12, 14, 16] as i}
-    <div class="text-left">
-      <label> <input type="checkbox" bind:checked={yn_show[i]} />Chart for {yn_labels[i].y_series_label} and {yn_labels[i + 1].y_series_label}</label>
-      <div class="text-center" style="display:{yn_show[i] ? 'block' : 'none'};touch-action: pan-y; width: 100%;">
-        <MyPlot array1={yn_arr[i]} array2={yn_arr[i + 1]} labels1={yn_labels[i]} labels2={yn_labels[i + 1]} {syncKey} {width} {height} } />
-      </div>
+      <button
+        onclick={() => {
+          process_data(diag_data);
+        }}>re-plot</button
+      >
     </div>
-  {/each}
+    <div class="flex flex-col">
+      <label>Chart-Width: <input type="number" bind:value={width} min={400} max={5000} step={100} /></label>
+      <label>Chart-Height: <input type="number" bind:value={height} min={100} max={1000} step={25} /></label>
+    </div>
+  </div>
+</div>
+
+{#if error}
+  <p style="color: red;">Error: {error}</p>
+{:else if diag_data.length > 0}
+  <p>...{diag_data.length} bytes</p>
+{/if}
+
+<div class="w-full text-center">
+  <div class="w-fit mx-auto">
+    <!-- 2. The Wide Container (The "Giant Canvas") -->
+    <!-- 'w-max' tells it to grow with the charts. 'min-w-full' keeps it at least screen-wide. -->
+    <div class="block w-max min-w-full text-left p-4">
+      {#each [0, 2, 4, 6, 8, 10, 12, 14, 16] as i}
+        <div class="text-left">
+          <label> <input type="checkbox" bind:checked={yn_show[i]} />Chart for {yn_labels[i].y_series_label} and {yn_labels[i + 1].y_series_label}</label>
+          <div class="text-center" style="display:{yn_show[i] ? 'block' : 'none'};touch-action: pan-y; width: 100%;">
+            <MyPlot array1={yn_arr[i]} array2={yn_arr[i + 1]} labels1={yn_labels[i]} labels2={yn_labels[i + 1]} {syncKey} {width} {height} } />
+          </div>
+        </div>
+      {/each}
+    </div>
+  </div>
 </div>

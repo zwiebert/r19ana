@@ -9,7 +9,6 @@ inline int hex_nibble(char c) {
   return -1;
 }
 inline bool hex2voc(XR25Frame::voc_t& voc, const char* src) {
-const size_t FRAME_MIN_SIZE = 20;  // x53b-740 is 29
   voc.frame_len = 0;
   if (!src) return false;
 
@@ -36,6 +35,6 @@ const size_t FRAME_MIN_SIZE = 20;  // x53b-740 is 29
   }
 
   // ignore final nibble if odd length
-  voc.frame_len = dst_idx >= FRAME_MIN_SIZE ? dst_idx : 0;
+  voc.frame_len = dst_idx >= XR25Frame::FRAME_MIN_SIZE ? dst_idx : 0;
   return voc.frame_len > 0;
 }

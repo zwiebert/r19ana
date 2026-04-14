@@ -97,12 +97,14 @@ static CliCmd cmds[] = {
              cmd.reply("could not store file name");
              return false;
            }
+           #ifdef ESP_PLATFORM
            if (data_logfile) {
              if (!data_logfile->set_full_path(name)) {
                cmd.reply("log-file not working (see console)");
                return false;
              }
            }
+           #endif
            cmd.reply("success: log-file is operational");
            return true;
          } else if (strcmp(tok, "enable") == 0) {
