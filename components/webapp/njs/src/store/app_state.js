@@ -11,3 +11,5 @@ export const ReloadProgress = writable(0);
 export const Verbose = PersistentValStore("AppVerbose", 1);
 
 export const GuiAcc = writable();
+
+export const EnableGitHubSamples = PersistentValStore("EnGhSmpls", 1);
