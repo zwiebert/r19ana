@@ -21,9 +21,9 @@
 
   $effect(() => {
     let opts = $state([
-      Object.assign({ y_series_label: "x", y_axis_label: "x" }, labels[0]),
-      Object.assign({ y_series_label: "Data Set 1", y_axis_label: "Left Axis" }, labels[1]),
-      Object.assign({ y_series_label: "Data Set 2", y_axis_label: "Right Axis" }, labels[2]),
+      Object.assign({ series_label: "x", axis_label: "x" }, labels[0]),
+      Object.assign({ series_label: "Data Set 1", axis_label: "Left Axis" }, labels[1]),
+      Object.assign({ series_label: "Data Set 2", axis_label: "Right Axis" }, labels[2]),
     ]);
     options = {
       width: width,
@@ -35,14 +35,14 @@
         y2: {}, // New independent right scale
       },
       series: [
-        { label: opts[0].y_series_label }, // X-axis
+        { label: opts[0].series_label }, // X-axis
         {
-          label: opts[1].y_series_label,
+          label: opts[1].series_label,
           stroke: "red",
           scale: "y", // Uses default left scale
         },
         {
-          label: opts[2].y_series_label,
+          label: opts[2].series_label,
           stroke: "blue",
           scale: "y2", // Uses independent right scale
         },
@@ -52,18 +52,18 @@
         {
           scale: "y",
           side: 3, // Left side (standard)
-          label: opts[1].y_axis_label,
+          label: opts[1].axis_label,
         },
         {
           scale: "y2",
           side: 1, // Right side (standard for secondary axes)
-          label: opts[2].y_axis_label,
+          label: opts[2].axis_label,
           grid: { show: false }, // Optional: hide grid to avoid clutter
         },
       ],
     };
 
-    if (opts[2].y_axis_label == "boolean") {
+    if (opts[2].axis_label == "boolean") {
       options.scales.y2 = { auto: false, range: (u, min, max) => [-0.1, 1.1] };
     }
 

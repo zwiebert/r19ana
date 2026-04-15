@@ -2,14 +2,14 @@
 	"name": "rv-netmcu",
 	"version": "0.51.0",
 	"scripts": {
-		"autobuild": "vite --mode mcu",
+		"autobuild": "vite --host --mode mcu",
 		"dev": "vite --mode mcu",
 		"build": "vite build --mode mcu",
-		"preview": "vite preview --mode mcu",
+		"preview": "vite preview --host --mode mcu",
 		"build:mcu": "vite build --mode mcu",
-		"preview:mcu": "vite preview --mode mcu",
+		"preview:mcu": "vite preview --host --mode mcu",
 		"build:gh": "vite build --mode github",
-		"preview:gh": "vite preview --mode github",
+		"preview:gh": "vite preview --host --mode github",
 		"build:host": "vite build --mode host",
 		"lint": "eslint . --ext .js,.svelte",
 		"start": "echo publix"
