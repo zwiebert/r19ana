@@ -6,6 +6,7 @@
   import DropFile from "../components/request-or-drop-file.svelte";
   import x53b_740_chart from "../cardiag/charts/x53b-740.js";
   import raw_chart from "../cardiag/charts/raw.js";
+  import byte_unstuffing from "../cardiag/byte_unstuffing.js";
   import { EnableGitHubSamples } from "../store/app_state";
   //import { DiagDataBuffer } from "../store/diag-data.js";
 
@@ -13,6 +14,7 @@
   let error = $state(null);
   let car_chart = $state.raw(x53b_740_chart);
   let car_charts = [x53b_740_chart, raw_chart];
+
   onMount(() => {});
 
   async function getGithubSamples() {
@@ -71,79 +73,15 @@
     }
   });
 
-  let xr25 = {
-    m_last_byte_was_ff: false,
-    m_header_found: false,
-    m_invalid_frame_ct: 0,
-    m_rbuf: [],
-    FRAME_MIN_SIZE: 29,
-    FRAME_MAX_SIZE: 64,
-
-    rbuf_clear: function () {
-      this.m_rbuf = [];
-      this.m_last_byte_was_ff = false;
-      this.m_header_found = false;
-    },
-    add: function (b) {
-      if (b == 0xff && !this.m_last_byte_was_ff) {
-        this.m_last_byte_was_ff = true;
-        return false;
-      }
-
-      if (b == 0x00 && this.m_last_byte_was_ff) {
-        if (!this.m_header_found) {
-          // this is the first frame.
-          this.rbuf_clear();
-          this.m_header_found = true;
-          return false;
-        }
-
-        let frame_length = this.m_rbuf.length;
-
-        if (frame_length < this.FRAME_MIN_SIZE) {
-          // discard too short frames
-          if (frame_length > 0) ++this.m_invalid_frame_ct;
-          this.rbuf_clear();
-          return false;
-        }
-
-        // we have a valid frame, and a new frame header
-        this.m_complete_frame_length = frame_length;
-        this.m_header_found = true;
-        return true;
-      }
-
-      // now all special bytes are handled.
-      this.m_last_byte_was_ff = false;
-
-      if (this.m_rbuf.length >= this.FRAME_MAX_SIZE) {
-        // drop all data, frame is too long
-        this.rbuf_clear();
-        return false;
-      }
-
-      // store data byte
-
-      this.m_rbuf.push(b);
-      return false;
-    },
-  };
-
   /**
    *  @brief remove header and bytestuffing
    *  @param arr   input raw data u8 array (with hdr and byte stuffing)
    *
    */
-  function process_data(arr) {
-    let blockCounter = 0;
-
-    for (let b of arr) {
-      if (!xr25.add(b)) continue;
-      if (blockCounter++ > 0) {
-        car_chart.process_frame(xr25.m_rbuf, blockCounter - 2);
-      }
-    }
-    console.log("nBlocks:", blockCounter);
+  function process_data(data) {
+    byte_unstuffing.set_callback((arr, ct) => car_chart.process_frame(arr, ct));
+    byte_unstuffing.set_data(data);
+    byte_unstuffing.process_data();
     redraw_charts();
   }
 
@@ -155,6 +93,7 @@
     yn_arr = car_chart.get_parsed_data();
     x_arr = yn_arr[0].map((_, i) => i);
     yn_labels = car_chart.get_labels();
+    console.log("yn_arr.len", yn_arr[0].length);
   }
 
   let yn_show = $state(
@@ -217,14 +156,14 @@
       <label>Height: <input type="number" bind:value={height} min={100} max={1000} step={25} /></label>
       <button
         onclick={() => {
-          process_data(diag_data);
+        process_data(diag_data);
         }}>re-plot</button
       >
     </div>
     <div class="flex flex-col text-left">
       {#each Array.from({ length: Math.floor(car_chart.get_nmb_of_graphs() / 2) }, (_, index) => index * 2) as i}
         <div>
-          <label> <input type="checkbox" bind:checked={yn_show[i]} />{yn_labels[i].series_label}, {yn_labels[i + 1].series_label}</label>
+          <label> <input type="checkbox" bind:checked={yn_show[i]} />{car_chart.get_label(i).series_label}, {car_chart.get_label(i+1).series_label}</label>
         </div>
       {/each}
     </div>

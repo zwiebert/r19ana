@@ -22,16 +22,21 @@ export default {
 
   get_labels: function () {
     let ret = [];
-    for (let g = 0; g < this.nmbGraphs; ++g) {
-      ret.push({ series_label: `Byte-${g}`, axis_label: "N" });
+    for (let g = 0; g <= this.nmbGraphs; ++g) {
+      ret.push({ series_label: `Byte-${g}`, axis_label: `Byte-${g}` });
     }
     return ret;
+  },
+
+  get_label: function (n) {
+      return { series_label: `Byte-${n}`, axis_label: `Byte-${n}` };
   },
 
   process_frame: function (arr, ct) {
     if (ct == 0) {
       this.nmbGraphs = arr.length;
       this.clear_parsed_data();
+      console.log("raw-charts process_frame()");
     } else if (arr.length != this.nmbGraphs) {
       return false;
     }

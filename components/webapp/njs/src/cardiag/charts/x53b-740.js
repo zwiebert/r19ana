@@ -22,6 +22,9 @@ export default {
   get_labels: function () {
     return this.labels;
   },
+  get_label: function (n) {
+      return this.labels[n];
+  },
   get_nmb_of_graphs: function () {
     return this.nmbGraphs;
   },
@@ -29,6 +32,7 @@ export default {
   process_frame: function (arr, ct) {
     if (ct == 0) {
       this.clear_parsed_data();
+      console.log("x53b-740-charts process_frame()");
     }
     let yn_arr = this.yn_arr;
     let m = get_x53b_740(arr);
