@@ -4,8 +4,8 @@
   import { onMount, untrack } from "svelte";
   import MyPlot from "./plot_test.svelte";
   import DropFile from "../components/drop-file.svelte";
-  import { get_x53b_740 } from "../cardiag/models/x53b-740.js";
-  import {EnableGitHubSamples} from "../store/app_state";
+  import car_chart from "../cardiag/charts/x53b-740.js";
+  import { EnableGitHubSamples } from "../store/app_state";
   //import { DiagDataBuffer } from "../store/diag-data.js";
 
   let { diag_data = [], chart_index = 0 } = $props();
@@ -69,6 +69,12 @@
     }
   });
 
+  /**
+   *  @brief remove header and bytestuffing
+   *  @param arr   input raw data u8 array (with hdr and byte stuffing)
+   *  @param process_single_frame  function called for each data frame with args (arr, frame_counter)
+   *
+   */
   function process_data(arr) {
     let ct = 0;
     let blockCounter = 0;
@@ -81,7 +87,7 @@
         if (b == 0x00) {
           last_xff = false;
           if (blockCounter++ > 0) {
-            process_frame(dataFrame, blockCounter - 2);
+            car_chart.process_frame(dataFrame, blockCounter - 2);
           }
           dataFrame = [];
           continue;
@@ -103,78 +109,20 @@
 
   // svelte-ignore state_referenced_locally
   const syncKey = uPlot.sync("zoom_group" + chart_index);
-  const nmbGraphs = 18;
-  let yn_arr = $state.raw(
-    Array(nmbGraphs)
-      .fill()
-      .map((e) => []),
-  );
+  let yn_arr = $state.raw(car_chart.get_parsed_data());
+  let x_arr = $state.raw([]);
   function redraw_charts() {
-    yn_arr = yn_arr;
+    yn_arr = car_chart.get_parsed_data();
+    x_arr = yn_arr[0].map((_, i) => i);
   }
+
   let yn_show = $state(
-    Array(nmbGraphs)
+    Array(car_chart.nmbGraphs)
       .fill()
       .map((e) => true),
   );
-
-  let yn_labels = $state([
-    { y_series_label: "Engine-Speed", y_axis_label: "RPM" },
-    { y_series_label: "MAP", y_axis_label: "mBar" },
-    { y_series_label: "Spark Advance", y_axis_label: "Degree" },
-    { y_series_label: "Oxygen Sensor", y_axis_label: "mV" },
-    { y_series_label: "Injection Duration", y_axis_label: "ms" },
-    { y_series_label: "Throttle Closed", y_axis_label: "boolean" },
-
-    { y_series_label: "Battery Voltage", y_axis_label: "V" },
-    { y_series_label: "Fuel Pump", y_axis_label: "boolean" },
-    { y_series_label: "ECT", y_axis_label: "Celsius" },
-    { y_series_label: "IAT", y_axis_label: "Celsius" },
-    { y_series_label: "Engine Pinking", y_axis_label: "N" },
-    { y_series_label: "Detonation Correction", y_axis_label: "Degree" },
-
-    { y_series_label: "Mix regulation", y_axis_label: "N" },
-    { y_series_label: "Engine Speed", y_axis_label: "RPM" },
-    { y_series_label: "Mix adapt low", y_axis_label: "N" },
-    { y_series_label: "Mix adapt high", y_axis_label: "N" },
-    { y_series_label: "Idle regulation", y_axis_label: "" },
-    { y_series_label: "Idle adapt", y_axis_label: "" },
-  ]);
-
-  function clear_parsed_data() {
-    yn_arr = Array(nmbGraphs)
-      .fill()
-      .map((e) => []);
-  }
-
-  function process_frame(arr, ct) {
-    if (ct == 0) {
-      clear_parsed_data();
-    }
-    let m = get_x53b_740(arr);
-    let idx = 0;
-    yn_arr[idx++].push(m.get_engine_speed_RPM());
-    yn_arr[idx++].push(m.get_manifold_absolute_pressure_mBar());
-    yn_arr[idx++].push(m.get_ignition_advance_deg());
-    yn_arr[idx++].push(m.get_oxygen_sensor_voltage_mV());
-    yn_arr[idx++].push(m.get_injection_duration_ms());
-    yn_arr[idx++].push(m.is_throttle_fully_closed());
-    ////////////////////////
-    yn_arr[idx++].push(m.get_battery_voltage_V());
-    yn_arr[idx++].push(m.is_fuel_pump_on());
-    yn_arr[idx++].push(m.get_engine_coolant_temperature_Celsius());
-    yn_arr[idx++].push(m.get_intake_air_temperature_Celsius());
-    yn_arr[idx++].push(m.get_engine_knocking());
-    yn_arr[idx++].push(m.get_detonation_correction_deg());
-    ////////////////////////
-    yn_arr[idx++].push(m.get_richness_regulation());
-    yn_arr[idx++].push(m.get_engine_speed_RPM());
-    yn_arr[idx++].push(m.get_richness_adaption_idle_and_low());
-    yn_arr[idx++].push(m.get_richness_adaption_moderate_and_high());
-    yn_arr[idx++].push(m.get_idle_regulation());
-    yn_arr[idx++].push(m.get_idle_adaption());
-  }
-
+ let x_labels = { y_series_label: "Block-Number", y_axis_label: "x" };
+  let yn_labels = $state(car_chart.labels);
   let width = $state(typeof window !== "undefined" ? window.innerWidth : 1000);
   let height = $state(300);
 </script>
@@ -183,7 +131,6 @@
 
 <div class="w-fit mx-auto">
   <div class="flex flex-row items-center">
-
     <div class="flex flex-col">
       <label><input type="checkbox" bind:checked={$EnableGitHubSamples} />Allow Samples from GitHub</label>
       {#if $EnableGitHubSamples}
@@ -195,7 +142,6 @@
             onchange={(event) => {
               let url = event.target.value;
               if (url) fetchBinaryData(url);
-              else clear_parsed_data();
             }}
           >
             {#each list as sample}
@@ -223,6 +169,13 @@
         }}>re-plot</button
       >
     </div>
+    <div class="flex flex-col text-left">
+      {#each [0, 2, 4, 6, 8, 10, 12, 14, 16] as i}
+        <div>
+          <label> <input type="checkbox" bind:checked={yn_show[i]} />{yn_labels[i].y_series_label}, {yn_labels[i + 1].y_series_label}</label>
+        </div>
+      {/each}
+    </div>
   </div>
 </div>
 
@@ -237,14 +190,15 @@
     <!-- 2. The Wide Container (The "Giant Canvas") -->
     <!-- 'w-max' tells it to grow with the charts. 'min-w-full' keeps it at least screen-wide. -->
     <div class="block w-max min-w-full text-left p-4">
-      {#each [0, 2, 4, 6, 8, 10, 12, 14, 16] as i}
-        <div class="text-left">
-          <label> <input type="checkbox" bind:checked={yn_show[i]} />Chart for {yn_labels[i].y_series_label} and {yn_labels[i + 1].y_series_label}</label>
-          <div class="text-center" style="display:{yn_show[i] ? 'block' : 'none'};touch-action: pan-y; width: 100%;">
-            <MyPlot array1={yn_arr[i]} array2={yn_arr[i + 1]} labels1={yn_labels[i]} labels2={yn_labels[i + 1]} {syncKey} {width} {height} } />
+      {#if yn_arr[0].length > 0}
+        {#each [0, 2, 4, 6, 8, 10, 12, 14, 16] as i}
+          <div class="text-left">
+            <div class="text-center" style="display:{yn_show[i] ? 'block' : 'none'};touch-action: pan-y; width: 100%;">
+              <MyPlot chartData={[x_arr, yn_arr[i], yn_arr[i + 1]]} labels={[x_labels, yn_labels[i], yn_labels[i + 1]]} {syncKey} {width} {height} } />
+            </div>
           </div>
-        </div>
-      {/each}
+        {/each}
+      {/if}
     </div>
   </div>
 </div>
