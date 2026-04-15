@@ -4,6 +4,10 @@ export default {
   nmbGraphs: 18,
   yn_arr: null,
 
+  get_info: function() {
+    return { name: "X53B_740", description: "this is the R19-F3N740 (54kW, TBI, manual)"};
+  },
+
   clear_parsed_data: function () {
     this.yn_arr = Array(this.nmbGraphs)
       .fill()
@@ -14,6 +18,12 @@ export default {
     if (!this.yn_arr)
         this.clear_parsed_data();
     return this.yn_arr; 
+  },
+  get_labels: function () {
+    return this.labels;
+  },
+  get_nmb_of_graphs: function () {
+    return this.nmbGraphs;
   },
 
   process_frame: function (arr, ct) {

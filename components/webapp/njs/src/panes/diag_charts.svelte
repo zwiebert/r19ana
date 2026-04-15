@@ -4,13 +4,15 @@
   import { onMount, untrack } from "svelte";
   import MyPlot from "./plot_test.svelte";
   import DropFile from "../components/request-or-drop-file.svelte";
-  import car_chart from "../cardiag/charts/x53b-740.js";
+  import x53b_740_chart from "../cardiag/charts/x53b-740.js";
+  import raw_chart from "../cardiag/charts/raw.js";
   import { EnableGitHubSamples } from "../store/app_state";
   //import { DiagDataBuffer } from "../store/diag-data.js";
 
   let { diag_data = [], chart_index = 0 } = $props();
   let error = $state(null);
-
+  let car_chart = $state.raw(x53b_740_chart);
+  let car_charts = [x53b_740_chart, raw_chart];
   onMount(() => {});
 
   async function getGithubSamples() {
@@ -152,15 +154,16 @@
   function redraw_charts() {
     yn_arr = car_chart.get_parsed_data();
     x_arr = yn_arr[0].map((_, i) => i);
+    yn_labels = car_chart.get_labels();
   }
 
   let yn_show = $state(
-    Array(car_chart.nmbGraphs)
+    Array(64)
       .fill()
       .map((e) => true),
   );
   let x_labels = { series_label: "Blk", axis_label: "x" };
-  let yn_labels = $state(car_chart.labels);
+  let yn_labels = $state(car_chart.get_labels());
   let width = $state(typeof window !== "undefined" ? window.innerWidth : 1000);
   let height = $state(300);
   let win_innerWidth = $state(typeof window !== "undefined" ? window.innerWidth : 1000);
@@ -202,6 +205,14 @@
       <DropFile onDataLoaded={(data_array) => (diag_data = data_array)} mode="button" />
     </div>
     <div class="flex flex-col">
+      <div>
+        <p>Type</p>
+        <select bind:value={car_chart} size={3}>
+          {#each car_charts as cc}
+            <option value={cc}>{cc.get_info().name}</option>
+          {/each}
+        </select>
+      </div>
       <label>Width: <input type="number" bind:value={width} min={400} max={5000} step={100} /></label>
       <label>Height: <input type="number" bind:value={height} min={100} max={1000} step={25} /></label>
       <button
@@ -211,7 +222,7 @@
       >
     </div>
     <div class="flex flex-col text-left">
-      {#each [0, 2, 4, 6, 8, 10, 12, 14, 16] as i}
+      {#each Array.from({ length: Math.floor(car_chart.get_nmb_of_graphs() / 2) }, (_, index) => index * 2) as i}
         <div>
           <label> <input type="checkbox" bind:checked={yn_show[i]} />{yn_labels[i].series_label}, {yn_labels[i + 1].series_label}</label>
         </div>
@@ -232,7 +243,7 @@
     <!-- 'w-max' tells it to grow with the charts. 'min-w-full' keeps it at least screen-wide. -->
     <div class="block w-max min-w-full text-left p-4">
       {#if yn_arr[0].length > 0}
-        {#each [0, 2, 4, 6, 8, 10, 12, 14, 16] as i}
+        {#each Array.from({ length: Math.floor(car_chart.get_nmb_of_graphs() / 2) }, (_, index) => index * 2) as i}
           <div class="text-left">
             <div class="text-center" style="display:{yn_show[i] ? 'block' : 'none'};touch-action: pan-y; width: 100%;">
               <MyPlot chartData={[x_arr, yn_arr[i], yn_arr[i + 1]]} labels={[x_labels, yn_labels[i], yn_labels[i + 1]]} {syncKey} {width} {height} } />
