@@ -164,10 +164,9 @@
   let width = $state(typeof window !== "undefined" ? window.innerWidth : 1000);
   let height = $state(300);
   let win_innerWidth = $state(typeof window !== "undefined" ? window.innerWidth : 1000);
-
 </script>
 
-<svelte:window bind:innerWidth={win_innerWidth} onresize={ () => width = window.innerWidth} />
+<svelte:window bind:innerWidth={win_innerWidth} onresize={() => (width = window.innerWidth)} />
 
 <h3>{chart_index + 1}</h3>
 
@@ -199,8 +198,8 @@
             fetchBinaryData("/f/mnt/sdcard/xr25.bin");
           }}>Fetch Data File From MCU</button
         >
-        <DropFile onDataLoaded={(data_array) => (diag_data = data_array) } mode="button"/>
       {/if}
+      <DropFile onDataLoaded={(data_array) => (diag_data = data_array)} mode="button" />
     </div>
     <div class="flex flex-col">
       <label>Width: <input type="number" bind:value={width} min={400} max={5000} step={100} /></label>
