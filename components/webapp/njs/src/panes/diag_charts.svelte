@@ -69,42 +69,80 @@
     }
   });
 
+  let xr25 = {
+    m_last_byte_was_ff: false,
+    m_header_found: false,
+    m_invalid_frame_ct: 0,
+    m_rbuf: [],
+    FRAME_MIN_SIZE: 29,
+    FRAME_MAX_SIZE: 64,
+
+    rbuf_clear: function () {
+      this.m_rbuf = [];
+      this.m_last_byte_was_ff = false;
+      this.m_header_found = false;
+    },
+    add: function (b) {
+      if (b == 0xff && !this.m_last_byte_was_ff) {
+        this.m_last_byte_was_ff = true;
+        return false;
+      }
+
+      if (b == 0x00 && this.m_last_byte_was_ff) {
+        if (!this.m_header_found) {
+          // this is the first frame.
+          this.rbuf_clear();
+          this.m_header_found = true;
+          return false;
+        }
+
+        let frame_length = this.m_rbuf.length;
+
+        if (frame_length < this.FRAME_MIN_SIZE) {
+          // discard too short frames
+          if (frame_length > 0) ++this.m_invalid_frame_ct;
+          this.rbuf_clear();
+          return false;
+        }
+
+        // we have a valid frame, and a new frame header
+        this.m_complete_frame_length = frame_length;
+        this.m_header_found = true;
+        return true;
+      }
+
+      // now all special bytes are handled.
+      this.m_last_byte_was_ff = false;
+
+      if (this.m_rbuf.length >= this.FRAME_MAX_SIZE) {
+        // drop all data, frame is too long
+        this.rbuf_clear();
+        return false;
+      }
+
+      // store data byte
+
+      this.m_rbuf.push(b);
+      return false;
+    },
+  };
+
   /**
    *  @brief remove header and bytestuffing
    *  @param arr   input raw data u8 array (with hdr and byte stuffing)
-   *  @param process_single_frame  function called for each data frame with args (arr, frame_counter)
    *
    */
   function process_data(arr) {
-    let ct = 0;
     let blockCounter = 0;
-    let dataFrame = [];
-    let last_xff = false;
-    let fidx = 0;
 
     for (let b of arr) {
-      if (last_xff) {
-        if (b == 0x00) {
-          last_xff = false;
-          if (blockCounter++ > 0) {
-            car_chart.process_frame(dataFrame, blockCounter - 2);
-          }
-          dataFrame = [];
-          continue;
-        } else {
-          last_xff = false;
-        }
-      } else {
-        if (b == 0xff) {
-          last_xff = true;
-          continue;
-        }
+      if (!xr25.add(b)) continue;
+      if (blockCounter++ > 0) {
+        car_chart.process_frame(xr25.m_rbuf, blockCounter - 2);
       }
-      dataFrame.push(b);
-      ct++;
     }
+    console.log("nBlocks:", blockCounter);
     redraw_charts();
-    console.log("ct:", ct, "blocks:", blockCounter);
   }
 
   // svelte-ignore state_referenced_locally
@@ -121,7 +159,7 @@
       .fill()
       .map((e) => true),
   );
- let x_labels = { y_series_label: "Block-Number", y_axis_label: "x" };
+  let x_labels = { y_series_label: "Block-Number", y_axis_label: "x" };
   let yn_labels = $state(car_chart.labels);
   let width = $state(typeof window !== "undefined" ? window.innerWidth : 1000);
   let height = $state(300);

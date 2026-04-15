@@ -132,10 +132,10 @@ int main(int argc, char** argv) {
     os->put('\xff');
     os->put('\x00');
     for (int i = 0; i < voc.frame_len; ++i) {
-      char c = char(voc.frame[i]);
-      os->put(c);
+      auto c = voc.frame[i];
+      os->put(char(c));
       if (c == 0xff) {
-        os->put(c);
+        os->put(char(c));
       }
     }
     continue;

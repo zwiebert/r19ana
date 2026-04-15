@@ -24,6 +24,7 @@ bool get_enable_auto_mount(bool default_val) {
 
 bool set_enable_logging(bool enable) {
   enable_logging = enable;
+  return true;
 }
 bool get_enable_logging(bool default_val) {
   return enable_logging >= 0 ? enable_logging : default_val;
@@ -31,6 +32,7 @@ bool get_enable_logging(bool default_val) {
 
 bool set_log_file_name(const char* name) {
   log_file_name = name;
+  return true;
 }
 
 std::string get_log_file_name(const char *default_val) {
