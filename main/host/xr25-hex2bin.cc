@@ -140,4 +140,6 @@ int main(int argc, char** argv) {
     }
     continue;
   }
+  os->put('\xff');
+  os->put('\x00');
 }
