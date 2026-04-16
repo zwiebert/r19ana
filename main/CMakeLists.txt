@@ -31,12 +31,18 @@ component_compile_options("-Wno-error=missing-field-initializers" "-Wno-error=ty
 else()
 
 project("r19xr25-esp32")
-add_compile_options("-std=c++20")
-include_directories("." ".." "host")
+set (CMAKE_CXX_STANDARD 20)
+include_directories("." ".." )
+
 add_executable(main_test  ${srcs_host} host/main_test.cc host/DataLogFile.cc)
 add_executable(xr25-hex2human  ${srcs_host} host/xr25-hex2human.cc)
 add_executable(xr25-bin2human  ${srcs_host} host/xr25-bin2human.cc)
 add_executable(xr25-hex2bin  ${srcs_host} host/xr25-hex2bin.cc)
+
+include(CTest)
+add_subdirectory("${CMAKE_CURRENT_LIST_DIR}/../external/unity" ${CMAKE_BINARY_DIR}/unity)
+add_subdirectory("${CMAKE_CURRENT_LIST_DIR}/test")
+
 
 endif()
 

@@ -16,3 +16,6 @@
 [submodule "external/mbed-jsoneat"]
 	path = external/mbed-jsoneat
 	url = ../mbed-jsoneat.git
+[submodule "external/unity"]
+	path = external/unity
+	url = https://github.com/ThrowTheSwitch/Unity.git

@@ -47,6 +47,12 @@ export default defineConfig(({ mode }) => {
 
     ],
     base: isGithub ? "./" : isProduction ? "/f/" : "/",
+  test: {
+    // Allows you to use 'describe', 'it', 'expect' without importing them
+    globals: true, 
+    // Uses a browser-like environment (requires: npm install -D jsdom)
+    environment: 'jsdom', 
+  },
 
     build: {
       outDir: isGithub ? "dist-gh" : build_directory,

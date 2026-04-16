@@ -30,8 +30,8 @@ bool XR25Frame::add(uint8_t b) {
 
     // we have a valid frame, and a new frame header
     m_complete_frame_length = frame_length;
-    m_header_found = true;
     rbuf_push();
+    m_header_found = true;
     return true;
   }
 

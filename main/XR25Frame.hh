@@ -58,7 +58,11 @@ void rbuf_push() {
  private:
   size_t m_complete_frame_length = 0;  ///< actual data frame length
  private:
+ #ifdef TEST
+ public:
+ #endif
   unsigned m_frame_counter = 0;
+  
   ringbuffer<voc_t> m_frames_rb;
   
   frame_data_t m_frame;
