@@ -1,8 +1,8 @@
-import { get_raw_parser } from "../parser/raw.js";
+import { get_raw_parser } from "../parser/raw";
 
 export default {
   nmbGraphs: 29,
-  yn_arr: null,
+  yn_arr: null as Array<any>| null,
   get_info: function () {
     return { name: "Raw", description: "shows all bytes of the frame as graphs." };
   },
@@ -32,7 +32,8 @@ export default {
       return { series_label: `Byte-${n}`, axis_label: `Byte-${n}` };
   },
 
-  process_frame: function (arr, ct) {
+  process_frame: function (arr:Uint8Array, ct:number) {
+    if (!this.yn_arr) return;
     if (ct == 0) {
       this.nmbGraphs = arr.length;
       this.clear_parsed_data();

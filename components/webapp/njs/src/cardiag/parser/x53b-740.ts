@@ -1,18 +1,4 @@
-function Enum(strings) {
-  // 1. Clean the string: remove // comments and /* */ comments
-  let cleaned = strings[0]
-    .replace(/\/\/.*/g, "") // Remove // comments
-    .replace(/\/\*[\s\S]*?\*\//g, ""); // Remove /* */ comments
-
-  // 2. Split by commas OR any whitespace
-  let keys = cleaned.split(/[,\s]+/).filter(Boolean);
-
-  let obj = {};
-  keys.forEach((key, i) => (obj[key] = i));
-  return Object.freeze(obj);
-}
-
-let idx_t = Enum`
+enum idx_t  {
     program_version,        // 0
     calibration_version,    // 1
     flags0,                 // 2, input (on/off-switches)
@@ -44,15 +30,15 @@ let idx_t = Enum`
     richness_adaption_avg2high,  // 26, #30
     idle_regulation,             // 27  #12
     id,                          // 28
-`;
+};
 /**
  * C-style int cast: Truncates decimals and
  * constrains to a 32-bit signed integer.
  */
-const int = (n) => n | 0;
-const getbit = (n, pos) => (n >>> pos) & 1;
+const int = (n:number) => n | 0;
+const getbit = (n:number, pos:number) => (n >>> pos) & 1;
 
-export function get_x53b_740(data_frame = []) {
+export function get_x53b_740(data_frame:Uint8Array = new Uint8Array(0)) {
   return x53b_740.set_data_frame(data_frame);
 }
 
@@ -61,14 +47,15 @@ function get_null() {
 }
 
 let x53b_740 = {
-  data_frame: [],
-  set_data_frame: function (data) {
+  data_frame: null as Uint8Array | null,
+  set_data_frame: function (data:Uint8Array) {
     this.data_frame = data;
     return this;
   },
-  X: function (idx) {
-    return this.data_frame[idx];
+  X: function (idx:number) {
+    return this.data_frame ? this.data_frame[idx] : 0;
   },
+
 
   get_manifold_absolute_pressure_mBar: function () {
     return int(this.X(idx_t.MAP) * 3.697 + 103.0);

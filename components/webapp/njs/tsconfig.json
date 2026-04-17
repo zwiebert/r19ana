@@ -1,0 +1,10 @@
+{
+  "compilerOptions": {
+    "checkJs": true,           // If you still have some .js files
+    "allowJs": true,           // Allows a mix of .js and .ts
+    "strict": true,            // This is the "no more typos" setting
+    "noImplicitAny": true,     // Forces you to be clear about your data
+    "moduleResolution": "node" 
+  }
+}
+

@@ -1,18 +1,18 @@
-<script>
+<script lang="ts">
   import uPlot from "uplot";
   import "uplot/dist/uPlot.min.css";
   import { onMount, untrack } from "svelte";
   import MyPlot from "./plot_test.svelte";
   import DropFile from "../components/request-or-drop-file.svelte";
-  import x53b_740_chart from "../cardiag/charts/x53b-740.js";
-  import raw_chart from "../cardiag/charts/raw.js";
-  import byte_unstuffing from "../cardiag/byte_unstuffing.js";
+  import x53b_740_chart from "../cardiag/charts/x53b-740";
+  import raw_chart from "../cardiag/charts/raw";
+  import byte_unstuffing from "../cardiag/byte_unstuffing";
   import { EnableGitHubSamples } from "../store/app_state";
   //import { DiagDataBuffer } from "../store/diag-data.js";
 
   let { diag_data = [], chart_index = 0 } = $props();
   let error = $state(null);
-  let car_chart = $state.raw(x53b_740_chart);
+  let car_chart:objects = $state.raw(x53b_740_chart);
   let car_charts = [x53b_740_chart, raw_chart];
 
   onMount(() => {});

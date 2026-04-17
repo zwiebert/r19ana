@@ -4,6 +4,23 @@
         {
             "type": "node",
             "request": "launch",
+            "name": "Debug Current Vitest File",
+            "autoAttachChildProcesses": true,
+            "skipFiles": [
+                "<node_internals>/**",
+                "**/node_modules/**"
+            ],
+            "program": "${workspaceFolder}/node_modules/vitest/vitest.mjs",
+            "args": [
+                "run",
+                "${relativeFile}"
+            ],
+            "smartStep": true,
+            "console": "integratedTerminal"
+        },
+        {
+            "type": "node",
+            "request": "launch",
             "name": "Lint via NPM",
             "runtimeExecutable": "npm",
             "runtimeArgs": [

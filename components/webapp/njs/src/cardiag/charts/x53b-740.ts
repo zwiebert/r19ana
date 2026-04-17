@@ -1,8 +1,8 @@
-import { get_x53b_740 } from "../parser/x53b-740.js";
+import { get_x53b_740 } from "../parser/x53b-740";
 
 export default {
   nmbGraphs: 18,
-  yn_arr: null,
+  yn_arr: null as Array<any> | null,
 
   get_info: function() {
     return { name: "X53B_740", description: "this is the R19-F3N740 (54kW, TBI, manual)"};
@@ -29,11 +29,13 @@ export default {
     return this.nmbGraphs;
   },
 
-  process_frame: function (arr, ct) {
+  process_frame: function (arr:Uint8Array, ct:number) {
     if (ct == 0) {
       this.clear_parsed_data();
       console.log("x53b-740-charts process_frame()");
     }
+    if (!this.yn_arr)
+      return;
     let yn_arr = this.yn_arr;
     let m = get_x53b_740(arr);
     let idx = 0;
