@@ -1,86 +1,71 @@
-import { get_x53b_740 } from "../parser/x53b-740";
+import { x53b_740_parser, x53b_740_metrics_table, x53b_740_metrics_table_pos } from "../parser/x53b-740";
+
+const t = x53b_740_metrics_table;
+const e = x53b_740_metrics_table_pos;
+const order = [
+  e.engine_speed,
+  e.map_sensor,
+  e.ignition_advance,
+  e.o2_sensor,
+  e.injection_duration,
+  e.idle_switch,
+  ///////////////////
+  e.batt_voltage,
+  e.fuel_pump_relay,
+  e.ect_sensor,
+  e.iat_sensor,
+  e.engine_pinking,
+  e.detonation_correction,
+  //////////////
+  e.richness_regulation,
+  e.engine_speed,
+  e.richness_adaption_idle2low,
+  e.richness_adaption_avg2high,
+  e.idle_regulation,
+  e.idle_adaption,
+];
+
+let labels = new Array(order.length);
+for (let i = 0; i < order.length; ++i) {
+  const table_entry = t[order[i]];
+  labels[i] = { series_label: table_entry.short_name, axis_label: table_entry.unit };
+}
 
 export default {
-  nmbGraphs: 18,
-  yn_arr: null as Array<any> | null,
+  yn_arr: Array.from({ length: order.length }, () => []) as any[][],
 
-  get_info: function() {
-    return { name: "X53B_740", description: "this is the R19-F3N740 (54kW, TBI, manual)"};
+  get_info: function () {
+    return { name: "X53B_740", description: "this is the R19-F3N740 (54kW, TBI, manual)" };
   },
 
-  clear_parsed_data: function () {
-    this.yn_arr = Array(this.nmbGraphs)
-      .fill()
-      .map((e) => []);
+  clear_chart_data: function () {
+    this.yn_arr.forEach(subArray => subArray.length = 0);
   },
 
-  get_parsed_data: function () {
-    if (!this.yn_arr)
-        this.clear_parsed_data();
-    return this.yn_arr; 
+  get_chart_data: function () {
+    return this.yn_arr;
   },
   get_labels: function () {
-    return this.labels;
+    return labels;
   },
   get_label: function (n) {
-      return this.labels[n];
+    return labels[n];
   },
   get_nmb_of_graphs: function () {
-    return this.nmbGraphs;
+    return order.length;
   },
 
-  process_frame: function (arr:Uint8Array, ct:number) {
-    if (ct == 0) {
-      this.clear_parsed_data();
-      console.log("x53b-740-charts process_frame()");
+  process_frame: function (arr: Uint8Array, ct: number, append: boolean = false) {
+    if (ct == 0 && !append) {
+      this.clear_chart_data();
     }
-    if (!this.yn_arr)
-      return;
-    let yn_arr = this.yn_arr;
-    let m = get_x53b_740(arr);
-    let idx = 0;
-    yn_arr[idx++].push(m.get_engine_speed_RPM());
-    yn_arr[idx++].push(m.get_manifold_absolute_pressure_mBar());
-    yn_arr[idx++].push(m.get_ignition_advance_deg());
-    yn_arr[idx++].push(m.get_oxygen_sensor_voltage_mV());
-    yn_arr[idx++].push(m.get_injection_duration_ms());
-    yn_arr[idx++].push(m.is_throttle_fully_closed());
-    ////////////////////////
-    yn_arr[idx++].push(m.get_battery_voltage_V());
-    yn_arr[idx++].push(m.is_fuel_pump_on());
-    yn_arr[idx++].push(m.get_engine_coolant_temperature_Celsius());
-    yn_arr[idx++].push(m.get_intake_air_temperature_Celsius());
-    yn_arr[idx++].push(m.get_engine_knocking());
-    yn_arr[idx++].push(m.get_detonation_correction_deg());
-    ////////////////////////
-    yn_arr[idx++].push(m.get_richness_regulation());
-    yn_arr[idx++].push(m.get_engine_speed_RPM());
-    yn_arr[idx++].push(m.get_richness_adaption_idle_and_low());
-    yn_arr[idx++].push(m.get_richness_adaption_moderate_and_high());
-    yn_arr[idx++].push(m.get_idle_regulation());
-    yn_arr[idx++].push(m.get_idle_adaption());
+    console.assert(this.yn_arr.length === order.length);
+    let m = new x53b_740_parser(arr);
+    let idx =  0;
+    for (let i in order) {
+      console.assert(this.yn_arr[idx]!== undefined);
+      this.yn_arr[idx++].push(t[i].parse.call(m));
+    }
+    this.yn_arr = this.yn_arr;
   },
-
-  labels: [
-    { series_label: "RPM", axis_label: "RPM" },
-    { series_label: "MAP", axis_label: "mBar" },
-    { series_label: "Advance", axis_label: "Degree" },
-    { series_label: "O2", axis_label: "mV" },
-    { series_label: "Inj-Duration", axis_label: "ms" },
-    { series_label: "Sw-Idle", axis_label: "boolean" },
-
-    { series_label: "Battery", axis_label: "V" },
-    { series_label: "Fuel-Pump", axis_label: "boolean" },
-    { series_label: "ECT", axis_label: "Celsius" },
-    { series_label: "IAT", axis_label: "Celsius" },
-    { series_label: "Pinking", axis_label: "N" },
-    { series_label: "Det-Correction", axis_label: "Degree" },
-
-    { series_label: "Mix-Regu", axis_label: "N" },
-    { series_label: "RPM", axis_label: "RPM" },
-    { series_label: "Mix-Adpt-Low", axis_label: "N" },
-    { series_label: "Mix-Adpt-High", axis_label: "N" },
-    { series_label: "Idle-Regu", axis_label: "" },
-    { series_label: "Idle-Adpt", axis_label: "" },
-  ],
 };

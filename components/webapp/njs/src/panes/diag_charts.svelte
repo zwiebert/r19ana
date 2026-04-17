@@ -12,7 +12,7 @@
 
   let { diag_data = [], chart_index = 0 } = $props();
   let error = $state(null);
-  let car_chart:objects = $state.raw(x53b_740_chart);
+  let car_chart: objects = $state.raw(x53b_740_chart);
   let car_charts = [x53b_740_chart, raw_chart];
 
   onMount(() => {});
@@ -87,10 +87,10 @@
 
   // svelte-ignore state_referenced_locally
   const syncKey = uPlot.sync("zoom_group" + chart_index);
-  let yn_arr = $state.raw(car_chart.get_parsed_data());
+  let yn_arr = $state.raw(car_chart.get_chart_data());
   let x_arr = $state.raw([]);
   function redraw_charts() {
-    yn_arr = car_chart.get_parsed_data();
+    yn_arr = car_chart.get_chart_data();
     x_arr = yn_arr[0].map((_, i) => i);
     yn_labels = car_chart.get_labels();
     console.log("yn_arr.len", yn_arr[0].length);
@@ -146,7 +146,7 @@
     <div class="flex flex-col">
       <div>
         <p>Type</p>
-        <select bind:value={car_chart} size={3}>
+        <select bind:value={car_chart} onchange={() => process_data(diag_data)} size={3}>
           {#each car_charts as cc}
             <option value={cc}>{cc.get_info().name}</option>
           {/each}
@@ -156,14 +156,14 @@
       <label>Height: <input type="number" bind:value={height} min={100} max={1000} step={25} /></label>
       <button
         onclick={() => {
-        process_data(diag_data);
+          process_data(diag_data);
         }}>re-plot</button
       >
     </div>
     <div class="flex flex-col text-left">
       {#each Array.from({ length: Math.floor(car_chart.get_nmb_of_graphs() / 2) }, (_, index) => index * 2) as i}
         <div>
-          <label> <input type="checkbox" bind:checked={yn_show[i]} />{car_chart.get_label(i).series_label}, {car_chart.get_label(i+1).series_label}</label>
+          <label> <input type="checkbox" bind:checked={yn_show[i]} />{car_chart.get_label(i).series_label}, {car_chart.get_label(i + 1).series_label}</label>
         </div>
       {/each}
     </div>

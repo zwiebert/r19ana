@@ -1,49 +1,47 @@
-import { get_raw_parser } from "../parser/raw";
+import { raw_parser } from "../parser/raw";
+
+let nmbGraphs = 29;
 
 export default {
-  nmbGraphs: 29,
-  yn_arr: null as Array<any>| null,
+  yn_arr: Array.from({ length: nmbGraphs }, () => []) as any[][],
   get_info: function () {
     return { name: "Raw", description: "shows all bytes of the frame as graphs." };
   },
-  clear_parsed_data: function () {
-    this.yn_arr = Array(this.nmbGraphs)
-      .fill()
-      .map((e) => []);
+  clear_chart_data: function () {
+    this.yn_arr.forEach((subArray) => (subArray.length = 0));
   },
 
-  get_parsed_data: function () {
-    if (!this.yn_arr) this.clear_parsed_data();
+  get_chart_data: function () {
     return this.yn_arr;
   },
   get_nmb_of_graphs: function () {
-    return this.nmbGraphs;
+    return nmbGraphs;
   },
 
   get_labels: function () {
     let ret = [];
-    for (let g = 0; g <= this.nmbGraphs; ++g) {
+    for (let g = 0; g <= nmbGraphs; ++g) {
       ret.push({ series_label: `Byte-${g}`, axis_label: `Byte-${g}` });
     }
     return ret;
   },
 
   get_label: function (n) {
-      return { series_label: `Byte-${n}`, axis_label: `Byte-${n}` };
+    return { series_label: `Byte-${n}`, axis_label: `Byte-${n}` };
   },
 
-  process_frame: function (arr:Uint8Array, ct:number) {
+  process_frame: function (arr: Uint8Array, ct: number, append: boolean = false) {
     if (!this.yn_arr) return;
-    if (ct == 0) {
-      this.nmbGraphs = arr.length;
-      this.clear_parsed_data();
+      nmbGraphs = arr.length;
+    if (ct == 0 && !append) {
+      this.clear_chart_data();
       console.log("raw-charts process_frame()");
-    } else if (arr.length != this.nmbGraphs) {
+    } else if (arr.length != nmbGraphs) {
       return false;
     }
-    let m = get_raw_parser(arr);
+    let m = new raw_parser(arr);
     let idx = 0;
-    for (let g = 0; g < this.nmbGraphs; ++g) {
+    for (let g = 0; g < nmbGraphs; ++g) {
       this.yn_arr[idx++].push(m.get_byte(g));
     }
     return true;

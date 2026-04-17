@@ -1,17 +1,20 @@
-export function get_raw_parser(data_frame: Uint8Array) {
-  return raw.set_data_frame(data_frame);
-}
 
-let raw = {
-  data_frame: null as Uint8Array | null,
-  set_data_frame: function (data:Uint8Array) {
+export class raw_parser {
+  private data_frame: Uint8Array;
+
+  constructor(data : Uint8Array) {
+    this.data_frame = data;
+  }
+  set_data_frame (data:Uint8Array) {
     this.data_frame = data;
     return this;
-  },
-  get_byte: function (idx: number) {
+  }
+  get_byte (idx: number) {
     return this.data_frame?.[idx];
-  },
-  get_length: function () {
+  }
+  get_length () {
     return this.data_frame?.length;
-  },
+  }
 };
+
+export default raw_parser;
