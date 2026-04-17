@@ -1,12 +1,10 @@
-// @ts-check
-
-export default {
-  m_arr: null as Uint8Array | null,
-  m_cb: null,
-  set_callback: function (cb: function) {
+export class byte_unstuffing {
+  m_arr: Uint8Array | null = null;
+  m_cb: ((data: Uint8Array, blockCounter: number) => void) | null = null;
+  set_callback(cb: ((data: Uint8Array, blockCounter: number) => void) | null) {
     this.m_cb = cb;
-  },
-  xr25: {
+  }
+  xr25 = {
     m_last_byte_was_ff: false,
     m_header_found: false,
     m_frame_complete: false,
@@ -22,7 +20,7 @@ export default {
       this.m_header_found = false;
       this.m_frame_complete = false;
     },
-    add: function (b) {
+    add: function (b: number) {
       if (this.m_frame_complete) {
         this.rbuf_clear();
         this.m_header_found = true;
@@ -65,23 +63,22 @@ export default {
       }
 
       // store data byte
- 
+
       this.m_rbuf[this.m_rbuf_idx++] = b;
       return null;
     },
-  },
+  };
 
-  set_data: function (arr : Uint8Array) {
+  set_data(arr: Uint8Array) {
     this.m_arr = arr;
-  },
-/*
+  }
+  /*
   add_data: function (arr) {
     this.m_arr.push(...arr);
   },
 */
-  get_frame_len: function () {
-    if (!this.m_arr)
-      return 0;
+  get_frame_len() {
+    if (!this.m_arr) return 0;
     let lmap = {} as Record<number, number>;
     for (let i = 0; i < 1000 && i < this.m_arr.length; ++i) {
       let data_frame = this.xr25.add(this.m_arr[i]);
@@ -103,9 +100,9 @@ export default {
       most_found_val = val;
     }
     return most_found_key;
-  },
+  }
 
-  process_data: function () {
+  process_data() {
     let blockCounter = 0;
     const frame_length = this.get_frame_len();
     this.xr25.rbuf_clear();
@@ -122,5 +119,5 @@ export default {
         }
       }
     }
-  },
-};
+  }
+}

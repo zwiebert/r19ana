@@ -1,4 +1,4 @@
-<script>
+<script lang="ts">
   "use strict";
   import { _ } from "../services/i18n";
   import NavTabs from "../app/nav_tabs.svelte";
@@ -8,11 +8,11 @@
   import DiagCharts from "../panes/diag_charts.svelte";
   import { TabIdx } from "../store/app_state.js";
 
-  $: tabIdxMain = $TabIdx["main"] || 0;
-  $: tabIdxCfg = $TabIdx["cfg"] || 0;
-  $: tabIdxFw = $TabIdx["fw"] || 0;
-  $: tabIdxSettings = $TabIdx["settings"] || 0;
-  $: tabIdxCharts = $TabIdx["charts"] || 0;
+  let tabIdxMain = $derived($TabIdx["main"] ?? 0);
+  let tabIdxCfg = $derived($TabIdx["cfg"] ??  0);
+  let tabIdxFw = $derived($TabIdx["fw"] ?? 0);
+  let tabIdxSettings = $derived($TabIdx["settings"] ?? 0);
+  let tabIdxCharts = $derived($TabIdx["charts"] ?? 0);
 </script>
 
 <div class="text-center">

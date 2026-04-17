@@ -1,7 +1,10 @@
-<script>
-  export let name;
-  export let value;
-  export let has_lan = true;
+<script lang="ts">
+  interface Iprops {
+    name: string;
+    value: string;
+    has_lan: boolean;
+  }
+  let { name, value, has_lan = true }: Iprops = $props();
 </script>
 
 <select class="config-input" id="cfg_{name}" bind:value>

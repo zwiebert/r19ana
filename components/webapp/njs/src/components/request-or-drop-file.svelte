@@ -1,4 +1,4 @@
-<script>
+<script lang="ts">
   let { 
     onDataLoaded, 
     mode = 'both', // 'drop', 'button', or 'both'

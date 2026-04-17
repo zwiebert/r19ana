@@ -1,4 +1,4 @@
-<script>
+<script lang="ts">
   import { McuGpiosFree } from "../../store/mcu_config.js";
 
   export let name;

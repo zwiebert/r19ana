@@ -1,9 +1,15 @@
-<script>
+<script lang="ts">
   import uPlot from "uplot";
   import "uplot/dist/uPlot.min.css";
-
+  interface Iprops {
+    chartData: any[][];
+    labels: objects[3];
+    syncKey: objects | null;
+    width: number;
+    height: number;
+  }
   // Props or state
-  let { chartData, labels = [{}, {}, {}], syncKey = null, width = 1600, height = 300 } = $props();
+  let { chartData, labels = [{}, {}, {}], syncKey = null, width = 1600, height = 300 }: Iprops = $props();
   let chart;
 
   let chartContainer;
@@ -98,7 +104,7 @@
   });
   */
 
-  function touchZoomPanPlugin(maxBlocks) {
+  function touchZoomPanPlugin(maxBlocks: number) {
     return {
       hooks: {
         ready: (u) => {

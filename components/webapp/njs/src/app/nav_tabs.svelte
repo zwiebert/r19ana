@@ -1,10 +1,12 @@
-<script>
+<script lang="ts">
   "use strict";
   import { TabIdx } from "../store/app_state.js";
 
-  export let name = "nav_tab";
-  export let nav_tabs = [];
-  export let vertical = false;
+  interface Inav_tabs {
+    name: string;
+    idx: number;
+  }
+  let { name = "nav_tab", nav_tabs = [], vertical = false }: { name: string; nav_tabs: Inav_tabs[]; vertical: boolean } = $props();
 
   function setTabIdx(idx) {
     let obj = {};
@@ -13,18 +15,19 @@
   }
 </script>
 
-<style lang="scss">
-  /* Style the buttons that are used to open the tab content */
-</style>
-
 <div id="tabBar" class="overflow-hidden">
   {#each nav_tabs as tab}
     <button
-      class="p-0 m-1  {($TabIdx[name] || 0) === tab.idx ? 'is-selected' : 'bg-transparent'} text-lg font-medium border-none outline-none tabbt"
+      class="p-0 m-1 {($TabIdx[name] || 0) === tab.idx ? 'is-selected' : 'bg-transparent'} text-lg font-medium border-none outline-none tabbt"
       id="tabbt{tab.idx}"
-      onclick={() => setTabIdx(tab.idx)}>
+      onclick={() => setTabIdx(tab.idx)}
+    >
       {tab.name}
     </button>
     {#if vertical}<br />{/if}
   {/each}
 </div>
+
+<style lang="scss">
+  /* Style the buttons that are used to open the tab content */
+</style>

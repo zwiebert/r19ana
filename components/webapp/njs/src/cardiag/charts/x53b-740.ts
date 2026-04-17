@@ -1,4 +1,6 @@
 import { x53b_740_parser, x53b_740_metrics_table, x53b_740_metrics_table_pos } from "../parser/x53b-740";
+import type { Icar_chart } from "./iface";
+export { Icar_chart };
 
 const t = x53b_740_metrics_table;
 const e = x53b_740_metrics_table_pos;
@@ -31,7 +33,7 @@ for (let i = 0; i < order.length; ++i) {
   labels[i] = { series_label: table_entry.short_name, axis_label: table_entry.unit };
 }
 
-export class x53b_740_chart {
+export class x53b_740_chart implements Icar_chart {
   private yn_arr: any[][] = Array.from({ length: order.length }, () => []);
 
   get_info () {
@@ -62,10 +64,15 @@ export class x53b_740_chart {
     console.assert(this.yn_arr.length === order.length);
     let m = new x53b_740_parser(arr);
     let idx =  0;
-    for (let i in order) {
+    for (let i of order) {
       console.assert(this.yn_arr[idx]!== undefined);
       this.yn_arr[idx++].push(t[i].parse.call(m));
     }
     //this.yn_arr = this.yn_arr;
   }
 };
+
+
+export function x53b_740_chart_factory() {
+return new x53b_740_chart() as Icar_chart;
+}

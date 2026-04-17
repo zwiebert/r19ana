@@ -1,4 +1,4 @@
-<script>
+<script lang="ts">
   "use strict";
   import Layout from "../app/layout.svelte";
   import Wapp from "../app/wapp.svelte";

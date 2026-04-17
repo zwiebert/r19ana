@@ -1,4 +1,4 @@
-<script>
+<script lang="ts">
   "use strict";
   import { _ } from "../services/i18n";
   import { req_mcuRestart, DISTRO } from "../app/misc.js";

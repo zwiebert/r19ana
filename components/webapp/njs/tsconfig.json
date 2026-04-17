@@ -1,10 +1,29 @@
 {
+  "extends": "@tsconfig/svelte/tsconfig.json",
+  "include": [
+    "src/**/*"
+  ],
+  "main": "src/main.ts",
+  "exclude": [
+    "node_modules/*",
+  ],
   "compilerOptions": {
-    "checkJs": true,           // If you still have some .js files
-    "allowJs": true,           // Allows a mix of .js and .ts
-    "strict": true,            // This is the "no more typos" setting
-    "noImplicitAny": true,     // Forces you to be clear about your data
-    "moduleResolution": "node" 
+    "noImplicitAny": true, // Forces you to be clear about your data
+    "verbatimModuleSyntax": true,
+    "isolatedModules": true,
+    "strict": true, // This is the "no more typos" setting
+    "checkJs": true, // If you still have some .js files
+    "allowJs": false, // Allows a mix of .js and .ts
+    "baseUrl": "./",
+    "module": "es2020",
+    "target": "es2020",
+    "paths": {
+      "@src/*": [
+        "src/*"
+      ],
+      "@environments/*": [
+        "src/environments/*"
+      ]
+    }
   }
 }
-

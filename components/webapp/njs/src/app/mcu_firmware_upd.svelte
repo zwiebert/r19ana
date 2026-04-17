@@ -1,4 +1,4 @@
-<script>
+<script lang="ts">
   import { _ } from "../services/i18n";
   import * as appDebug from "../app/app_debug.js";
   import * as httpFetch from "../app/fetch.js";

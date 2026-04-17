@@ -4,18 +4,19 @@
   import { onMount, untrack } from "svelte";
   import MyPlot from "./plot_test.svelte";
   import DropFile from "../components/request-or-drop-file.svelte";
-  import { x53b_740_chart } from "../cardiag/charts/x53b-740";
-  import { raw_chart } from "../cardiag/charts/raw";
-  import type { Icar_chart } from "../cardiag/charts/iface";
-  import byte_unstuffing from "../cardiag/byte_unstuffing";
+  import { x53b_740_chart_factory } from "../cardiag/charts/x53b-740";
+  import { raw_chart_factory } from "../cardiag/charts/raw";
+  import type { Icar_chart } from "../cardiag/charts/raw";
+  import { byte_unstuffing } from "../cardiag/byte_unstuffing";
   import { EnableGitHubSamples } from "../store/app_state";
   //import { DiagDataBuffer } from "../store/diag-data.js";
 
   let { chart_index = 0 } = $props();
   let error = $state(null);
-  let car_charts : Icar_chart[] = [new x53b_740_chart(), new raw_chart()];
+  let car_charts: Icar_chart[] = [x53b_740_chart_factory(), raw_chart_factory()];
   let car_chart: Icar_chart = $state.raw(car_charts[0]);
   let diag_data: Uint8Array = $state.raw(new Uint8Array(0));
+  const unstuffing = new byte_unstuffing();
 
   onMount(() => {});
 
@@ -43,7 +44,7 @@
     }
   }
 
-  async function fetchBinaryData(url) {
+  async function fetchBinaryData(url: string) {
     // 1. Declare variables at the top of the function scope
     let response;
     let buffer;
@@ -83,11 +84,11 @@
    *  @param append  if true, append to the existing chart data instead of replacing it
    *
    */
-  function process_data(data, car_chart, append: boolean = false) {
-    console.log("process_data:", car_chart.get_info().name)
-    byte_unstuffing.set_callback((arr, ct) => car_chart.process_frame(arr, ct, append));
-    byte_unstuffing.set_data(data);
-    byte_unstuffing.process_data();
+  function process_data(data: Uint8Array, car_chart: Icar_chart, append: boolean = false) {
+    console.log("process_data:", car_chart.get_info().name);
+    unstuffing.set_callback((arr: Uint8Array, ct: number) => car_chart.process_frame(arr, ct, append));
+    unstuffing.set_data(data);
+    unstuffing.process_data();
     redraw_charts();
   }
 
@@ -98,7 +99,6 @@
   function redraw_charts() {
     yn_arr = car_chart.get_chart_data();
     x_arr = yn_arr[0].map((_, i) => i);
-    yn_labels = car_chart.get_labels();
     console.log("redraw_charts: yn_arr.len", yn_arr[0].length);
   }
 
@@ -108,7 +108,6 @@
       .map((e) => true),
   );
   let x_labels = { series_label: "Blk", axis_label: "x" };
-  let yn_labels = $state(car_chart.get_labels());
   let width = $state(typeof window !== "undefined" ? window.innerWidth : 1000);
   let height = $state(300);
   let win_innerWidth = $state(typeof window !== "undefined" ? window.innerWidth : 1000);
@@ -129,7 +128,7 @@
           <select
             size={6}
             onchange={(event) => {
-              let url = event.target.value;
+              let url = event.target.value as string;
               if (url) fetchBinaryData(url);
             }}
           >
@@ -152,7 +151,7 @@
     <div class="flex flex-col">
       <div>
         <p>Type</p>
-        <select bind:value={car_chart} onchange={() => yn_arr = car_chart.get_chart_data()} size={3}>
+        <select bind:value={car_chart} onchange={() => (yn_arr = car_chart.get_chart_data())} size={3}>
           {#each car_charts as cc}
             <option value={cc}>{cc.get_info().name}</option>
           {/each}
@@ -191,7 +190,14 @@
         {#each Array.from({ length: Math.floor(car_chart.get_nmb_of_graphs() / 2) }, (_, index) => index * 2) as i}
           <div class="text-left">
             <div class="text-center" style="display:{yn_show[i] ? 'block' : 'none'};touch-action: pan-y; width: 100%;">
-              <MyPlot chartData={[x_arr, yn_arr[i], yn_arr[i + 1]]} labels={[x_labels, yn_labels[i], yn_labels[i + 1]]} {syncKey} {width} {height} } />
+              <MyPlot
+                chartData={[x_arr, yn_arr[i], yn_arr[i + 1]]}
+                labels={[x_labels, car_chart.get_label(i), car_chart.get_label(i + 1)]}
+                {syncKey}
+                {width}
+                {height}
+                }
+              />
             </div>
           </div>
         {/each}

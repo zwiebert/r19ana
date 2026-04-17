@@ -1,8 +1,15 @@
 import { raw_parser } from "../parser/raw";
+import type { Icar_chart } from "./iface";
+export { Icar_chart };
 
 let nmbGraphs = 29;
 
-export class raw_chart {
+let labels: any[] = [];
+for (let g = 0; g <= 64; ++g) {
+  labels.push({ series_label: `Byte-${g}`, axis_label: `Byte-${g}` });
+}
+
+export class raw_chart implements Icar_chart {
   private yn_arr: any[][] = Array.from({ length: 64 }, () => []);
   get_info() {
     return { name: "Raw", description: "shows all bytes of the frame as graphs." };
@@ -19,15 +26,11 @@ export class raw_chart {
   }
 
   get_labels() {
-    let ret = [];
-    for (let g = 0; g <= nmbGraphs; ++g) {
-      ret.push({ series_label: `Byte-${g}`, axis_label: `Byte-${g}` });
-    }
-    return ret;
+    return labels;
   }
 
   get_label(n) {
-    return { series_label: `Byte-${n}`, axis_label: `Byte-${n}` };
+    return labels[n];
   }
 
   process_frame(arr: Uint8Array, ct: number, append: boolean = false) {
@@ -42,9 +45,13 @@ export class raw_chart {
     let m = new raw_parser(arr);
     let idx = 0;
     for (let g = 0; g < nmbGraphs; ++g) {
-      console.assert(this.yn_arr.length >= nmbGraphs); 
+      console.assert(this.yn_arr.length >= nmbGraphs);
       this.yn_arr[idx++].push(m.get_byte(g));
     }
     return true;
   }
+}
+
+export function raw_chart_factory() {
+  return new raw_chart() as Icar_chart;
 }

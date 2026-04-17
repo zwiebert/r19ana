@@ -1,4 +1,4 @@
-<script>
+<script lang="ts">
   let {onDataLoaded = (data_array) => {}, mode = "drop", proccessing = false} = $props();
   let dragOver = $state(false); // Svelte 5 state for styling
   let fileName = $state("");

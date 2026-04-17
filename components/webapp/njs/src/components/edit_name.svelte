@@ -1,4 +1,4 @@
-<script>
+<script lang="ts">
   import { _ } from "../services/i18n";
   import {
     Z,
