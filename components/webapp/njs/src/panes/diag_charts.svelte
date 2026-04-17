@@ -4,16 +4,18 @@
   import { onMount, untrack } from "svelte";
   import MyPlot from "./plot_test.svelte";
   import DropFile from "../components/request-or-drop-file.svelte";
-  import x53b_740_chart from "../cardiag/charts/x53b-740";
-  import raw_chart from "../cardiag/charts/raw";
+  import { x53b_740_chart } from "../cardiag/charts/x53b-740";
+  import { raw_chart } from "../cardiag/charts/raw";
+  import type { Icar_chart } from "../cardiag/charts/iface";
   import byte_unstuffing from "../cardiag/byte_unstuffing";
   import { EnableGitHubSamples } from "../store/app_state";
   //import { DiagDataBuffer } from "../store/diag-data.js";
 
-  let { diag_data = [], chart_index = 0 } = $props();
+  let { chart_index = 0 } = $props();
   let error = $state(null);
-  let car_chart: objects = $state.raw(x53b_740_chart);
-  let car_charts = [x53b_740_chart, raw_chart];
+  let car_charts : Icar_chart[] = [new x53b_740_chart(), new raw_chart()];
+  let car_chart: Icar_chart = $state.raw(car_charts[0]);
+  let diag_data: Uint8Array = $state.raw(new Uint8Array(0));
 
   onMount(() => {});
 
@@ -66,20 +68,24 @@
 
   $effect(() => {
     let data = diag_data;
+    let chart = car_chart;
+
     if (data && data.length > 0) {
       untrack(() => {
-        process_data(data);
+        process_data(data, chart);
       });
     }
   });
 
   /**
-   *  @brief remove header and bytestuffing
-   *  @param arr   input raw data u8 array (with hdr and byte stuffing)
+   *  @brief generate chart data from binary input
+   *  @param data   input raw data u8 array (with hdr and byte stuffing)
+   *  @param append  if true, append to the existing chart data instead of replacing it
    *
    */
-  function process_data(data) {
-    byte_unstuffing.set_callback((arr, ct) => car_chart.process_frame(arr, ct));
+  function process_data(data, car_chart, append: boolean = false) {
+    console.log("process_data:", car_chart.get_info().name)
+    byte_unstuffing.set_callback((arr, ct) => car_chart.process_frame(arr, ct, append));
     byte_unstuffing.set_data(data);
     byte_unstuffing.process_data();
     redraw_charts();
@@ -93,7 +99,7 @@
     yn_arr = car_chart.get_chart_data();
     x_arr = yn_arr[0].map((_, i) => i);
     yn_labels = car_chart.get_labels();
-    console.log("yn_arr.len", yn_arr[0].length);
+    console.log("redraw_charts: yn_arr.len", yn_arr[0].length);
   }
 
   let yn_show = $state(
@@ -146,7 +152,7 @@
     <div class="flex flex-col">
       <div>
         <p>Type</p>
-        <select bind:value={car_chart} onchange={() => process_data(diag_data)} size={3}>
+        <select bind:value={car_chart} onchange={() => yn_arr = car_chart.get_chart_data()} size={3}>
           {#each car_charts as cc}
             <option value={cc}>{cc.get_info().name}</option>
           {/each}
@@ -156,7 +162,7 @@
       <label>Height: <input type="number" bind:value={height} min={100} max={1000} step={25} /></label>
       <button
         onclick={() => {
-          process_data(diag_data);
+          process_data(diag_data, car_chart);
         }}>re-plot</button
       >
     </div>
@@ -181,7 +187,7 @@
     <!-- 2. The Wide Container (The "Giant Canvas") -->
     <!-- 'w-max' tells it to grow with the charts. 'min-w-full' keeps it at least screen-wide. -->
     <div class="block w-max min-w-full text-left p-4">
-      {#if yn_arr[0].length > 0}
+      {#if x_arr.length > 0}
         {#each Array.from({ length: Math.floor(car_chart.get_nmb_of_graphs() / 2) }, (_, index) => index * 2) as i}
           <div class="text-left">
             <div class="text-center" style="display:{yn_show[i] ? 'block' : 'none'};touch-action: pan-y; width: 100%;">
