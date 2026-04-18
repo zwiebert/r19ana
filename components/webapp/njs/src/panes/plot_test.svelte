@@ -1,10 +1,14 @@
 <script lang="ts">
+/* eslint-disable @typescript-eslint/no-unsafe-assignment */
+/* eslint-disable @typescript-eslint/no-unsafe-member-access */
+/* eslint-disable @typescript-eslint/no-unsafe-call */
   import uPlot from "uplot";
   import "uplot/dist/uPlot.min.css";
+  import type {ILabel} from "../cardiag/charts/iface";
   interface Iprops {
-    chartData: any[][];
-    labels: objects[3];
-    syncKey: objects | null;
+    chartData: number[][];
+    labels: ILabel[3];
+    syncKey: objects;
     width: number;
     height: number;
   }

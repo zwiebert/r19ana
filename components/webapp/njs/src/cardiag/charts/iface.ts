@@ -7,3 +7,5 @@ export interface Icar_chart {
   get_nmb_of_graphs: () => number;
   process_frame: (arr: Uint8Array, ct: number, append: boolean) => void;
 }
+
+export interface ILabel {series_label: string; axis_label: string; }

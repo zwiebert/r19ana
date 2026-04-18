@@ -1,16 +1,16 @@
 import { raw_parser } from "../parser/raw";
-import type { Icar_chart } from "./iface";
-export { Icar_chart };
+import type { Icar_chart, ILabel } from "./iface";
+export type { Icar_chart, ILabel };
 
 let nmbGraphs = 29;
 
-let labels: any[] = [];
+const labels: ILabel[] = [];
 for (let g = 0; g <= 64; ++g) {
   labels.push({ series_label: `Byte-${g}`, axis_label: `Byte-${g}` });
 }
 
 export class raw_chart implements Icar_chart {
-  private yn_arr: any[][] = Array.from({ length: 64 }, () => []);
+  private yn_arr: (number | boolean)[][] = Array.from({ length: 64 }, () => []);
   get_info() {
     return { name: "Raw", description: "shows all bytes of the frame as graphs." };
   }
@@ -42,7 +42,7 @@ export class raw_chart implements Icar_chart {
     } else if (arr.length != nmbGraphs) {
       return false;
     }
-    let m = new raw_parser(arr);
+    const m = new raw_parser(arr);
     let idx = 0;
     for (let g = 0; g < nmbGraphs; ++g) {
       console.assert(this.yn_arr.length >= nmbGraphs);

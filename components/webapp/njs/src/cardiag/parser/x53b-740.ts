@@ -37,9 +37,6 @@ enum idx_t {
  */
 const int = (n: number) => n | 0;
 const getbit = (n: number, pos: number) => (n >>> pos) & 1;
-function get_null() {
-  return 0;
-}
 
 export class x53b_740_parser {
   private data_frame: Uint8Array;
@@ -77,7 +74,7 @@ export class x53b_740_parser {
     return int(this.X(idx_t.oxygen) * 4);
   }
   get_engine_speed_RPM() {
-    let num = this.X(idx_t.engine_speed_lb) | (this.X(idx_t.engine_speed_hb) << 8);
+    const num = this.X(idx_t.engine_speed_lb) | (this.X(idx_t.engine_speed_hb) << 8);
     return num == 0 ? 0 : int(30000000 / num);
   }
   get_engine_knocking() {
@@ -184,12 +181,12 @@ export enum x53b_740_metrics_table_pos {
 
 export interface CarMetrics {
   k: number;
-  parse: () => any;
+  parse: () => number | boolean;
   name: string;
   unit: string;
   short_name: string;
 }
-
+/* eslint-disable @typescript-eslint/unbound-method */
 const P = x53b_740_parser.prototype;
 export const x53b_740_metrics_table: Array<CarMetrics> = [
   { k: 1, parse: P.get_manifold_absolute_pressure_mBar, name: "Manifold Absolute Pressure", unit: "mBar", short_name: "MAP" },
@@ -211,5 +208,5 @@ export const x53b_740_metrics_table: Array<CarMetrics> = [
   { k: 0, parse: P.is_throttle_fully_closed, name: "Idle Switch", unit: "boolean", short_name: "IdleSw" },
   { k: 0, parse: P.is_throttle_fully_open, name: "Full Load Switch", unit: "boolean", short_name: "FullLdSw" },
 ];
-
+/* eslint-enable @typescript-eslint/unbound-method */
 export default x53b_740_parser;

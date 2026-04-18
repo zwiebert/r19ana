@@ -58,16 +58,16 @@
       </div>
 
       <div style="display: {!tabIdxCharts ? 'block' : 'none'}">
-        <DiagCharts chart_index={0} />
+        <DiagCharts chart_index={0} chart_index_viewed={tabIdxCharts}/>
       </div>
       <div style="display: {tabIdxCharts === 1 ? 'block' : 'none'}">
-        <DiagCharts chart_index={1} />
+        <DiagCharts chart_index={1} chart_index_viewed={tabIdxCharts} />
       </div>
       <div style="display: {tabIdxCharts === 2 ? 'block' : 'none'}">
-        <DiagCharts chart_index={2} />
+        <DiagCharts chart_index={2} chart_index_viewed={tabIdxCharts} />
       </div>
       <div style="display: {tabIdxCharts === 3 ? 'block' : 'none'}">
-        <DiagCharts chart_index={3} />
+        <DiagCharts chart_index={3} chart_index_viewed={tabIdxCharts} />
       </div>
     {/if}
   </div>

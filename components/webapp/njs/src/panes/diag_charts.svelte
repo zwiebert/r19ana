@@ -1,4 +1,5 @@
 <script lang="ts">
+  /* eslint-disable svelte/require-each-key */
   import uPlot from "uplot";
   import "uplot/dist/uPlot.min.css";
   import { onMount, untrack } from "svelte";
@@ -11,7 +12,7 @@
   import { EnableGitHubSamples } from "../store/app_state";
   //import { DiagDataBuffer } from "../store/diag-data.js";
 
-  let { chart_index = 0 } = $props();
+  let { chart_index = 0, chart_index_viewed = 0 } = $props();
   let error = $state(null);
   let car_charts: Icar_chart[] = [x53b_740_chart_factory(), raw_chart_factory()];
   let car_chart: Icar_chart = $state.raw(car_charts[0]);
@@ -20,7 +21,7 @@
 
   onMount(() => {});
 
-  async function getGithubSamples() {
+  async function getGithubSamples(): objects[] {
     const user = "zwiebert";
     const repo = "r19ana";
     const folder = "main/data"; // the folder where your .bin files sit
@@ -124,7 +125,7 @@
       {#if $EnableGitHubSamples}
         {#await getGithubSamples()}
           <p>Loading samples URLs...</p>
-        {:then list}
+        {:then list: {url:string, name:string}[]}
           <select
             size={6}
             onchange={(event) => {
@@ -146,7 +147,9 @@
           }}>Fetch Data File From MCU</button
         >
       {/if}
-      <DropFile onDataLoaded={(data_array) => (diag_data = data_array)} mode="button" />
+      {#if chart_index === chart_index_viewed}
+        <DropFile onDataLoaded={(data_array) => (diag_data = data_array)} mode="button" />
+      {/if}
     </div>
     <div class="flex flex-col">
       <div>

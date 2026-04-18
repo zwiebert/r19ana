@@ -13,7 +13,7 @@ export class raw_parser {
     return this.data_frame?.[idx];
   }
   get_length () {
-    return this.data_frame?.length;
+    return this.data_frame?.length ?? 0;
   }
 };
 

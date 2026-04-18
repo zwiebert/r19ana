@@ -13,7 +13,7 @@
     "isolatedModules": true,
     "strict": true, // This is the "no more typos" setting
     "checkJs": true, // If you still have some .js files
-    "allowJs": false, // Allows a mix of .js and .ts
+    "allowJs": true, // Allows a mix of .js and .ts
     "baseUrl": "./",
     "module": "es2020",
     "target": "es2020",

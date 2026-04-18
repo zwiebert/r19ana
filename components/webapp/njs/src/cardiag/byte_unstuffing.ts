@@ -1,5 +1,5 @@
 export class byte_unstuffing {
-  m_arr: Uint8Array | null = null;
+  m_arr = new Uint8Array(0);
   m_cb: ((data: Uint8Array, blockCounter: number) => void) | null = null;
   set_callback(cb: ((data: Uint8Array, blockCounter: number) => void) | null) {
     this.m_cb = cb;
@@ -39,7 +39,7 @@ export class byte_unstuffing {
           return null;
         }
 
-        let frame_length = this.m_rbuf_idx;
+        const frame_length = this.m_rbuf_idx;
 
         if (frame_length < this.FRAME_MIN_SIZE) {
           // discard too short frames
@@ -79,9 +79,9 @@ export class byte_unstuffing {
 */
   get_frame_len() {
     if (!this.m_arr) return 0;
-    let lmap = {} as Record<number, number>;
+    const lmap = {} as Record<number, number>;
     for (let i = 0; i < 1000 && i < this.m_arr.length; ++i) {
-      let data_frame = this.xr25.add(this.m_arr[i]);
+      const data_frame = this.xr25.add(this.m_arr[i]);
       if (!data_frame) continue;
       const key = data_frame.length;
       if (key in lmap) {
@@ -92,9 +92,9 @@ export class byte_unstuffing {
     }
     let most_found_key = 0;
     let most_found_val = 0;
-    for (let skey in lmap) {
+    for (const skey in lmap) {
       const key = +skey;
-      let val = lmap[key];
+      const val = lmap[key];
       if (most_found_val > val) continue;
       most_found_key = key;
       most_found_val = val;
@@ -107,8 +107,8 @@ export class byte_unstuffing {
     const frame_length = this.get_frame_len();
     this.xr25.rbuf_clear();
 
-    for (let b of this.m_arr) {
-      let data_frame = this.xr25.add(b);
+    for (const b of this.m_arr) {
+      const data_frame = this.xr25.add(b);
       if (!data_frame) continue;
       if (frame_length != data_frame.length) {
         continue;

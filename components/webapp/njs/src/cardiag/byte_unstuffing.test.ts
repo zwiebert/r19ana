@@ -8,11 +8,11 @@ const unstuffing = new byte_unstuffing();
 const FRAME_CT = 200;
 const FRAME_LEN = 29;
 const size = FRAME_LEN * FRAME_CT;
-let random_bytes = getPseudoRandomBytes(size);
-let stuffed_bytes = new Uint8Array(size * 2);
+const random_bytes = getPseudoRandomBytes(size);
+const stuffed_bytes = new Uint8Array(size * 2);
 let sb_len = 0;
 let stuffed_frames_ct = 0;
-let destuffed_bytes = new Uint8Array(size * 2);
+const destuffed_bytes = new Uint8Array(size * 2);
 let dsb_len = 0;
 let destuffed_frames_ct = 0;
 
@@ -23,7 +23,7 @@ function stuff(dst: Uint8Array, dst_size: number, src: Uint8Array, src_len: numb
     dst[sb++] = 0xff;
     dst[sb++] = 0x00;
     for (let i = 0; i < frame_len; ++i) {
-      let b = src[df + i];
+      const b = src[df + i];
       dst[sb++] = b;
       if (b == 0xff) dst[sb++] = 0xff;
     }
@@ -40,7 +40,7 @@ function init() {}
 test("test byte-destuffing code", () => {
   init();
   stuff(stuffed_bytes, stuffed_bytes.length, random_bytes, random_bytes.length);
-  unstuffing.set_callback((arr, ct) => {
+  unstuffing.set_callback((arr:Uint8Array, ct:number) => {
     for (let i = 0; i < arr.length; ++i) {
       destuffed_bytes[dsb_len++] = arr[i];
     }
