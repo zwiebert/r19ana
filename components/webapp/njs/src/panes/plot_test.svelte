@@ -8,7 +8,7 @@
   interface Iprops {
     chartData: number[][];
     labels: ILabel[3];
-    syncKey: objects;
+    syncKey: objectst
     width: number;
     height: number;
   }
@@ -73,9 +73,17 @@
       ],
     };
 
+    if (opts[1].axis_label == "boolean") {
+      options.scales.y = { auto: false, range: (u, min, max) => [-0.1, 1.1] };
+    } else if (opts[1].range) {
+      options.scales.y = { auto: false, range: (u, min, max) => opts[1].range };
+    }
     if (opts[2].axis_label == "boolean") {
       options.scales.y2 = { auto: false, range: (u, min, max) => [-0.1, 1.1] };
+    } else if (opts[2].range) {
+      options.scales.y2 = { auto: false, range: (u, min, max) => opts[2].range };
     }
+
 
     if (syncKey)
       options.cursor = {

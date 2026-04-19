@@ -1,3 +1,4 @@
+import type { CarMetrics } from "../charts/iface";
 enum idx_t {
   program_version, // 0
   calibration_version, // 1
@@ -179,34 +180,27 @@ export enum x53b_740_metrics_table_pos {
   COUNT,
 }
 
-export interface CarMetrics {
-  k: number;
-  parse: () => number | boolean;
-  name: string;
-  unit: string;
-  short_name: string;
-}
 /* eslint-disable @typescript-eslint/unbound-method */
 const P = x53b_740_parser.prototype;
 export const x53b_740_metrics_table: Array<CarMetrics> = [
-  { k: 1, parse: P.get_manifold_absolute_pressure_mBar, name: "Manifold Absolute Pressure", unit: "mBar", short_name: "MAP" },
-  { k: 2, parse: P.get_engine_coolant_temperature_Celsius, name: "Engine Coolant Temperature", unit: "°C", short_name: "ECT" },
-  { k: 3, parse: P.get_intake_air_temperature_Celsius, name: "Intake Air Temperature", unit: "°C", short_name: "IAT" },
-  { k: 4, parse: P.get_battery_voltage_V, name: "Battery Voltage", unit: "V", short_name: "Batt." },
-  { k: 5, parse: P.get_oxygen_sensor_voltage_mV, name: "Oxygen Sensor", unit: "mV", short_name: "O2" },
-  { k: 6, parse: P.get_engine_speed_RPM, name: "Engine Speed", unit: "RPM", short_name: "RPM" },
-  { k: 12, parse: P.get_idle_regulation, name: "Idle Regulation", unit: "", short_name: "IdleRegu" },
-  { k: 13, parse: P.get_engine_knocking, name: "Engine Pinking", unit: "", short_name: "Cliq" },
-  { k: 15, parse: P.get_detonation_correction_deg, name: "Detonation Correction", unit: "°D", short_name: "" },
-  { k: 21, parse: P.get_idle_adaption, name: "Idle Adaption", unit: "", short_name: "IdleAdpt" },
-  { k: 30, parse: P.get_richness_adaption_moderate_and_high, name: "Richness Adaption (avg-high load)", unit: "", short_name: "MixAdptHigh" },
-  { k: 31, parse: P.get_richness_adaption_idle_and_low, name: "Richness Adaption (idle-low load)", unit: "", short_name: "MixAdptLow" },
-  { k: 35, parse: P.get_richness_regulation, name: "", unit: "", short_name: "MixRegu" },
-  { k: 50, parse: P.get_injection_duration_ms, name: "Injection Duration", unit: "ms", short_name: "InjDur" },
-  { k: 51, parse: P.get_ignition_advance_deg, name: "Ignition Advance", unit: "°D", short_name: "Adv" },
-  { k: 0, parse: P.is_fuel_pump_on, name: "Fuel Pump Relay", unit: "boolean", short_name: "FuelPump" },
-  { k: 0, parse: P.is_throttle_fully_closed, name: "Idle Switch", unit: "boolean", short_name: "IdleSw" },
-  { k: 0, parse: P.is_throttle_fully_open, name: "Full Load Switch", unit: "boolean", short_name: "FullLdSw" },
+  { k: 1, parse: P.get_manifold_absolute_pressure_mBar, name: "Manifold Absolute Pressure", unit: "mBar", range:[103,1045], short_name: "MAP" },
+  { k: 2, parse: P.get_engine_coolant_temperature_Celsius, name: "Engine Coolant Temperature", unit: "°C", range:[-40,120],  short_name: "ECT" },
+  { k: 3, parse: P.get_intake_air_temperature_Celsius, name: "Intake Air Temperature", unit: "°C", range:[-40,120], short_name: "IAT" },
+  { k: 4, parse: P.get_battery_voltage_V, name: "Battery Voltage", unit: "V", range:[8,16], short_name: "Batt." },
+  { k: 5, parse: P.get_oxygen_sensor_voltage_mV, name: "Oxygen Sensor", unit: "mV", range:[ 0,1200], short_name: "O2" },
+  { k: 6, parse: P.get_engine_speed_RPM, name: "Engine Speed", unit: "RPM", range:[0,10000], short_name: "RPM" },
+  { k: 12, parse: P.get_idle_regulation, name: "Idle Regulation", unit: "", range:[0,255], short_name: "IdleRegu" },
+  { k: 13, parse: P.get_engine_knocking, name: "Engine Pinking", unit: "", range:[0,255], short_name: "Knock" },
+  { k: 15, parse: P.get_detonation_correction_deg, name: "Knock-Retard", unit: "°D", range:[0,255], short_name: "KnockRtrd" },
+  { k: 21, parse: P.get_idle_adaption, name: "Idle Adaption", unit: "", range:[0,255], short_name: "IdleAdpt" },
+  { k: 30, parse: P.get_richness_adaption_moderate_and_high, name: "Richness Adaption (avg-high load)", unit: "",range:[-128,126], short_name: "MixAdptHigh" },
+  { k: 31, parse: P.get_richness_adaption_idle_and_low, name: "Richness Adaption (idle-low load)", unit: "",range:[-128,126], short_name: "MixAdptLow" },
+  { k: 35, parse: P.get_richness_regulation, name: "", unit: "", range:[0,255], short_name: "MixRegu" },
+  { k: 50, parse: P.get_injection_duration_ms, name: "Injection Duration", unit: "ms", range:[0,66], short_name: "InjDur" },
+  { k: 51, parse: P.get_ignition_advance_deg, name: "Ignition Advance", unit: "°BDC", range:[0,255], short_name: "Adv" },
+  { k: 0, parse: P.is_fuel_pump_on, name: "Fuel Pump Relay", unit: "boolean",range:[0,1], short_name: "FuelPump" },
+  { k: 0, parse: P.is_throttle_fully_closed, name: "Idle Switch", unit: "boolean", range:[0,1], short_name: "IdleSw" },
+  { k: 0, parse: P.is_throttle_fully_open, name: "Full Load Switch", unit: "boolean", range:[0,1], short_name: "WOT-Sw" },
 ];
 /* eslint-enable @typescript-eslint/unbound-method */
 export default x53b_740_parser;

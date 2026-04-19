@@ -7,7 +7,7 @@
   import DropFile from "../components/request-or-drop-file.svelte";
   import { x53b_740_chart_factory } from "../cardiag/charts/x53b-740";
   import { raw_chart_factory } from "../cardiag/charts/raw";
-  import type { Icar_chart } from "../cardiag/charts/raw";
+  import type { Icar_chart, ILabel } from "../cardiag/charts/iface";
   import { byte_unstuffing } from "../cardiag/byte_unstuffing";
   import { EnableGitHubSamples } from "../store/app_state";
   //import { DiagDataBuffer } from "../store/diag-data.js";
@@ -108,7 +108,7 @@
       .fill()
       .map((e) => true),
   );
-  let x_labels = { series_label: "Blk", axis_label: "x" };
+  let x_labels:ILabel = $derived({ series_label: "Blk", axis_label: "x", vmin:0, vmax: x_arr.length });
   let width = $state(typeof window !== "undefined" ? window.innerWidth : 1000);
   let height = $state(300);
   let win_innerWidth = $state(typeof window !== "undefined" ? window.innerWidth : 1000);

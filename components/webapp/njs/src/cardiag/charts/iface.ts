@@ -8,4 +8,13 @@ export interface Icar_chart {
   process_frame: (arr: Uint8Array, ct: number, append: boolean) => void;
 }
 
-export interface ILabel {series_label: string; axis_label: string; }
+export interface CarMetrics {
+  k: number;
+  parse: () => number | boolean;
+  name: string;
+  unit: string;
+  range: number[],
+  short_name: string;
+}
+
+export interface ILabel {series_label: string; axis_label: string; range:number[] }

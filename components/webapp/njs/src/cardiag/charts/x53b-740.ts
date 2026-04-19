@@ -31,7 +31,7 @@ const order = [
 const labels = new Array<ILabel>(order.length);
 for (let i = 0; i < order.length; ++i) {
   const table_entry = t[order[i]];
-  labels[i] = { series_label: table_entry.short_name, axis_label: table_entry.unit };
+  labels[i] = { series_label: table_entry.short_name, axis_label: table_entry.unit, range:table_entry.range };
 }
 
 export class x53b_740_chart implements Icar_chart {

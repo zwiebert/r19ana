@@ -6,7 +6,7 @@ let nmbGraphs = 29;
 
 const labels: ILabel[] = [];
 for (let g = 0; g <= 64; ++g) {
-  labels.push({ series_label: `Byte-${g}`, axis_label: `Byte-${g}` });
+  labels.push({ series_label: `Byte-${g}`, axis_label: `Byte-${g}`, range:[0, 255] });
 }
 
 export class raw_chart implements Icar_chart {
