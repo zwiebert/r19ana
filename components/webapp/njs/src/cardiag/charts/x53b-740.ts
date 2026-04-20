@@ -20,11 +20,14 @@ const order = [
   e.detonation_correction,
   //////////////
   e.richness_regulation,
-  e.o2_integrator,
   e.richness_adaption_idle2low,
   e.richness_adaption_avg2high,
   e.idle_regulation,
   e.idle_adaption,
+  e.full_load_switch,
+  ///////////////
+  e.unknown_byte24,
+  e.unknown_byte28,
 ];
 
 

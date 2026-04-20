@@ -16,7 +16,7 @@ enum idx_t {
   engine_knocking, //  #13
   ignition_advance, //  #51
   detonation_correction, // , #15 (knocking retardation)
-  o2_integrator, // ,
+  idle_regulation, //  #12
   flags1, // static 0x88  (bit-5: Closed Loop Readiness (Condition Correction Lambda)!!!)
   flags2, // Flags2	Idle Control	Low-bit jitter (stepper), //
   // high-bit spike at end.
@@ -26,12 +26,12 @@ enum idx_t {
   flags5, // static 0x0a
   flags6, // fuel-pump...
   flags7, // 
-  idle_regulation, //  #12
+  unknown_byte24,
   richness_regulation, // #35
   richness_adaption_avg2high, // #30
-  richness_adaption_idle2low, // #31
   idle_adaption, // #21
-  id, // 
+  unknown_byte28, 
+  richness_adaption_idle2low, // #31
   COUNT
 }
 /**
@@ -110,8 +110,11 @@ export class x53b_740_parser {
   get_richness_adaption_moderate_and_high_percent() {
     return (int(this.X(idx_t.richness_adaption_avg2high)) - 128)   * 0.78125;
   }
-  get_unknown_o2_integrator() {
-    return int(this.X(idx_t.o2_integrator));
+  get_unknown_byte24() {
+    return int(this.X(idx_t.unknown_byte24));
+  }
+  get_unknown_byte28() {
+    return int(this.X(idx_t.unknown_byte28));
   }
 
   get_idle_period() {
@@ -159,10 +162,11 @@ export enum x53b_740_metrics_table_pos {
   richness_regulation,
   injection_duration,
   ignition_advance,
-  o2_integrator,
   fuel_pump_relay,
   idle_switch,
   full_load_switch,
+  unknown_byte24,
+  unknown_byte28,
   COUNT,
 }
 
@@ -184,10 +188,11 @@ export const x53b_740_metrics_table: Array<CarMetrics> = [
   { k: 35, parse: P.get_richness_regulation, name: "", unit: "%", range:[-100,100], short_name: "STFT" },
   { k: 50, parse: P.get_injection_duration_ms, name: "Injection Duration", unit: "ms", range:[0,66], short_name: "InjDur" },
   { k: 51, parse: P.get_ignition_advance_deg, name: "Ignition Advance", unit: "°BDC", range:[0,255], short_name: "Adv" },
-  { k: 0, parse: P.get_unknown_o2_integrator, name: "O2 Integrator???", unit: "???", range:[0,255], short_name: "O2Int?" },
   { k: 0, parse: P.is_fuel_pump_on, name: "Fuel Pump Relay", unit: "boolean",range:[0,1], short_name: "FuelPump" },
   { k: 0, parse: P.is_throttle_fully_closed, name: "Idle Switch", unit: "boolean", range:[0,1], short_name: "IdleSw" },
   { k: 0, parse: P.is_throttle_fully_open, name: "Full Load Switch", unit: "boolean", range:[0,1], short_name: "WOT-Sw" },
+  { k: 0, parse: P.get_unknown_byte24, name: "unknown byte 24", unit: "???", range:[0,255], short_name: "byte24" },
+  { k: 0, parse: P.get_unknown_byte28, name: "unknown byte 28", unit: "???", range:[0,255], short_name: "byte28" },
 ];
 /* eslint-enable @typescript-eslint/unbound-method */
 export default x53b_740_parser;
