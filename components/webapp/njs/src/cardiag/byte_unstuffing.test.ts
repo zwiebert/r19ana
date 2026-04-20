@@ -47,13 +47,19 @@ test("test byte-destuffing code", () => {
   init();
   stuff(stuffed_bytes, stuffed_bytes.length, random_bytes, random_bytes.length);
   //const unstuffing = new byte_unstuffing((arr: Uint8Array, ct: number) => {
+
   const unstuffing = new RenixDestuffer((arr: Uint8Array, ct: number) => {
     for (let i = 0; i < arr.length; ++i) {
       destuffed_bytes[dsb_len++] = arr[i];
     }
     destuffed_frames_ct++;
   });
-  unstuffing.process_chunk(stuffed_bytes.subarray(0, sb_len));
+
+  const chunk_len = 20;
+  for (let i=0; i < sb_len; i += chunk_len){
+    const len = i + chunk_len < sb_len ? chunk_len : sb_len - i;
+     unstuffing.process_chunk(stuffed_bytes.subarray(i, i + len));
+  }
   console.log("dsb_len", dsb_len);
   expect(random_bytes.subarray(0, dsb_len)).toEqual(destuffed_bytes.subarray(0, dsb_len));
   expect(stuffed_frames_ct).toBe(FRAME_CT);
