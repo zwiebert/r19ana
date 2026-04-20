@@ -17,14 +17,16 @@
 
   let chartContainer;
 
-  /*
-  const options = {
-    width: 600,
-    height: 400,
-    scales: { x: { time: false } },
-    series: [{}, { stroke: "red" }, { stroke: "blue" }]
-  };
-  */
+  const bitChartData = Array.from({ length: 9 }, () => []);
+  $effect(() => {
+  for (let i = 0; i < chartData[0].length; ++i) {
+    bitChartData[0].push(chartData[0][i]);
+    const val = chartData[1][i];
+    for (let k = 0; k < 8; ++k) {
+      bitChartData[k + 1].push(((val >>> k) & 1) + k * 1.2);
+    }
+  }
+  });
 
   let options = {};
 
@@ -38,24 +40,24 @@
       width: width,
       height: height,
       plugins: [touchZoomPanPlugin(chartData[0].length)],
-      scales: {
-        x: { time: false },
-        y: {}, // Default left scale
-        y2: {}, // New independent right scale
-      },
       series: [
         { label: opts[0].series_label }, // X-axis
-        {
-          label: opts[1].series_label,
-          stroke: "red",
-          scale: "y", // Uses default left scale
-        },
-        {
-          label: opts[2].series_label,
-          stroke: "blue",
-          scale: "y2", // Uses independent right scale
-        },
+        { label: "Bit 0", stroke: "red", scale: "bits" },
+        { label: "Bit 1", stroke: "blue", scale: "bits" },
+        { label: "Bit 2", stroke: "green", scale: "bits" },
+        { label: "Bit 3", stroke: "black", scale: "bits" },
+        { label: "Bit 4", stroke: "red", scale: "bits" },
+        { label: "Bit 5", stroke: "blue", scale: "bits" },
+        { label: "Bit 6", stroke: "green", scale: "bits" },
+        { label: "Bit 7", stroke: "black", scale: "bits" },
       ],
+      scales: {
+        x: { time: false },
+        bits: {
+          auto: true,
+          range: [0, 10], // Adjust based on your offsets
+        },
+      },
       axes: [
         {}, // Bottom X-axis
         {
@@ -63,25 +65,8 @@
           side: 3, // Left side (standard)
           label: opts[1].axis_label,
         },
-        {
-          scale: "y2",
-          side: 1, // Right side (standard for secondary axes)
-          label: opts[2].axis_label,
-          grid: { show: false }, // Optional: hide grid to avoid clutter
-        },
       ],
     };
-
-    if (opts[1].axis_label == "boolean") {
-      options.scales.y = { auto: false, range: (u, min, max) => [-0.1, 1.1] };
-    } else if (opts[1].range) {
-      options.scales.y = { auto: false, range: (u, min, max) => opts[1].range };
-    }
-    if (opts[2].axis_label == "boolean") {
-      options.scales.y2 = { auto: false, range: (u, min, max) => [-0.1, 1.1] };
-    } else if (opts[2].range) {
-      options.scales.y2 = { auto: false, range: (u, min, max) => opts[2].range };
-    }
 
     if (syncKey)
       options.cursor = {
@@ -94,10 +79,10 @@
       };
 
     if (!chart) {
-      chart = new uPlot(options, chartData, chartContainer);
+      chart = new uPlot(options, bitChartData, chartContainer);
     } else {
       chart.destroy();
-      chart = new uPlot(options, chartData, chartContainer);
+      chart = new uPlot(options, bitChartData, chartContainer);
     }
     // Cleanup
     return () => {

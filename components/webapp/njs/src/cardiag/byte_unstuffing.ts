@@ -9,6 +9,7 @@ export class byte_unstuffing {
     m_header_found: false,
     m_frame_complete: false,
     m_invalid_frame_ct: 0,
+    m_start_byte: 0,
     FRAME_MIN_SIZE: 29,
     FRAME_MAX_SIZE: 64,
     m_rbuf: new Uint8Array(64),
@@ -24,6 +25,7 @@ export class byte_unstuffing {
       if (this.m_frame_complete) {
         this.rbuf_clear();
         this.m_header_found = true;
+        this.m_rbuf[this.m_rbuf_idx++] = this.m_start_byte;
       }
 
       if (b == 0xff && !this.m_last_byte_was_ff) {
@@ -31,11 +33,12 @@ export class byte_unstuffing {
         return null;
       }
 
-      if (b == 0x00 && this.m_last_byte_was_ff) {
+      if (b != 0xff && this.m_last_byte_was_ff) {
         if (!this.m_header_found) {
           // this is the first frame.
           this.rbuf_clear();
           this.m_header_found = true;
+          this.m_start_byte = b;
           return null;
         }
 
@@ -69,9 +72,6 @@ export class byte_unstuffing {
     },
   };
 
-  set_data(arr: Uint8Array) {
-    this.m_arr = arr;
-  }
   /*
   add_data: function (arr) {
     this.m_arr.push(...arr);
@@ -102,6 +102,9 @@ export class byte_unstuffing {
     return most_found_key;
   }
 
+  set_data(arr: Uint8Array<ArrayBuffer>) {
+    this.m_arr = arr;
+  }
   process_data() {
     let blockCounter = 0;
     const frame_length = this.get_frame_len();

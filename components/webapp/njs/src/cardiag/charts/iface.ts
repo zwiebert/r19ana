@@ -1,11 +1,24 @@
+export interface ILabel {
+  series_label: string;
+  axis_label: string;
+  range: number[];
+}
+export interface IModelInfo { name:string; description:string; };
 export interface Icar_chart {
-  get_info: () => any;
+  get_info: () => IModelInfo;
   clear_chart_data: () => void;
-  get_chart_data: () => any[][];
-  get_labels: () => any[];
-  get_label: (n: number) => any;
+  get_chart_data: () => (number | boolean)[][];
+  get_labels: () => ILabel[];
+  get_label: (n: number) => ILabel;
   get_nmb_of_graphs: () => number;
-  process_frame: (arr: Uint8Array, ct: number, append: boolean) => void;
+
+  /**
+   *
+   * @param arr  a bunch of data frames in bendix bytestuffing format
+   * @param ct   frame counter, if 0 and not append==true, reset chart first
+   * @param append append to previous data, even it ct==0 (XXX: ???)
+   */
+  process_data_frames: (arr: Uint8Array, ct: number, append: boolean) => void;
 }
 
 export interface CarMetrics {
@@ -13,8 +26,6 @@ export interface CarMetrics {
   parse: () => number | boolean;
   name: string;
   unit: string;
-  range: number[],
+  range: number[];
   short_name: string;
 }
-
-export interface ILabel {series_label: string; axis_label: string; range:number[] }

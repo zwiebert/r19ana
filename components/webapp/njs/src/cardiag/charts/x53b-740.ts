@@ -58,7 +58,7 @@ export class x53b_740_chart implements Icar_chart {
     return order.length;
   }
 
-  process_frame (arr: Uint8Array, ct: number, append: boolean = false) {
+  process_data_frames (arr: Uint8Array, ct: number, append: boolean = false) {
     if (ct == 0 && !append) {
       this.clear_chart_data();
     }

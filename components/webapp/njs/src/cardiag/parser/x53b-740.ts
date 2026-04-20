@@ -1,36 +1,38 @@
 import type { CarMetrics } from "../charts/iface";
 enum idx_t {
-  program_version, // 0
-  calibration_version, // 1
-  flags0, // 2, input (on/off-switches)
-  MAP, // 3, #1
-  ECT, // 4, #2
-  IAT, // 5, #3
-  battery, // 6, #4
-  oxygen, // 7, #5
-  engine_speed_lb, // 8, #6 low-byte
-  engine_speed_hb, // 9, #6 high-byte
-  injection_duration_lb, // 12, #50 low-byte
-  injection_duration_hb, // 11, #50 high-byte
-  engine_knocking, // 10, #13
-  ignition_advance, // 13, #51
-  detonation_correction, // 14, #15 (knocking retardation)
-  o2_integrator, // 15,
-  flags1, // 16 static 0x88  (bit-5: Closed Loop Readiness (Condition Correction Lambda)!!!)
-  flags2, // 17   Flags2	Idle Control	Low-bit jitter (stepper), //
+  start_byte, // always zero
+  program_version, //
+  calibration_version, //
+  flags0, // input-flags (on/off-switches)
+  MAP, //  #1
+  ECT, //  #2
+  IAT, //  #3
+  battery, //  #4
+  oxygen, //  #5
+  engine_speed_lb, // #6 low-byte
+  engine_speed_hb, // #6 high-byte
+  injection_duration_lb, //  #50 low-byte
+  injection_duration_hb, //  #50 high-byte
+  engine_knocking, //  #13
+  ignition_advance, //  #51
+  detonation_correction, // , #15 (knocking retardation)
+  o2_integrator, // ,
+  flags1, // static 0x88  (bit-5: Closed Loop Readiness (Condition Correction Lambda)!!!)
+  flags2, // Flags2	Idle Control	Low-bit jitter (stepper), //
   // high-bit spike at end.
-  flags3, // 18   Enrichment/Purge,	Wakes-up at warm engine, heavy //
+  flags3, // Enrichment/Purge,	Wakes-up at warm engine, heavy //
   // spiking/toggling.
-  flags4, // 19 static 0x00  Error memory   (rich/lean signal at bit-0 !!!)
-  flags5, // 20 static 0x0a
-  flags6, // 21   fuel-pump...
-  flags7, // 22
-  idle_adaption, // 23, #21
-  richness_adaption_idle2low, // 24, #31
-  richness_regulation, // 25, #35
-  richness_adaption_avg2high, // 26, #30
-  idle_regulation, // 27  #12
-  id, // 28
+  flags4, // static 0x00  Error memory   (rich/lean signal at bit-0 !!!)
+  flags5, // static 0x0a
+  flags6, // fuel-pump...
+  flags7, // 
+  idle_regulation, //  #12
+  richness_regulation, // #35
+  richness_adaption_avg2high, // #30
+  richness_adaption_idle2low, // #31
+  idle_adaption, // #21
+  id, // 
+  COUNT
 }
 /**
  * C-style int cast: Truncates decimals and
@@ -46,7 +48,7 @@ export class x53b_740_parser {
     this.data_frame = data;
   }
 
-  set_data_frame(data: Uint8Array) {
+  set_data_packet(data: Uint8Array) {
     this.data_frame = data;
     return this;
   }
@@ -100,13 +102,13 @@ export class x53b_740_parser {
     return int(this.X(idx_t.idle_adaption));
   }
   get_richness_regulation() {
-    return int(this.X(idx_t.richness_regulation));
+    return (int(this.X(idx_t.richness_regulation)) - 128) * 0.78125;
   }
-  get_richness_adaption_idle_and_low() {
-    return int(this.X(idx_t.richness_adaption_idle2low)) - 128;
+  get_richness_adaption_idle_and_low_percent() {
+    return (int(this.X(idx_t.richness_adaption_idle2low)) - 128) * 0.78125;
   }
-  get_richness_adaption_moderate_and_high() {
-    return int(this.X(idx_t.richness_adaption_avg2high)) - 128;
+  get_richness_adaption_moderate_and_high_percent() {
+    return (int(this.X(idx_t.richness_adaption_avg2high)) - 128)   * 0.78125;
   }
 
   get_idle_period() {
@@ -136,26 +138,6 @@ export class x53b_740_parser {
   is_vacuum_provided_to_egr_valve() {
     return getbit(this.X(idx_t.flags3), 5);
   }
-}
-
-export class x53b_740_XR25_parser extends x53b_740_parser {
-  readonly xr25_keys: Record<number, (...args: any[]) => any> = {
-    1: this.get_manifold_absolute_pressure_mBar.bind(this),
-    2: this.get_engine_coolant_temperature_Celsius.bind(this),
-    3: this.get_intake_air_temperature_Celsius.bind(this),
-    4: this.get_battery_voltage_V.bind(this),
-    5: this.get_oxygen_sensor_voltage_mV.bind(this),
-    6: this.get_engine_speed_RPM.bind(this),
-    12: this.get_idle_regulation.bind(this),
-    13: this.get_engine_knocking.bind(this),
-    15: this.get_detonation_correction_deg.bind(this),
-    21: this.get_idle_adaption.bind(this),
-    30: this.get_richness_adaption_moderate_and_high.bind(this),
-    31: this.get_richness_adaption_idle_and_low.bind(this),
-    35: this.get_richness_regulation.bind(this),
-    50: this.get_injection_duration_ms.bind(this),
-    51: this.get_ignition_advance_deg.bind(this),
-  };
 }
 
 export enum x53b_740_metrics_table_pos {
@@ -188,14 +170,14 @@ export const x53b_740_metrics_table: Array<CarMetrics> = [
   { k: 3, parse: P.get_intake_air_temperature_Celsius, name: "Intake Air Temperature", unit: "°C", range:[-40,120], short_name: "IAT" },
   { k: 4, parse: P.get_battery_voltage_V, name: "Battery Voltage", unit: "V", range:[8,16], short_name: "Batt." },
   { k: 5, parse: P.get_oxygen_sensor_voltage_mV, name: "Oxygen Sensor", unit: "mV", range:[ 0,1200], short_name: "O2" },
-  { k: 6, parse: P.get_engine_speed_RPM, name: "Engine Speed", unit: "RPM", range:[0,10000], short_name: "RPM" },
+  { k: 6, parse: P.get_engine_speed_RPM, name: "Engine Speed", unit: "RPM", range:[0,6000], short_name: "RPM" },
   { k: 12, parse: P.get_idle_regulation, name: "Idle Regulation", unit: "", range:[0,255], short_name: "IdleRegu" },
   { k: 13, parse: P.get_engine_knocking, name: "Engine Pinking", unit: "", range:[0,255], short_name: "Knock" },
   { k: 15, parse: P.get_detonation_correction_deg, name: "Knock-Retard", unit: "°D", range:[0,255], short_name: "KnockRtrd" },
   { k: 21, parse: P.get_idle_adaption, name: "Idle Adaption", unit: "", range:[0,255], short_name: "IdleAdpt" },
-  { k: 30, parse: P.get_richness_adaption_moderate_and_high, name: "Richness Adaption (avg-high load)", unit: "",range:[-128,126], short_name: "MixAdptHigh" },
-  { k: 31, parse: P.get_richness_adaption_idle_and_low, name: "Richness Adaption (idle-low load)", unit: "",range:[-128,126], short_name: "MixAdptLow" },
-  { k: 35, parse: P.get_richness_regulation, name: "", unit: "", range:[0,255], short_name: "MixRegu" },
+  { k: 30, parse: P.get_richness_adaption_moderate_and_high_percent, name: "Richness Adaption (avg-high load)", unit: "%",range:[-100,100], short_name: "LTFT-Cruise" },
+  { k: 31, parse: P.get_richness_adaption_idle_and_low_percent, name: "Richness Adaption (idle-low load)", unit: "%",range:[-100,100], short_name: "LTFT-Idle" },
+  { k: 35, parse: P.get_richness_regulation, name: "", unit: "%", range:[-100,100], short_name: "STFT" },
   { k: 50, parse: P.get_injection_duration_ms, name: "Injection Duration", unit: "ms", range:[0,66], short_name: "InjDur" },
   { k: 51, parse: P.get_ignition_advance_deg, name: "Ignition Advance", unit: "°BDC", range:[0,255], short_name: "Adv" },
   { k: 0, parse: P.is_fuel_pump_on, name: "Fuel Pump Relay", unit: "boolean",range:[0,1], short_name: "FuelPump" },

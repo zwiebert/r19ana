@@ -5,7 +5,7 @@ export class raw_parser {
   constructor(data : Uint8Array) {
     this.data_frame = data;
   }
-  set_data_frame (data:Uint8Array) {
+  set_data_packet (data:Uint8Array) {
     this.data_frame = data;
     return this;
   }

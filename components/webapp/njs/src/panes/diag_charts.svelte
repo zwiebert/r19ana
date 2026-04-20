@@ -4,6 +4,7 @@
   import "uplot/dist/uPlot.min.css";
   import { onMount, untrack } from "svelte";
   import MyPlot from "./plot_test.svelte";
+  import MyBitsPlot from "./plot_status_bits.svelte";
   import DropFile from "../components/request-or-drop-file.svelte";
   import { x53b_740_chart_factory } from "../cardiag/charts/x53b-740";
   import { raw_chart_factory } from "../cardiag/charts/raw";
@@ -87,7 +88,7 @@
    */
   function process_data(data: Uint8Array, car_chart: Icar_chart, append: boolean = false) {
     console.log("process_data:", car_chart.get_info().name);
-    unstuffing.set_callback((arr: Uint8Array, ct: number) => car_chart.process_frame(arr, ct, append));
+    unstuffing.set_callback((arr: Uint8Array, ct: number) => car_chart.process_data_frames(arr, ct, append));
     unstuffing.set_data(data);
     unstuffing.process_data();
     redraw_charts();
@@ -108,10 +109,16 @@
       .fill()
       .map((e) => true),
   );
+  let yn_show_as_bits = $state(
+    Array(64)
+      .fill()
+      .map((e) => false),
+  );
   let x_labels:ILabel = $derived({ series_label: "Blk", axis_label: "x", vmin:0, vmax: x_arr.length });
   let width = $state(typeof window !== "undefined" ? window.innerWidth : 1000);
   let height = $state(300);
   let win_innerWidth = $state(typeof window !== "undefined" ? window.innerWidth : 1000);
+  
 </script>
 
 <svelte:window bind:innerWidth={win_innerWidth} onresize={() => (width = window.innerWidth)} />
@@ -171,7 +178,8 @@
     <div class="flex flex-col text-left">
       {#each Array.from({ length: Math.floor(car_chart.get_nmb_of_graphs() / 2) }, (_, index) => index * 2) as i}
         <div>
-          <label> <input type="checkbox" bind:checked={yn_show[i]} />{car_chart.get_label(i).series_label}, {car_chart.get_label(i + 1).series_label}</label>
+          <label><input type="checkbox" bind:checked={yn_show[i]} />{car_chart.get_label(i).series_label}, {car_chart.get_label(i + 1).series_label}</label>
+          <label><input type="checkbox" bind:checked={yn_show_as_bits[i]} />bits</label>
         </div>
       {/each}
     </div>
@@ -193,6 +201,24 @@
         {#each Array.from({ length: Math.floor(car_chart.get_nmb_of_graphs() / 2) }, (_, index) => index * 2) as i}
           <div class="text-left">
             <div class="text-center" style="display:{yn_show[i] ? 'block' : 'none'};touch-action: pan-y; width: 100%;">
+            {#if yn_show_as_bits[i]}
+              <MyBitsPlot
+                chartData={[x_arr, yn_arr[i]]}
+                labels={[x_labels, car_chart.get_label(i), car_chart.get_label(i + 1)]}
+                {syncKey}
+                {width}
+                {height}
+                }
+              />
+              <MyBitsPlot
+                chartData={[x_arr, yn_arr[i + 1]]}
+                labels={[x_labels, car_chart.get_label(i), car_chart.get_label(i + 1)]}
+                {syncKey}
+                {width}
+                {height}
+                }
+              />
+            {:else}
               <MyPlot
                 chartData={[x_arr, yn_arr[i], yn_arr[i + 1]]}
                 labels={[x_labels, car_chart.get_label(i), car_chart.get_label(i + 1)]}
@@ -201,6 +227,7 @@
                 {height}
                 }
               />
+              {/if}
             </div>
           </div>
         {/each}
