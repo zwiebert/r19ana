@@ -55,24 +55,24 @@ int PrintDiagX53b740::snprint_diag(char* dst, size_t dst_siz,
     diag_printf("%6d rpm  #06 \"%s\"\n", d.get_engine_speed_RPM(),
                 _("Crankshaft"));
 
-    diag_printf("%6d N    #12 \"%s\"\n", d.get_idle_regulation(),
+    diag_printf("%6d -0+  #12 \"%s\"\n", d.get_idle_regulation(),
                 _("Idle Regulation"));
-    diag_printf("%6d N    #13 \"%s\"\n", d.get_engine_knocking(),
+    diag_printf("%6d +N   #13 \"%s\"\n", d.get_engine_knocking(),
                 _("Engine-Knock"));
     diag_printf("%6d °D   #15 \"%s\"\n", d.get_detonation_correction_deg(),
                 _("Detonation Correction"));
 
-    diag_printf("%6d N    #21 \"%s\"\n", d.get_idle_adaption(),
+    diag_printf("%6d -0+  #21 \"%s\"\n", d.get_idle_adaption(),
                 _("Idle Adaption"));
 
 
-    diag_printf("%6d N    #30 \"%s\"\n",
+    diag_printf("%6d -0+  #30 \"%s\"\n",
                 int(d[idx_t::richness_adaption_idle2low]) - 128,
                 _("Richness-Adaption idle and low load (LTFT)"));
-    diag_printf("%6d N    #31 \"%s\"\n",
+    diag_printf("%6d -0+  #31 \"%s\"\n",
                 int(d[idx_t::richness_adaption_avg2high]) - 128,
                 _("Richness-Adaption avg and high load (LTFT)"));
-    diag_printf("%6d N    #35 \"%s\"\n",
+    diag_printf("%6d -0+  #35 \"%s\"\n",
                 int(d[idx_t::richness_regulation]) - 128,
                 _("Richness-Regulation (STFT)"));
 
@@ -86,7 +86,6 @@ int PrintDiagX53b740::snprint_diag(char* dst, size_t dst_siz,
     diag_printf("%6d N    VER \"Version\"\n", d.X(idx_t::program_version));
     diag_printf("%6d N    CAL \"Calibration\"\n",
                 d.X(idx_t::calibration_version));
-    diag_printf("%6d N    ID  \"Renault-ID\"\n", d.get_id());
 
     // boolean status bits
     diag_printf("%6d bool PG \"%s\"\n", (d.is_throttle_fully_open()),

@@ -2,7 +2,7 @@ import { raw_parser } from "../parser/raw";
 import type { Icar_chart, ILabel } from "./iface";
 export type { Icar_chart, ILabel };
 
-let nmbGraphs = 29;
+let nmbGraphs = 30;
 
 const labels: ILabel[] = [];
 for (let g = 0; g <= 64; ++g) {
@@ -36,9 +36,6 @@ export class raw_chart implements Icar_chart {
   process_data_packet(arr: Uint8Array, ct: number) {
     if (!this.yn_arr) return;
     nmbGraphs = arr.length;
-    if (arr.length != nmbGraphs) {
-      return false;
-    }
     const m = new raw_parser(arr);
     let idx = 0;
     for (let g = 0; g < nmbGraphs; ++g) {

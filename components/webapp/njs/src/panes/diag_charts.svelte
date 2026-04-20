@@ -198,7 +198,7 @@
     <!-- 'w-max' tells it to grow with the charts. 'min-w-full' keeps it at least screen-wide. -->
     <div class="block w-max min-w-full text-left p-4">
       {#if x_arr.length > 0}
-        {#each Array.from({ length: Math.floor(car_chart.get_nmb_of_graphs() / 2) }, (_, index) => index * 2) as i}
+        {#each Array.from({ length: Math.floor(car_chart.get_nmb_of_graphs() / 2)}, (_, index) => index * 2) as i}
           <div class="text-left">
             <div class="text-center" style="display:{yn_show[i] ? 'block' : 'none'};touch-action: pan-y; width: 100%;">
             {#if yn_show_as_bits[i]}
