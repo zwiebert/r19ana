@@ -18,7 +18,7 @@ export interface Icar_chart {
    * @param ct   frame counter, if 0 and not append==true, reset chart first
    * @param append append to previous data, even it ct==0 (XXX: ???)
    */
-  process_data_frames: (arr: Uint8Array, ct: number, append: boolean) => void;
+  process_data_packet: (arr: Uint8Array, ct: number, append: boolean) => void;
 }
 
 export interface CarMetrics {

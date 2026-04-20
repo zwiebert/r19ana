@@ -10,6 +10,7 @@
   import { raw_chart_factory } from "../cardiag/charts/raw";
   import type { Icar_chart, ILabel } from "../cardiag/charts/iface";
   import { byte_unstuffing } from "../cardiag/byte_unstuffing";
+  import { RenixDestuffer } from "../cardiag/renix_destuffer";
   import { EnableGitHubSamples } from "../store/app_state";
   //import { DiagDataBuffer } from "../store/diag-data.js";
 
@@ -18,7 +19,6 @@
   let car_charts: Icar_chart[] = [x53b_740_chart_factory(), raw_chart_factory()];
   let car_chart: Icar_chart = $state.raw(car_charts[0]);
   let diag_data: Uint8Array = $state.raw(new Uint8Array(0));
-  const unstuffing = new byte_unstuffing();
 
   onMount(() => {});
 
@@ -61,7 +61,6 @@
       buffer = await response.arrayBuffer();
       diag_data = new Uint8Array(buffer);
 
-      console.log("Binary data loaded into array:", diag_data);
       error = false;
     } catch (e) {
       // Note: Do NOT try to access 'response' here if fetch failed
@@ -88,9 +87,10 @@
    */
   function process_data(data: Uint8Array, car_chart: Icar_chart, append: boolean = false) {
     console.log("process_data:", car_chart.get_info().name);
-    unstuffing.set_callback((arr: Uint8Array, ct: number) => car_chart.process_data_frames(arr, ct, append));
-    unstuffing.set_data(data);
-    unstuffing.process_data();
+    //const unstuffing = new byte_unstuffing((arr: Uint8Array, ct: number) => car_chart.process_data_packet(arr, ct));
+    const unstuffing = new RenixDestuffer((arr: Uint8Array, ct: number) => car_chart.process_data_packet(arr, ct));
+    car_chart.clear_chart_data();
+    unstuffing.process_chunk(data);
     redraw_charts();
   }
 

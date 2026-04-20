@@ -110,6 +110,9 @@ export class x53b_740_parser {
   get_richness_adaption_moderate_and_high_percent() {
     return (int(this.X(idx_t.richness_adaption_avg2high)) - 128)   * 0.78125;
   }
+  get_unknown_o2_integrator() {
+    return int(this.X(idx_t.o2_integrator));
+  }
 
   get_idle_period() {
     return this.X(22);
@@ -156,6 +159,7 @@ export enum x53b_740_metrics_table_pos {
   richness_regulation,
   injection_duration,
   ignition_advance,
+  o2_integrator,
   fuel_pump_relay,
   idle_switch,
   full_load_switch,
@@ -180,6 +184,7 @@ export const x53b_740_metrics_table: Array<CarMetrics> = [
   { k: 35, parse: P.get_richness_regulation, name: "", unit: "%", range:[-100,100], short_name: "STFT" },
   { k: 50, parse: P.get_injection_duration_ms, name: "Injection Duration", unit: "ms", range:[0,66], short_name: "InjDur" },
   { k: 51, parse: P.get_ignition_advance_deg, name: "Ignition Advance", unit: "°BDC", range:[0,255], short_name: "Adv" },
+  { k: 0, parse: P.get_unknown_o2_integrator, name: "O2 Integrator???", unit: "???", range:[0,255], short_name: "O2Int?" },
   { k: 0, parse: P.is_fuel_pump_on, name: "Fuel Pump Relay", unit: "boolean",range:[0,1], short_name: "FuelPump" },
   { k: 0, parse: P.is_throttle_fully_closed, name: "Idle Switch", unit: "boolean", range:[0,1], short_name: "IdleSw" },
   { k: 0, parse: P.is_throttle_fully_open, name: "Full Load Switch", unit: "boolean", range:[0,1], short_name: "WOT-Sw" },

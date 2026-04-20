@@ -1,9 +1,6 @@
 export class byte_unstuffing {
-  m_arr = new Uint8Array(0);
-  m_cb: ((data: Uint8Array, blockCounter: number) => void) | null = null;
-  set_callback(cb: ((data: Uint8Array, blockCounter: number) => void) | null) {
-    this.m_cb = cb;
-  }
+  private m_arr = new Uint8Array(0);
+  constructor(private m_cb: (data: Uint8Array, blockCounter: number) => void) {}
   xr25 = {
     m_last_byte_was_ff: false,
     m_header_found: false,
@@ -102,10 +99,8 @@ export class byte_unstuffing {
     return most_found_key;
   }
 
-  set_data(arr: Uint8Array<ArrayBuffer>) {
+  process_chunk(arr: Uint8Array<ArrayBuffer>) {
     this.m_arr = arr;
-  }
-  process_data() {
     let blockCounter = 0;
     const frame_length = this.get_frame_len();
     this.xr25.rbuf_clear();

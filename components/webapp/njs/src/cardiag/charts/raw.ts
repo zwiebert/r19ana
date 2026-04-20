@@ -33,13 +33,10 @@ export class raw_chart implements Icar_chart {
     return labels[n];
   }
 
-  process_data_frames(arr: Uint8Array, ct: number, append: boolean = false) {
+  process_data_packet(arr: Uint8Array, ct: number) {
     if (!this.yn_arr) return;
     nmbGraphs = arr.length;
-    if (ct == 0 && !append) {
-      this.clear_chart_data();
-      console.log("raw-charts process_data_frames()");
-    } else if (arr.length != nmbGraphs) {
+    if (arr.length != nmbGraphs) {
       return false;
     }
     const m = new raw_parser(arr);

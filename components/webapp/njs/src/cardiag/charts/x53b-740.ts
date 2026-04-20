@@ -20,7 +20,7 @@ const order = [
   e.detonation_correction,
   //////////////
   e.richness_regulation,
-  e.engine_speed,
+  e.o2_integrator,
   e.richness_adaption_idle2low,
   e.richness_adaption_avg2high,
   e.idle_regulation,
@@ -58,10 +58,7 @@ export class x53b_740_chart implements Icar_chart {
     return order.length;
   }
 
-  process_data_frames (arr: Uint8Array, ct: number, append: boolean = false) {
-    if (ct == 0 && !append) {
-      this.clear_chart_data();
-    }
+  process_data_packet (arr: Uint8Array, ct: number) {
     console.assert(this.yn_arr.length === order.length);
     const m = new x53b_740_parser(arr);
     let idx =  0;
