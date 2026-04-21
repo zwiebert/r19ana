@@ -19,13 +19,14 @@
   const bool_val_0 = "0";
   const bool_val_1 = "1";
 
+  const getbit = (n: number, pos: number) => (n >>> pos) & 1;
   const bitChartData = Array.from({ length: 9 }, () => []);
   $effect(() => {
     for (let i = 0; i < chartData[0].length; ++i) {
       bitChartData[0].push(chartData[0][i]);
       const val = chartData[1][i];
       for (let k = 0; k < 8; ++k) {
-        bitChartData[k + 1].push(((val >>> k) & 1) * 0.8 + k - 0.4);
+        bitChartData[k + 1].push(getbit(val, k) * 0.8 + k - 0.4);
       }
     }
   });

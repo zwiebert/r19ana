@@ -73,12 +73,12 @@
     };
 
     if (opts[1].axis_label == "boolean") {
-      options.scales.y = { auto: false, range: (u, min, max) => [-0.1, 1.1] };
+      options.scales.y = { auto: false, range: (u, min, max) => [-3.6, 2.5] };
     } else if (opts[1].range) {
       options.scales.y = { auto: false, range: (u, min, max) => opts[1].range };
     }
     if (opts[2].axis_label == "boolean") {
-      options.scales.y2 = { auto: false, range: (u, min, max) => [-0.1, 1.1] };
+      options.scales.y2 = { auto: false, range: (u, min, max) => [-4.1, 2.1] };
     } else if (opts[2].range) {
       options.scales.y2 = { auto: false, range: (u, min, max) => opts[2].range };
     }

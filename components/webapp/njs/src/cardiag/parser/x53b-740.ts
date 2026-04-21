@@ -232,7 +232,7 @@ export const x53b_740_metrics_table: Array<CarMetrics> = [
   { k: 50, parse: P.get_injection_duration_ms, name: "Injection Duration", unit: "ms", range: [0, 66], short_name: "InjDur" },
   { k: 51, parse: P.get_ignition_advance_deg, name: "Ignition Advance", unit: "°BTDC", range: [0, 55], short_name: "Adv" },
   { k: 0, parse: P.is_fuel_pump_on, name: "Fuel Pump Relay", unit: "boolean", range: [0, 1], short_name: "FuelPump" },
-  { k: 0, parse: P.is_throttle_fully_closed, name: "Idle Switch", unit: "boolean", range: [0, 1], short_name: "IdleSw" },
+  { k: 0, parse: P.is_throttle_fully_closed, name: "Idle Switch", unit: "boolean", range: [0, 1], short_name: "Idle-Sw" },
   { k: 0, parse: P.is_throttle_fully_open, name: "Full Load Switch", unit: "boolean", range: [0, 1], short_name: "WOT-Sw" },
   { k: 0, parse: P.get_unknown_x, name: "unknown byte 24", unit: "???", range: [0, 255], short_name: "byte24" },
   { k: 0, parse: P.get_unknown_xx, name: "unknown byte 28", unit: "???", range: [0, 255], short_name: "byte28" },
