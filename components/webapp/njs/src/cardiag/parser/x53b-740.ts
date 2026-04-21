@@ -3,7 +3,7 @@ enum idx_t {
   start_byte, // always zero
   program_version, //
   calibration_version, //
-  flags0, // input-flags (on/off-switches)
+  status0, // input-status (on/off-switches)
   MAP, //  #1
   ECT, //  #2
   IAT, //  #3
@@ -17,22 +17,22 @@ enum idx_t {
   ignition_advance, //  #51
   detonation_correction, // , #15 (knocking retardation)
   idle_regulation, //  #12
-  flags1, // static 0x88  (bit-5: Closed Loop Readiness (Condition Correction Lambda)!!!)
-  flags2, // Flags2	Idle Control	Low-bit jitter (stepper), //
+  status1, // static 0x88  (bit-5: Closed Loop Readiness (Condition Correction Lambda)!!!)
+  status2, // Flags2	Idle Control	Low-bit jitter (stepper), //
   // high-bit spike at end.
-  flags3, // Enrichment/Purge,	Wakes-up at warm engine, heavy //
+  status3, // Enrichment/Purge,	Wakes-up at warm engine, heavy //
   // spiking/toggling.
-  flags4, // static 0x00  Error memory   (rich/lean signal at bit-0 !!!)
-  flags5, // static 0x0a
-  flags6, // fuel-pump...
-  flags7, // 
-  unknown_byte24,
+  status4, // static 0x00  Error memory   (rich/lean signal at bit-0 !!!)
+  status5, // static 0x0a
+  status6, // fuel-pump...
+  status7, //
+  unknown_x,
   richness_regulation, // #35
-  idle_adaption, // #21
+  unknown_xx,
   richness_adaption_avg2high, // #30
-  unknown_byte28, 
+  idle_adaption, // #21
   richness_adaption_idle2low, // #31
-  COUNT
+  COUNT,
 }
 /**
  * C-style int cast: Truncates decimals and
@@ -108,41 +108,62 @@ export class x53b_740_parser {
     return (int(this.X(idx_t.richness_adaption_idle2low)) - 128) * 0.78125;
   }
   get_richness_adaption_moderate_and_high_percent() {
-    return (int(this.X(idx_t.richness_adaption_avg2high)) - 128)   * 0.78125;
+    return (int(this.X(idx_t.richness_adaption_avg2high)) - 128) * 0.78125;
   }
-  get_unknown_byte24() {
-    return int(this.X(idx_t.unknown_byte24));
+  get_unknown_x() {
+    return int(this.X(idx_t.unknown_x));
   }
-  get_unknown_byte28() {
-    return int(this.X(idx_t.unknown_byte28));
+  get_unknown_xx() {
+    return int(this.X(idx_t.unknown_xx));
   }
 
   get_idle_period() {
     return this.X(22);
   } // TODO
 
-  get_id() {
-    return this.X(idx_t.id);
+  get_status0() {
+    return this.X(idx_t.status0);
+  }
+  get_status1() {
+    return this.X(idx_t.status1);
+  }
+  get_status2() {
+    return this.X(idx_t.status2);
+  }
+  get_status3() {
+    return this.X(idx_t.status3);
+  }
+  get_status4() {
+    return this.X(idx_t.status4);
+  }
+  get_status5() {
+    return this.X(idx_t.status5);
+  }
+  get_status6() {
+    return this.X(idx_t.status6);
+  }
+  get_status7() {
+    return this.X(idx_t.status7);
   }
 
   is_evap_canister_open_to_intake() {
     return this.is_vacuum_provided_to_egr_valve();
   }
   is_throttle_fully_open() {
-    return !getbit(this.X(idx_t.flags0), 4);
-    return (this.X(idx_t.flags0) & 0x10) == 0;
+    return !getbit(this.X(idx_t.status0), 4);
+    return (this.X(idx_t.status0) & 0x10) == 0;
   }
   is_throttle_fully_closed() {
-    return !getbit(this.X(idx_t.flags0), 3);
+    return !getbit(this.X(idx_t.status0), 3);
   }
   is_fuel_pump_on() {
-    return getbit(this.X(idx_t.flags6), 4);
+    return getbit(this.X(idx_t.status6), 4);
   }
   is_oxygen_sensor_loop_closed() {
-    return getbit(this.X(idx_t.flags2), 5);
+    return getbit(this.X(idx_t.status2), 5);
   } // plot-verified
   is_vacuum_provided_to_egr_valve() {
-    return getbit(this.X(idx_t.flags3), 5);
+    return getbit(this.X(idx_t.status3), 5);
   }
 }
 
@@ -165,34 +186,64 @@ export enum x53b_740_metrics_table_pos {
   fuel_pump_relay,
   idle_switch,
   full_load_switch,
-  unknown_byte24,
-  unknown_byte28,
+  unknown_x,
+  unknown_xx,
+  status0,
+  status1,
+  status2,
+  status3,
+  status4,
+  status5,
+  status6,
+  status7,
   COUNT,
 }
 
 /* eslint-disable @typescript-eslint/unbound-method */
 const P = x53b_740_parser.prototype;
 export const x53b_740_metrics_table: Array<CarMetrics> = [
-  { k: 1, parse: P.get_manifold_absolute_pressure_mBar, name: "Manifold Absolute Pressure", unit: "mBar", range:[103,1045], short_name: "MAP" },
-  { k: 2, parse: P.get_engine_coolant_temperature_Celsius, name: "Engine Coolant Temperature", unit: "°C", range:[-40,120],  short_name: "ECT" },
-  { k: 3, parse: P.get_intake_air_temperature_Celsius, name: "Intake Air Temperature", unit: "°C", range:[-40,120], short_name: "IAT" },
-  { k: 4, parse: P.get_battery_voltage_V, name: "Battery Voltage", unit: "V", range:[8,16], short_name: "Batt." },
-  { k: 5, parse: P.get_oxygen_sensor_voltage_mV, name: "Oxygen Sensor", unit: "mV", range:[ 0,1200], short_name: "O2" },
-  { k: 6, parse: P.get_engine_speed_RPM, name: "Engine Speed", unit: "RPM", range:[0,6000], short_name: "RPM" },
-  { k: 12, parse: P.get_idle_regulation, name: "Idle Regulation", unit: "", range:[-128,128], short_name: "IdleRegu" },
-  { k: 13, parse: P.get_engine_knocking, name: "Engine Pinking", unit: "", range:[0,255], short_name: "Knock" },
-  { k: 15, parse: P.get_detonation_correction_deg, name: "Knock-Retard", unit: "°D", range:[0,255], short_name: "KnockRtrd" },
-  { k: 21, parse: P.get_idle_adaption, name: "Idle Adaption", unit: "", range:[0,255], short_name: "IdleAdpt" },
-  { k: 30, parse: P.get_richness_adaption_moderate_and_high_percent, name: "Richness Adaption (avg-high load)", unit: "%",range:[-100,100], short_name: "LTFT-Cruise" },
-  { k: 31, parse: P.get_richness_adaption_idle_and_low_percent, name: "Richness Adaption (idle-low load)", unit: "%",range:[-100,100], short_name: "LTFT-Idle" },
-  { k: 35, parse: P.get_richness_regulation, name: "", unit: "%", range:[-100,100], short_name: "STFT" },
-  { k: 50, parse: P.get_injection_duration_ms, name: "Injection Duration", unit: "ms", range:[0,66], short_name: "InjDur" },
-  { k: 51, parse: P.get_ignition_advance_deg, name: "Ignition Advance", unit: "°BTDC", range:[0,55], short_name: "Adv" },
-  { k: 0, parse: P.is_fuel_pump_on, name: "Fuel Pump Relay", unit: "boolean",range:[0,1], short_name: "FuelPump" },
-  { k: 0, parse: P.is_throttle_fully_closed, name: "Idle Switch", unit: "boolean", range:[0,1], short_name: "IdleSw" },
-  { k: 0, parse: P.is_throttle_fully_open, name: "Full Load Switch", unit: "boolean", range:[0,1], short_name: "WOT-Sw" },
-  { k: 0, parse: P.get_unknown_byte24, name: "unknown byte 24", unit: "???", range:[0,255], short_name: "byte24" },
-  { k: 0, parse: P.get_unknown_byte28, name: "unknown byte 28", unit: "???", range:[0,255], short_name: "byte28" },
+  { k: 1, parse: P.get_manifold_absolute_pressure_mBar, name: "Manifold Absolute Pressure", unit: "mBar", range: [103, 1045], short_name: "MAP" },
+  { k: 2, parse: P.get_engine_coolant_temperature_Celsius, name: "Engine Coolant Temperature", unit: "°C", range: [-40, 120], short_name: "ECT" },
+  { k: 3, parse: P.get_intake_air_temperature_Celsius, name: "Intake Air Temperature", unit: "°C", range: [-40, 120], short_name: "IAT" },
+  { k: 4, parse: P.get_battery_voltage_V, name: "Battery Voltage", unit: "V", range: [8, 16], short_name: "Batt." },
+  { k: 5, parse: P.get_oxygen_sensor_voltage_mV, name: "Oxygen Sensor", unit: "mV", range: [0, 1200], short_name: "O2" },
+  { k: 6, parse: P.get_engine_speed_RPM, name: "Engine Speed", unit: "RPM", range: [0, 6000], short_name: "RPM" },
+  { k: 12, parse: P.get_idle_regulation, name: "Idle Regulation", unit: "", range: [-128, 128], short_name: "IdleRegu" },
+  { k: 13, parse: P.get_engine_knocking, name: "Engine Pinking", unit: "", range: [0, 255], short_name: "Knock" },
+  { k: 15, parse: P.get_detonation_correction_deg, name: "Knock-Retard", unit: "°D", range: [0, 255], short_name: "KnockRtrd" },
+  { k: 21, parse: P.get_idle_adaption, name: "Idle Adaption", unit: "", range: [0, 255], short_name: "IdleAdpt" },
+  {
+    k: 30,
+    parse: P.get_richness_adaption_moderate_and_high_percent,
+    name: "Richness Adaption (avg-high load)",
+    unit: "%",
+    range: [-100, 100],
+    short_name: "LTFT-Cruise",
+  },
+  {
+    k: 31,
+    parse: P.get_richness_adaption_idle_and_low_percent,
+    name: "Richness Adaption (idle-low load)",
+    unit: "%",
+    range: [-100, 100],
+    short_name: "LTFT-Idle",
+  },
+  { k: 35, parse: P.get_richness_regulation, name: "", unit: "%", range: [-100, 100], short_name: "STFT" },
+  { k: 50, parse: P.get_injection_duration_ms, name: "Injection Duration", unit: "ms", range: [0, 66], short_name: "InjDur" },
+  { k: 51, parse: P.get_ignition_advance_deg, name: "Ignition Advance", unit: "°BTDC", range: [0, 55], short_name: "Adv" },
+  { k: 0, parse: P.is_fuel_pump_on, name: "Fuel Pump Relay", unit: "boolean", range: [0, 1], short_name: "FuelPump" },
+  { k: 0, parse: P.is_throttle_fully_closed, name: "Idle Switch", unit: "boolean", range: [0, 1], short_name: "IdleSw" },
+  { k: 0, parse: P.is_throttle_fully_open, name: "Full Load Switch", unit: "boolean", range: [0, 1], short_name: "WOT-Sw" },
+  { k: 0, parse: P.get_unknown_x, name: "unknown byte 24", unit: "???", range: [0, 255], short_name: "byte24" },
+  { k: 0, parse: P.get_unknown_xx, name: "unknown byte 28", unit: "???", range: [0, 255], short_name: "byte28" },
+  { k: 0, parse: P.get_status0, name: "status byte 0: input switches", unit: "bits", range: [0, 255], short_name: "st0" },
+  { k: 0, parse: P.get_status1, name: "status byte 1: input switches", unit: "bits", range: [0, 255], short_name: "st1" },
+  { k: 0, parse: P.get_status2, name: "status byte 2: input switches", unit: "bits", range: [0, 255], short_name: "st2" },
+  { k: 0, parse: P.get_status3, name: "status byte 3: input switches", unit: "bits", range: [0, 255], short_name: "st3" },
+  { k: 0, parse: P.get_status4, name: "status byte 4: input switches", unit: "bits", range: [0, 255], short_name: "st4" },
+  { k: 0, parse: P.get_status5, name: "status byte 5: input switches", unit: "bits", range: [0, 255], short_name: "st5" },
+  { k: 0, parse: P.get_status6, name: "status byte 6: input switches", unit: "bits", range: [0, 255], short_name: "st6" },
+  { k: 0, parse: P.get_status7, name: "status byte 7: input switches", unit: "bits", range: [0, 255], short_name: "st7" },
 ];
 /* eslint-enable @typescript-eslint/unbound-method */
 export default x53b_740_parser;

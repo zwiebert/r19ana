@@ -6,28 +6,46 @@ const t = x53b_740_metrics_table;
 const e = x53b_740_metrics_table_pos;
 const order = [
   e.engine_speed,
-  e.map_sensor,
-  e.ignition_advance,
-  e.o2_sensor,
-  e.injection_duration,
   e.idle_switch,
-  ///////////////////
-  e.batt_voltage,
+
+  e.map_sensor,
+  e.full_load_switch,
+
+  e.ignition_advance,
+  e.unknown_x,
+  
+  e.o2_sensor,
   e.fuel_pump_relay,
+
+  e.injection_duration,
+  e.batt_voltage,
+
   e.ect_sensor,
   e.iat_sensor,
+
   e.engine_pinking,
   e.detonation_correction,
-  //////////////
+
   e.richness_regulation,
-  e.full_load_switch,
+  e.unknown_xx,
+  
   e.richness_adaption_idle2low,
   e.richness_adaption_avg2high,
+
   e.idle_regulation,
   e.idle_adaption,
-  ///////////////
-  e.unknown_byte24,
-  e.unknown_byte28,
+
+  e.status0,
+  e.status1,
+
+  e.status2,
+  e.status3,
+
+  e.status4,
+  e.status5,
+
+  e.status6,
+  e.status7,
 ];
 
 
