@@ -20,11 +20,11 @@ const order = [
   e.detonation_correction,
   //////////////
   e.richness_regulation,
+  e.full_load_switch,
   e.richness_adaption_idle2low,
   e.richness_adaption_avg2high,
   e.idle_regulation,
   e.idle_adaption,
-  e.full_load_switch,
   ///////////////
   e.unknown_byte24,
   e.unknown_byte28,
@@ -39,6 +39,7 @@ for (let i = 0; i < order.length; ++i) {
 
 export class x53b_740_chart implements Icar_chart {
   private yn_arr: (number | boolean)[][] = Array.from({ length: order.length }, () => []);
+  public nmbGraphs: number = order.length;
 
   get_info () {
     return { name: "X53B_740", description: "this is the R19-F3N740 (54kW, TBI, manual)" };

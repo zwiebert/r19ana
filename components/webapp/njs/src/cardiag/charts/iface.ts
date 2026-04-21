@@ -5,6 +5,7 @@ export interface ILabel {
 }
 export interface IModelInfo { name:string; description:string; };
 export interface Icar_chart {
+  nmbGraphs: number;
   get_info: () => IModelInfo;
   clear_chart_data: () => void;
   get_chart_data: () => (number | boolean)[][];

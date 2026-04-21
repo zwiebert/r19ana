@@ -19,6 +19,7 @@
   let car_charts: Icar_chart[] = [x53b_740_chart_factory(), raw_chart_factory()];
   let car_chart: Icar_chart = $state.raw(car_charts[0]);
   let diag_data: Uint8Array = $state.raw(new Uint8Array(0));
+  let nmbGraphs: number = $state(0);
 
   onMount(() => {});
 
@@ -76,6 +77,7 @@
       untrack(() => {
         process_data(data, chart);
       });
+      redraw_charts();
     }
   });
 
@@ -91,7 +93,6 @@
     const unstuffing = new RenixDestuffer((arr: Uint8Array, ct: number) => car_chart.process_data_packet(arr, ct));
     car_chart.clear_chart_data();
     unstuffing.process_chunk(data);
-    redraw_charts();
   }
 
   // svelte-ignore state_referenced_locally
@@ -99,6 +100,8 @@
   let yn_arr = $state.raw(car_chart.get_chart_data());
   let x_arr = $state.raw([]);
   function redraw_charts() {
+    car_chart = car_chart;
+    nmbGraphs = car_chart.get_nmb_of_graphs();
     yn_arr = car_chart.get_chart_data();
     x_arr = yn_arr[0].map((_, i) => i);
     console.log("redraw_charts: yn_arr.len", yn_arr[0].length);
@@ -114,11 +117,10 @@
       .fill()
       .map((e) => false),
   );
-  let x_labels:ILabel = $derived({ series_label: "Blk", axis_label: "x", vmin:0, vmax: x_arr.length });
+  let x_labels: ILabel = $derived({ series_label: "Blk", axis_label: "x", vmin: 0, vmax: x_arr.length });
   let width = $state(typeof window !== "undefined" ? window.innerWidth : 1000);
   let height = $state(300);
   let win_innerWidth = $state(typeof window !== "undefined" ? window.innerWidth : 1000);
-  
 </script>
 
 <svelte:window bind:innerWidth={win_innerWidth} onresize={() => (width = window.innerWidth)} />
@@ -176,7 +178,7 @@
       >
     </div>
     <div class="flex flex-col text-left">
-      {#each Array.from({ length: Math.floor(car_chart.get_nmb_of_graphs() / 2) }, (_, index) => index * 2) as i}
+      {#each Array.from({ length: Math.floor(nmbGraphs / 2) }, (_, index) => index * 2) as i}
         <div>
           <label><input type="checkbox" bind:checked={yn_show[i]} />{car_chart.get_label(i).series_label}, {car_chart.get_label(i + 1).series_label}</label>
           <label><input type="checkbox" bind:checked={yn_show_as_bits[i]} />bits</label>
@@ -198,35 +200,35 @@
     <!-- 'w-max' tells it to grow with the charts. 'min-w-full' keeps it at least screen-wide. -->
     <div class="block w-max min-w-full text-left p-4">
       {#if x_arr.length > 0}
-        {#each Array.from({ length: Math.floor(car_chart.get_nmb_of_graphs() / 2)}, (_, index) => index * 2) as i}
+        {#each Array.from({ length: Math.floor(nmbGraphs / 2) }, (_, index) => index * 2) as i}
           <div class="text-left">
             <div class="text-center" style="display:{yn_show[i] ? 'block' : 'none'};touch-action: pan-y; width: 100%;">
-            {#if yn_show_as_bits[i]}
-              <MyBitsPlot
-                chartData={[x_arr, yn_arr[i]]}
-                labels={[x_labels, car_chart.get_label(i), car_chart.get_label(i + 1)]}
-                {syncKey}
-                {width}
-                {height}
-                }
-              />
-              <MyBitsPlot
-                chartData={[x_arr, yn_arr[i + 1]]}
-                labels={[x_labels, car_chart.get_label(i), car_chart.get_label(i + 1)]}
-                {syncKey}
-                {width}
-                {height}
-                }
-              />
-            {:else}
-              <MyPlot
-                chartData={[x_arr, yn_arr[i], yn_arr[i + 1]]}
-                labels={[x_labels, car_chart.get_label(i), car_chart.get_label(i + 1)]}
-                {syncKey}
-                {width}
-                {height}
-                }
-              />
+              {#if yn_show_as_bits[i]}
+                <MyBitsPlot
+                  chartData={[x_arr, yn_arr[i]]}
+                  labels={[x_labels, car_chart.get_label(i), car_chart.get_label(i + 1)]}
+                  {syncKey}
+                  {width}
+                  {height}
+                  }
+                />
+                <MyBitsPlot
+                  chartData={[x_arr, yn_arr[i + 1]]}
+                  labels={[x_labels, car_chart.get_label(i), car_chart.get_label(i + 1)]}
+                  {syncKey}
+                  {width}
+                  {height}
+                  }
+                />
+              {:else}
+                <MyPlot
+                  chartData={[x_arr, yn_arr[i], yn_arr[i + 1]]}
+                  labels={[x_labels, car_chart.get_label(i), car_chart.get_label(i + 1)]}
+                  {syncKey}
+                  {width}
+                  {height}
+                  }
+                />
               {/if}
             </div>
           </div>

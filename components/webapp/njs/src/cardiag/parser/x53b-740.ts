@@ -28,8 +28,8 @@ enum idx_t {
   flags7, // 
   unknown_byte24,
   richness_regulation, // #35
-  richness_adaption_avg2high, // #30
   idle_adaption, // #21
+  richness_adaption_avg2high, // #30
   unknown_byte28, 
   richness_adaption_idle2low, // #31
   COUNT
@@ -96,7 +96,7 @@ export class x53b_740_parser {
     return this.X(idx_t.detonation_correction);
   }
   get_idle_regulation() {
-    return int(this.X(idx_t.idle_regulation));
+    return int(this.X(idx_t.idle_regulation) - 128);
   }
   get_idle_adaption() {
     return int(this.X(idx_t.idle_adaption));
@@ -179,7 +179,7 @@ export const x53b_740_metrics_table: Array<CarMetrics> = [
   { k: 4, parse: P.get_battery_voltage_V, name: "Battery Voltage", unit: "V", range:[8,16], short_name: "Batt." },
   { k: 5, parse: P.get_oxygen_sensor_voltage_mV, name: "Oxygen Sensor", unit: "mV", range:[ 0,1200], short_name: "O2" },
   { k: 6, parse: P.get_engine_speed_RPM, name: "Engine Speed", unit: "RPM", range:[0,6000], short_name: "RPM" },
-  { k: 12, parse: P.get_idle_regulation, name: "Idle Regulation", unit: "", range:[0,255], short_name: "IdleRegu" },
+  { k: 12, parse: P.get_idle_regulation, name: "Idle Regulation", unit: "", range:[-128,128], short_name: "IdleRegu" },
   { k: 13, parse: P.get_engine_knocking, name: "Engine Pinking", unit: "", range:[0,255], short_name: "Knock" },
   { k: 15, parse: P.get_detonation_correction_deg, name: "Knock-Retard", unit: "°D", range:[0,255], short_name: "KnockRtrd" },
   { k: 21, parse: P.get_idle_adaption, name: "Idle Adaption", unit: "", range:[0,255], short_name: "IdleAdpt" },
@@ -187,7 +187,7 @@ export const x53b_740_metrics_table: Array<CarMetrics> = [
   { k: 31, parse: P.get_richness_adaption_idle_and_low_percent, name: "Richness Adaption (idle-low load)", unit: "%",range:[-100,100], short_name: "LTFT-Idle" },
   { k: 35, parse: P.get_richness_regulation, name: "", unit: "%", range:[-100,100], short_name: "STFT" },
   { k: 50, parse: P.get_injection_duration_ms, name: "Injection Duration", unit: "ms", range:[0,66], short_name: "InjDur" },
-  { k: 51, parse: P.get_ignition_advance_deg, name: "Ignition Advance", unit: "°BDC", range:[0,255], short_name: "Adv" },
+  { k: 51, parse: P.get_ignition_advance_deg, name: "Ignition Advance", unit: "°BTDC", range:[0,55], short_name: "Adv" },
   { k: 0, parse: P.is_fuel_pump_on, name: "Fuel Pump Relay", unit: "boolean",range:[0,1], short_name: "FuelPump" },
   { k: 0, parse: P.is_throttle_fully_closed, name: "Idle Switch", unit: "boolean", range:[0,1], short_name: "IdleSw" },
   { k: 0, parse: P.is_throttle_fully_open, name: "Full Load Switch", unit: "boolean", range:[0,1], short_name: "WOT-Sw" },
