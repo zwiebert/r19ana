@@ -19,13 +19,13 @@
 
   const bitChartData = Array.from({ length: 9 }, () => []);
   $effect(() => {
-  for (let i = 0; i < chartData[0].length; ++i) {
-    bitChartData[0].push(chartData[0][i]);
-    const val = chartData[1][i];
-    for (let k = 0; k < 8; ++k) {
-      bitChartData[k + 1].push(((val >>> k) & 1) + k * 1.2);
+    for (let i = 0; i < chartData[0].length; ++i) {
+      bitChartData[0].push(chartData[0][i]);
+      const val = chartData[1][i];
+      for (let k = 0; k < 8; ++k) {
+        bitChartData[k + 1].push(((val >>> k) & 1) * 0.8 + k - 0.4);
+      }
     }
-  }
   });
 
   let options = {};
@@ -55,22 +55,28 @@
         x: { time: false },
         bits: {
           auto: true,
-          range: [0, 10], // Adjust based on your offsets
+          range: [-0.5, 7.5], // Adjust based on your offsets
         },
       },
       axes: [
         {}, // Bottom X-axis
         {
           scale: "bits",
-          grid: {show:false},
+          grid: { show: false },
           side: 1, // Left side (standard)
           label: opts[1].series_label,
+          incrs: [1],
+          space: 0,
+          values: (self, ticks) => ticks.filter((v) => Number.isInteger(v)),
         },
         {
           scale: "bits",
-          grid: {show:false},
+          grid: { show: false },
           side: 3, // Left side (standard)
           label: opts[1].series_label,
+          incrs: [1],
+          space: 0,
+          values: (self, ticks) => ticks.filter((v) => Number.isInteger(v)),
         },
       ],
     };
