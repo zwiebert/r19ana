@@ -16,6 +16,8 @@
   let chart;
 
   let chartContainer;
+  const bool_val_0 = "0";
+  const bool_val_1 = "1";
 
   const bitChartData = Array.from({ length: 9 }, () => []);
   $effect(() => {
@@ -42,14 +44,82 @@
       plugins: [touchZoomPanPlugin(chartData[0].length)],
       series: [
         { label: opts[0].series_label }, // X-axis
-        { label: "Bit 0", stroke: "red", scale: "bits" },
-        { label: "Bit 1", stroke: "blue", scale: "bits" },
-        { label: "Bit 2", stroke: "green", scale: "bits" },
-        { label: "Bit 3", stroke: "black", scale: "bits" },
-        { label: "Bit 4", stroke: "red", scale: "bits" },
-        { label: "Bit 5", stroke: "blue", scale: "bits" },
-        { label: "Bit 6", stroke: "green", scale: "bits" },
-        { label: "Bit 7", stroke: "black", scale: "bits" },
+        {
+          label: "Bit 0",
+          stroke: "red",
+          scale: "bits",
+          // 'v' is the raw value (e.g., 0.4 or -0.4)
+          value: (self, v) => {
+            if (v == null) return "--";
+            // If value is greater than the integer 'n', it's a 1
+            // For Bit 0, n=0. If v > 0, it's HIGH.
+            return v > 0 ? bool_val_1 : bool_val_0;
+          },
+        },
+        {
+          label: "Bit 1",
+          stroke: "blue",
+          scale: "bits",
+          value: (self, v) => {
+            if (v == null) return "--";
+            return v > 1 ? bool_val_1 : bool_val_0;
+          },
+        },
+
+        {
+          label: "Bit 2",
+          stroke: "green",
+          scale: "bits",
+          value: (self, v) => {
+            if (v == null) return "--";
+            return v > 2 ? bool_val_1 : bool_val_0;
+          },
+        },
+        {
+          label: "Bit 3",
+          stroke: "black",
+          scale: "bits",
+          value: (self, v) => {
+            if (v == null) return "--";
+            return v > 3 ? bool_val_1 : bool_val_0;
+          },
+        },
+        {
+          label: "Bit 4",
+          stroke: "red",
+          scale: "bits",
+          value: (self, v) => {
+            if (v == null) return "--";
+            return v > 4 ? bool_val_1 : bool_val_0;
+          },
+        },
+        {
+          label: "Bit 5",
+          stroke: "blue",
+          scale: "bits",
+          value: (self, v) => {
+            if (v == null) return "--";
+            return v > 5 ? bool_val_1 : bool_val_0;
+          },
+        },
+        {
+          label: "Bit 6",
+          stroke: "green",
+          scale: "bits",
+          value: (self, v) => {
+            if (v == null) return "--";
+            return v > 6 ? bool_val_1 : bool_val_0;
+          },
+        },
+        {
+          label: "Bit 7",
+          stroke: "black",
+          scale: "bits",
+          value: (self, v) => {
+            if (v == null) return "--";
+            return v > 7 ? bool_val_1 : bool_val_0;
+          },
+        },
       ],
       scales: {
         x: { time: false },
