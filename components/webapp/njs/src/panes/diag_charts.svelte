@@ -181,7 +181,9 @@
       {#each Array.from({ length: Math.floor(nmbGraphs / 2) }, (_, index) => index * 2) as i}
         <div>
           <label><input type="checkbox" bind:checked={yn_show[i]} />{car_chart.get_label(i).series_label}, {car_chart.get_label(i + 1).series_label}</label>
-          <label><input type="checkbox" bind:checked={yn_show_as_bits[i]} />bits</label>
+          {#if car_chart.get_label(i).axis_label === "bits" || car_chart.get_label(i).axis_label === "raw"}
+            <label><input type="checkbox" bind:checked={yn_show_as_bits[i]} />bits</label>
+          {/if}
         </div>
       {/each}
     </div>
@@ -204,22 +206,8 @@
           <div class="text-left">
             <div class="text-center" style="display:{yn_show[i] ? 'block' : 'none'};touch-action: pan-y; width: 100%;">
               {#if yn_show_as_bits[i]}
-                <MyBitsPlot
-                  chartData={[x_arr, yn_arr[i]]}
-                  labels={[x_labels, car_chart.get_label(i), car_chart.get_label(i + 1)]}
-                  {syncKey}
-                  {width}
-                  {height}
-                  }
-                />
-                <MyBitsPlot
-                  chartData={[x_arr, yn_arr[i + 1]]}
-                  labels={[x_labels, car_chart.get_label(i), car_chart.get_label(i + 1)]}
-                  {syncKey}
-                  {width}
-                  {height}
-                  }
-                />
+                <MyBitsPlot chartData={[x_arr, yn_arr[i]]} labels={[x_labels, car_chart.get_label(i)]} {syncKey} {width} {height} } />
+                <MyBitsPlot chartData={[x_arr, yn_arr[i + 1]]} labels={[x_labels, car_chart.get_label(i + 1)]} {syncKey} {width} {height} } />
               {:else}
                 <MyPlot
                   chartData={[x_arr, yn_arr[i], yn_arr[i + 1]]}

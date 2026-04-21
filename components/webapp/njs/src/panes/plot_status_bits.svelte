@@ -61,9 +61,16 @@
       axes: [
         {}, // Bottom X-axis
         {
-          scale: "y",
+          scale: "bits",
+          grid: {show:false},
+          side: 1, // Left side (standard)
+          label: opts[1].series_label,
+        },
+        {
+          scale: "bits",
+          grid: {show:false},
           side: 3, // Left side (standard)
-          label: opts[1].axis_label,
+          label: opts[1].series_label,
         },
       ],
     };

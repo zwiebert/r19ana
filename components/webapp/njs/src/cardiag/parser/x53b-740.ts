@@ -236,14 +236,14 @@ export const x53b_740_metrics_table: Array<CarMetrics> = [
   { k: 0, parse: P.is_throttle_fully_open, name: "Full Load Switch", unit: "boolean", range: [0, 1], short_name: "WOT-Sw" },
   { k: 0, parse: P.get_unknown_x, name: "unknown byte 24", unit: "???", range: [0, 255], short_name: "byte24" },
   { k: 0, parse: P.get_unknown_xx, name: "unknown byte 28", unit: "???", range: [0, 255], short_name: "byte28" },
-  { k: 0, parse: P.get_status0, name: "status byte 0: input switches", unit: "bits", range: [0, 255], short_name: "st0" },
-  { k: 0, parse: P.get_status1, name: "status byte 1: input switches", unit: "bits", range: [0, 255], short_name: "st1" },
-  { k: 0, parse: P.get_status2, name: "status byte 2: input switches", unit: "bits", range: [0, 255], short_name: "st2" },
-  { k: 0, parse: P.get_status3, name: "status byte 3: input switches", unit: "bits", range: [0, 255], short_name: "st3" },
-  { k: 0, parse: P.get_status4, name: "status byte 4: input switches", unit: "bits", range: [0, 255], short_name: "st4" },
-  { k: 0, parse: P.get_status5, name: "status byte 5: input switches", unit: "bits", range: [0, 255], short_name: "st5" },
-  { k: 0, parse: P.get_status6, name: "status byte 6: input switches", unit: "bits", range: [0, 255], short_name: "st6" },
-  { k: 0, parse: P.get_status7, name: "status byte 7: input switches", unit: "bits", range: [0, 255], short_name: "st7" },
+  { k: 0, parse: P.get_status0, name: "status byte 0: input switches", unit: "bits", range: [0, 255], short_name: "status-0" },
+  { k: 0, parse: P.get_status1, name: "status byte 1: input switches", unit: "bits", range: [0, 255], short_name: "status-1" },
+  { k: 0, parse: P.get_status2, name: "status byte 2: input switches", unit: "bits", range: [0, 255], short_name: "status-2" },
+  { k: 0, parse: P.get_status3, name: "status byte 3: input switches", unit: "bits", range: [0, 255], short_name: "status-3" },
+  { k: 0, parse: P.get_status4, name: "status byte 4: input switches", unit: "bits", range: [0, 255], short_name: "status-4" },
+  { k: 0, parse: P.get_status5, name: "status byte 5: input switches", unit: "bits", range: [0, 255], short_name: "status-5" },
+  { k: 0, parse: P.get_status6, name: "status byte 6: input switches", unit: "bits", range: [0, 255], short_name: "status-6" },
+  { k: 0, parse: P.get_status7, name: "status byte 7: input switches", unit: "bits", range: [0, 255], short_name: "status-7" },
 ];
 /* eslint-enable @typescript-eslint/unbound-method */
 export default x53b_740_parser;
