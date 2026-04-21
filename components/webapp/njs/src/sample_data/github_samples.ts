@@ -23,24 +23,3 @@
     }
   }
 
-  export async function fetchBinaryData(url: string) {
-    // 1. Declare variables at the top of the function scope
-    let response;
-    let buffer;
-
-    try {
-      // 2. Assign the result to your lowercase 'response' variable
-      response = await fetch(url);
-
-      if (!response.ok) throw new Error("Network response was not ok");
-
-      // 3. Use the lowercase 'response' variable here
-      buffer = await response.arrayBuffer();
-      diag_data = new Uint8Array(buffer);
-
-      error = false;
-    } catch (e) {
-      // Note: Do NOT try to access 'response' here if fetch failed
-      error = e.message;
-    }
-  }

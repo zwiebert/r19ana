@@ -2,17 +2,17 @@
   /* eslint-disable svelte/require-each-key */
   import uPlot from "uplot";
   import "uplot/dist/uPlot.min.css";
-  import { onMount, untrack } from "svelte";
+  import { untrack } from "svelte";
   import MyPlot from "./plot_test.svelte";
   import MyBitsPlot from "./plot_status_bits.svelte";
   import DropFile from "../components/request-or-drop-file.svelte";
   import { x53b_740_chart_factory } from "../cardiag/charts/x53b-740";
   import { raw_chart_factory } from "../cardiag/charts/raw";
   import type { Icar_chart, ILabel } from "../cardiag/charts/iface";
-  import { byte_unstuffing } from "../cardiag/byte_unstuffing";
+  //import { byte_unstuffing } from "../cardiag/byte_unstuffing";
   import { RenixDestuffer } from "../cardiag/renix_destuffer";
   import { EnableGitHubSamples } from "../store/app_state";
-  import { getGithubSamples, fetchBinaryData } from "../sample_data/github_samples";
+  import { getGithubSamples } from "../sample_data/github_samples";
   //import { DiagDataBuffer } from "../store/diag-data.js";
 
   let { chart_index = 0, chart_index_viewed = 0 } = $props();
@@ -21,17 +21,65 @@
   let car_chart: Icar_chart = $state.raw(car_charts[0]);
   let diag_data: Uint8Array = $state.raw(new Uint8Array(0));
   let nmbGraphs: number = $state(0);
+  let live_simu = false;
 
-  onMount(() => {});
+  async function fetchBinaryData(url: string) {
+    // 1. Declare variables at the top of the function scope
+    let response;
+    let buffer;
+
+    try {
+      // 2. Assign the result to your lowercase 'response' variable
+      response = await fetch(url);
+
+      if (!response.ok) throw new Error("Network response was not ok");
+
+      // 3. Use the lowercase 'response' variable here
+      buffer = await response.arrayBuffer();
+      diag_data = new Uint8Array(buffer);
+
+      error = false;
+    } catch (e) {
+      // Note: Do NOT try to access 'response' here if fetch failed
+      error = e.message;
+    }
+  }
+
+  let timeoutId = 0;
+
+  function startTimer(data: Uint8Array, car_chart: Icar_chart, chunk_size: number, chunk_nmb: number) {
+    timeoutId = setTimeout(() => {
+      const start = chunk_size * chunk_nmb;
+      const end = start + chunk_size;
+      if (end >= data.length) return;
+
+      process_data(data.subarray(start, end), car_chart, chunk_nmb !== 0);
+      redraw_charts();
+      // Schedule the next run
+      startTimer(data, car_chart, chunk_size, chunk_nmb + 1);
+    }, 100);
+  }
+
+  function live_simu_process_data(data: Uint8Array, car_chart: Icar_chart) {
+    clearTimeout(timeoutId);
+    startTimer(data, car_chart, 100, 0);
+  }
+  //startTimer();
 
   $effect(() => {
     let data = diag_data;
     let chart = car_chart;
 
     if (data && data.length > 0) {
-      untrack(() => {
-        process_data(data, chart);
-      });
+      if (live_simu) {
+        untrack(() => {
+          live_simu_process_data(data, chart);
+        });
+      } else {
+        untrack(() => {
+          process_data(data, chart);
+        });
+      }
       redraw_charts();
     }
   });
@@ -43,10 +91,8 @@
    *
    */
   function process_data(data: Uint8Array, car_chart: Icar_chart, append: boolean = false) {
-    console.log("process_data:", car_chart.get_info().name);
-    //const unstuffing = new byte_unstuffing((arr: Uint8Array, ct: number) => car_chart.process_data_packet(arr, ct));
     const unstuffing = new RenixDestuffer((arr: Uint8Array, ct: number) => car_chart.process_data_packet(arr, ct));
-    car_chart.clear_chart_data();
+    if (!append) car_chart.clear_chart_data();
     unstuffing.process_chunk(data);
   }
 

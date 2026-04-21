@@ -37,7 +37,7 @@
     options = {
       width: width,
       height: height,
-      plugins: [touchZoomPanPlugin(chartData[0].length)],
+     // plugins: [touchZoomPanPlugin(chartData[0].length)],
       scales: {
         x: { time: false },
         y: {}, // Default left scale
