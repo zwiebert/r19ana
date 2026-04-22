@@ -7,21 +7,24 @@
 
   interface Iprops {
     chartData: number[][];
-    chartDataVersions: number[];
+    chartDataVersions: objects[];
     labels: ILabel[3];
     syncKey: objectst;
     width: number;
     height: number;
-    live: boolean;
+    is_live: boolean;
   }
   // Props or state
-  let { chartData, chartDataVersions, labels = [{}, {}, {}], syncKey = null, width = 1600, height = 30, is_live = false }: Iprops = $props();
+  const { chartData, chartDataVersions, labels = [{}, {}, {}], syncKey = null, width = 1600, height = 30, is_live = false }: Iprops = $props();
 
   let chart;
   let chartContainer;
-  const create_trigger = $derived(is_live ? 1 : chartDataVersions[0]);
-  const setData_trigger = $derived(chartDataVersions[1] + chartDataVersions[2]);
-  const setScaleX_trigger = $derived(is_live ? chartDataVersions[0] : 1);
+  const x_arr_version = $derived(chartDataVersions[0]);
+  const y_arr_version = $derived(chartDataVersions[1]);
+  const y2_arr_version = $derived(chartDataVersions[2]);
+  const create_trigger = $derived(is_live ? {} : x_arr_version);
+  const setData_trigger = $derived({ y: y_arr_version, y2: y2_arr_version });
+  const setScaleX_trigger = $derived(is_live ? x_arr_version : {});
 
   let options = $derived({
     width: width,
@@ -105,29 +108,30 @@
       });
     }
   });
-
   $effect(() => {
     console.log("setScale-x");
     const trigger = setScaleX_trigger;
-    if (is_live) {
-      // 1. Calculate how much the data moved (e.g., how many seconds/indices)
-      // Assuming your X-array is sorted, compare the new first element to the old one
-      const newDataStart = chartData[0][0];
-      const oldDataStart = chart.data[0][0];
-      const delta = newDataStart - oldDataStart;
+    untrack(() => {
+      if (is_live) {
+        // 1. Calculate how much the data moved (e.g., how many seconds/indices)
+        // Assuming your X-array is sorted, compare the new first element to the old one
+        const newDataStart = chartData[0][0];
+        const oldDataStart = chart.data[0][0];
+        const delta = newDataStart - oldDataStart;
 
-      requestAnimationFrame(() => {
-        if (chart) {
-          // 3. Shift the current view by the same delta
-          // This keeps the "zoom level" (the width) the same,
-          // but slides the "window" along with the data.
-          chart.setScale("x", {
-            min: chart.scales.x.min + delta,
-            max: chart.scales.x.max + delta,
-          });
-        }
-      });
-    }
+        requestAnimationFrame(() => {
+          if (chart) {
+            // 3. Shift the current view by the same delta
+            // This keeps the "zoom level" (the width) the same,
+            // but slides the "window" along with the data.
+            chart.setScale("x", {
+              min: chart.scales.x.min + delta,
+              max: chart.scales.x.max + delta,
+            });
+          }
+        });
+      }
+    });
   });
 
   $effect(() => {

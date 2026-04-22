@@ -16,11 +16,85 @@
   //import { DiagDataBuffer } from "../store/diag-data.js";
 
   let { chart_index = 0, chart_index_viewed = 0 } = $props();
+
+  interface IchartData {
+    car_chart: Icar_chart; //
+    nmbGraphs: number;
+    yn_arr: number[][];
+    x_arr: number[];
+    x_arr_modifed: boolean;
+    yn_arr_modified: boolean;
+    id: number;
+  }
+  let force_all_version = $state(0);
+  let input_data_version = $state(0); // version counter for input data changes
+  let car_chart_version = $state(0); // index of  current parser/chart generator
+  let input_data_live_begin = $state(0);
+  let input_data_live_end = $state(0);
+  const input_data = $derived(!live_simu ? diag_data : diag_data.subarray(input_data_live_begin, input_data_live_end));
+  const input_data_len = $derived(input_data.length);
+  const yn_arr_version = $derived({ cc: car_chart_version, len: yn_arr.length, len2: yn_arr[0].length, id: chart_data.id }); //  version of y data
+  const x_arr_version = $derived({ cc: car_chart_version, len: x_arr_len }); //  version of x data
+
+  const yn_arr = $derived(chart_data?.yn_arr ?? [[]]);
+  const x_arr = $derived((!live_simu ? chart_data?.x_arr : x_arr_live) ?? []);
+  const x_arr_len = $derived(x_arr.length);
+  const nmbGraphs = $derived(chart_data.nmbGraphs);
+
   let error = $state(null);
   let car_charts: Icar_chart[] = [x53b_740_chart_factory(), raw_chart_factory()];
-  let car_chart: Icar_chart = $state.raw(car_charts[0]);
+  let car_chart: Icar_chart = $derived(car_charts[car_chart_version]);
+  const processData_trigger = $derived({ ver: car_chart_version, len: input_data_len, ipd: input_data_version, fa: force_all_version });
   let diag_data: Uint8Array = $state.raw(new Uint8Array(0));
-  let nmbGraphs: number = $state(0);
+
+  let yn_show = $state(
+    Array(64)
+      .fill()
+      .map((e) => true),
+  );
+  let yn_show_as_bits = $state(
+    Array(64)
+      .fill()
+      .map((e) => false),
+  );
+  let x_labels: ILabel = $derived({ series_label: "Blk", axis_label: "x", vmin: 0, vmax: x_arr.length });
+  let width = $state(typeof window !== "undefined" ? window.innerWidth - 10 : 1000);
+  let height = $state(300);
+  let win_innerWidth = $state(typeof window !== "undefined" ? window.innerWidth : 1000);
+
+  const chart_data: IchartData = $derived.by(() => {
+    console.log("create chart_data");
+    const data = input_data;
+    const chart = car_chart;
+    const trigger = processData_trigger;
+    const getID = (() => {
+      let id = 0; // This acts as your 'static' variable
+      return () => ++id;
+    })();
+    untrack(() => {
+      process_data(data, chart, live_simu);
+    });
+    const x_arr = chart.get_chart_data()[0].map((_, i) => i);
+    console.log(chart.get_info(), chart.get_chart_data()[1].length);
+
+    return {
+      car_chart: chart, //
+      nmbGraphs: chart.get_nmb_of_graphs(),
+      yn_arr: chart.get_chart_data(),
+      x_arr: x_arr,
+      id: getID(),
+    };
+  });
+
+  $effect(() => {
+    console.log("simu effect");
+    const trigger = live_simu;
+    live_simu_process_data();
+  });
+
+  // svelte-ignore state_referenced_locally
+  const syncKey = uPlot.sync("zoom_group" + chart_index);
+
   let live_simu = $state(false);
 
   async function fetchBinaryData(url: string) {
@@ -47,45 +121,34 @@
 
   let timeoutId = 0;
 
-  function startTimer(data: Uint8Array, car_chart: Icar_chart, chunk_size: number, chunk_nmb: number) {
+  const n1 = 0;
+  const n2 = 10000;
+  let x_arr_live = Array.from({ length: n2 - n1 + 1 }, (_, i) => n1 + i);
+
+  function startTimer(chunk_size: number, chunk_nmb: number) {
     timeoutId = setTimeout(() => {
+      const data = diag_data;
       const start = chunk_size * chunk_nmb;
       const end = start + chunk_size;
       if (end >= data.length) return;
 
-      process_data(data.subarray(start, end), car_chart, chunk_nmb !== 0);
-      const n1 = 0;
-      const n2 = 10000;
-      const x = Array.from({ length: n2 - n1 + 1 }, (_, i) => n1 + i);
-      redraw_charts(x);
+      input_data_live_end = end;
+      input_data_live_begin = start;
+      ++input_data_version; //trigger processing
+
+      //console.log("live simu tick", start, end, input_data.length);
+
       // Schedule the next run
-      if (live_simu) startTimer(data, car_chart, chunk_size, chunk_nmb + 1);
+      if (live_simu) startTimer(chunk_size, chunk_nmb + 1);
     }, 20);
   }
 
-  function live_simu_process_data(data: Uint8Array, car_chart: Icar_chart) {
+  function live_simu_process_data() {
     clearTimeout(timeoutId);
-    startTimer(data, car_chart, 100, 0);
+    car_chart.clear_chart_data();
+    if (live_simu) startTimer(100, 0);
   }
   //startTimer();
-
-  $effect(() => {
-    let data = diag_data;
-    let chart = car_chart;
-
-    if (data && data.length > 0) {
-      if (live_simu) {
-        untrack(() => {
-          live_simu_process_data(data, chart);
-        });
-      } else {
-        untrack(() => {
-          process_data(data, chart);
-          redraw_charts();
-        });
-      }
-    }
-  });
 
   /**
    *  @brief generate chart data from binary input
@@ -98,41 +161,6 @@
     if (!append) car_chart.clear_chart_data();
     unstuffing.process_chunk(data);
   }
-
-  // svelte-ignore state_referenced_locally
-  const syncKey = uPlot.sync("zoom_group" + chart_index);
-  let yn_arr = $state.raw(car_chart.get_chart_data());
-  let yn_arr_version = $state(0);
-  let x_arr = $state.raw([]);
-  let x_arr_version = $state(0);
-
-  function redraw_charts(x: number[] = undefined) {
-    car_chart = car_chart;
-    nmbGraphs = car_chart.get_nmb_of_graphs();
-    yn_arr = car_chart.get_chart_data();
-    ++yn_arr_version;
-    const arr = x ?? yn_arr[0].map((_, i) => i);
-    if (x_arr.length !== arr.length || x_arr[0] !== arr[0]) {
-      ++x_arr_version;
-      x_arr = arr;
-    }
-    // console.log("arr_versions:", x_arr_version, yn_arr_version);
-  }
-
-  let yn_show = $state(
-    Array(64)
-      .fill()
-      .map((e) => true),
-  );
-  let yn_show_as_bits = $state(
-    Array(64)
-      .fill()
-      .map((e) => false),
-  );
-  let x_labels: ILabel = $derived({ series_label: "Blk", axis_label: "x", vmin: 0, vmax: x_arr.length });
-  let width = $state(typeof window !== "undefined" ? window.innerWidth - 10 : 1000);
-  let height = $state(300);
-  let win_innerWidth = $state(typeof window !== "undefined" ? window.innerWidth : 1000);
 </script>
 
 <svelte:window bind:innerWidth={win_innerWidth} onresize={() => (width = window.innerWidth - 10)} />
@@ -177,19 +205,9 @@
     <div class="flex flex-col">
       <div>
         <p>Type</p>
-        <select
-          bind:value={car_chart}
-          onchange={() => {
-            console.log("init show-as-bits");
-            for (let i; i < yn_show_as_bits.length; ++i) {
-              yn_show_as_bits[i] = false;
-            }
-            yn_arr = car_chart.get_chart_data();
-          }}
-          size={3}
-        >
-          {#each car_charts as cc}
-            <option value={cc}>{cc.get_info().name}</option>
+        <select bind:value={car_chart_version} size={3}>
+          {#each car_charts as cc, i}
+            <option value={i}>{cc.get_info().name}</option>
           {/each}
         </select>
       </div>
@@ -197,7 +215,7 @@
       <label>Height: <input type="number" bind:value={height} min={100} max={1000} step={25} /></label>
       <button
         onclick={() => {
-          process_data(diag_data, car_chart);
+          ++force_all_version;
         }}>re-plot</button
       >
     </div>

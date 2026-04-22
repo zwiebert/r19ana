@@ -7,24 +7,26 @@
 
   interface Iprops {
     chartData: number[][];
-    chartDataVersions: number[];
+    chartDataVersions: objects[];
     labels: ILabel[3];
     syncKey: objectst;
     width: number;
     height: number;
-    live: boolean;
+    is_live: boolean;
   }
   // Props or state
-  let { chartData, chartDataVersions, labels = [{}, {}, {}], syncKey = null, width = 1600, height = 30, is_live = false }: Iprops = $props();
+  const { chartData, chartDataVersions, labels = [{}, {}, {}], syncKey = null, width = 1600, height = 30, is_live = false }: Iprops = $props();
 
   let chart;
 
   let chartContainer;
   const bool_val_0 = "0";
   const bool_val_1 = "1";
-  const create_trigger = $derived(is_live ? 1 : chartDataVersions[0]);
-  const setData_trigger = $derived(chartDataVersions[1]);
-  const setScaleX_trigger = $derived(is_live ? chartDataVersions[0] : 1);
+  const x_arr_version = $derived(chartDataVersions[0]);
+  const y_arr_version = $derived(chartDataVersions[1]);
+  const create_trigger = $derived(is_live ? {} : x_arr_version);
+  const setData_trigger = $derived(y_arr_version);
+  const setScaleX_trigger = $derived(is_live ? x_arr_version : {});
 
   const getbit = (n: number, pos: number) => (n >>> pos) & 1;
 
