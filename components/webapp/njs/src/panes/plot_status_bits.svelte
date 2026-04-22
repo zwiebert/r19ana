@@ -42,8 +42,7 @@
     }
   });
 
-  let options = $state({});
-  options = {
+  let options = $derived({
     width: width,
     height: height,
     plugins: [touchZoomPanPlugin(bitChartData[0].length)],
@@ -154,17 +153,16 @@
         values: (self, ticks) => ticks.filter((v) => Number.isInteger(v)),
       },
     ],
-  };
-
-  if (syncKey)
-    options.cursor = {
-      // 2. Link the charts using the sync key
-      sync: {
-        key: syncKey.key,
-        setSeries: true, // Optional: syncs series toggling/highlighting
-        setScale: [true, false], // Syncs X scale (index 0), ignores Y scale (index 1)
-      },
-    };
+    cursor: {
+      sync: syncKey
+        ? {
+            key: syncKey.key,
+            setSeries: true, // Optional: syncs series toggling/highlighting
+            setScale: [true, false], // Syncs X scale (index 0), ignores Y scale (index 1)
+          }
+        : {},
+    },
+  });
 
   $effect(() => {
     console.log("create new uplot chart");

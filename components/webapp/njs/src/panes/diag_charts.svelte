@@ -130,12 +130,12 @@
       .map((e) => false),
   );
   let x_labels: ILabel = $derived({ series_label: "Blk", axis_label: "x", vmin: 0, vmax: x_arr.length });
-  let width = $state(typeof window !== "undefined" ? window.innerWidth : 1000);
+  let width = $state(typeof window !== "undefined" ? window.innerWidth - 10 : 1000);
   let height = $state(300);
   let win_innerWidth = $state(typeof window !== "undefined" ? window.innerWidth : 1000);
 </script>
 
-<svelte:window bind:innerWidth={win_innerWidth} onresize={() => (width = window.innerWidth)} />
+<svelte:window bind:innerWidth={win_innerWidth} onresize={() => (width = window.innerWidth - 10)} />
 
 <h3>{chart_index + 1}</h3>
 
@@ -177,7 +177,17 @@
     <div class="flex flex-col">
       <div>
         <p>Type</p>
-        <select bind:value={car_chart} onchange={() => (yn_arr = car_chart.get_chart_data())} size={3}>
+        <select
+          bind:value={car_chart}
+          onchange={() => {
+            console.log("init show-as-bits");
+            for (let i; i < yn_show_as_bits.length; ++i) {
+              yn_show_as_bits[i] = false;
+            }
+            yn_arr = car_chart.get_chart_data();
+          }}
+          size={3}
+        >
           {#each car_charts as cc}
             <option value={cc}>{cc.get_info().name}</option>
           {/each}
@@ -194,8 +204,8 @@
     <div class="flex flex-col text-left">
       {#each Array.from({ length: Math.floor(nmbGraphs / 2) }, (_, index) => index * 2) as i}
         <div>
-          <label><input type="checkbox" bind:checked={yn_show[i]} />{car_chart.get_label(i).series_label}, {car_chart.get_label(i + 1).series_label}</label>
-          {#if car_chart.get_label(i).axis_label === "bits" || car_chart.get_label(i).axis_label === "raw"}
+          <label><input type="checkbox" bind:checked={yn_show[i]} />{car_chart.get_label(i)?.series_label}, {car_chart.get_label(i + 1)?.series_label}</label>
+          {#if car_chart.get_label(i)?.axis_label === "bits" || car_chart.get_label(i)?.axis_label === "raw"}
             <label><input type="checkbox" bind:checked={yn_show_as_bits[i]} />bits</label>
           {/if}
         </div>
@@ -219,7 +229,7 @@
         {#each Array.from({ length: Math.floor(nmbGraphs / 2) }, (_, index) => index * 2) as i}
           <div class="text-left">
             <div class="text-center" style="display:{yn_show[i] ? 'block' : 'none'};touch-action: pan-y; width: 100%;">
-              {#if yn_show_as_bits[i]}
+              {#if yn_show_as_bits[i] && (car_chart.get_label(i)?.axis_label === "bits" || car_chart.get_label(i)?.axis_label === "raw")}
                 <MyBitsPlot
                   chartData={[x_arr, yn_arr[i]]}
                   chartDataVersions={[x_arr_version, yn_arr_version]}

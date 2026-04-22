@@ -23,15 +23,24 @@
   const setData_trigger = $derived(chartDataVersions[1] + chartDataVersions[2]);
   const setScaleX_trigger = $derived(is_live ? chartDataVersions[0] : 1);
 
-  let options = $state({});
-  options = {
+  let options = $derived({
     width: width,
     height: height,
     // plugins: [touchZoomPanPlugin(chartData[0].length)],
     scales: {
       x: { time: false },
-      y: {}, // Default left scale
-      y2: {}, // New independent right scale
+      y:
+        labels[1]?.axis_label == "boolean"
+          ? { auto: false, range: (u, min, max) => [-3.6, 2.5] }
+          : labels[1]?.range
+            ? { auto: false, range: (u, min, max) => labels[1].range }
+            : {}, // Default left scale
+      y2:
+        labels[2]?.axis_label == "boolean"
+          ? { auto: false, range: (u, min, max) => [-4.1, 2.1] }
+          : labels[2]?.range
+            ? { auto: false, range: (u, min, max) => labels[2].range }
+            : {}, // Default right scale
     },
     series: [
       { label: labels[0]?.series_label ?? "x" }, // X-axis
@@ -60,28 +69,16 @@
         grid: { show: false }, // Optional: hide grid to avoid clutter
       },
     ],
-  };
-
-  if (labels[1]?.axis_label == "boolean") {
-    options.scales.y = { auto: false, range: (u, min, max) => [-3.6, 2.5] };
-  } else if (labels[1]?.range) {
-    options.scales.y = { auto: false, range: (u, min, max) => labels[1].range };
-  }
-  if (labels[2]?.axis_label == "boolean") {
-    options.scales.y2 = { auto: false, range: (u, min, max) => [-4.1, 2.1] };
-  } else if (labels[2].range) {
-    options.scales.y2 = { auto: false, range: (u, min, max) => labels[2].range };
-  }
-
-  if (syncKey)
-    options.cursor = {
-      // 2. Link the charts using the sync key
-      sync: {
-        key: syncKey.key,
-        setSeries: true, // Optional: syncs series toggling/highlighting
-        setScale: [true, false], // Syncs X scale (index 0), ignores Y scale (index 1)
-      },
-    };
+    cursor: {
+      sync: syncKey
+        ? {
+            key: syncKey.key,
+            setSeries: true, // Optional: syncs series toggling/highlighting
+            setScale: [true, false], // Syncs X scale (index 0), ignores Y scale (index 1)
+          }
+        : {},
+    },
+  });
 
   $effect(() => {
     console.log("create new uplot chart");
