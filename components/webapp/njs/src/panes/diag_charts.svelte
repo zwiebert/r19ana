@@ -21,7 +21,7 @@
   let car_chart: Icar_chart = $state.raw(car_charts[0]);
   let diag_data: Uint8Array = $state.raw(new Uint8Array(0));
   let nmbGraphs: number = $state(0);
-  let live_simu = false;
+  let live_simu = $state(false);
 
   async function fetchBinaryData(url: string) {
     // 1. Declare variables at the top of the function scope
@@ -54,10 +54,13 @@
       if (end >= data.length) return;
 
       process_data(data.subarray(start, end), car_chart, chunk_nmb !== 0);
-      redraw_charts();
+      const n1 = 0;
+      const n2 = 10000;
+      const x = Array.from({ length: n2 - n1 + 1 }, (_, i) => n1 + i);
+      redraw_charts(x);
       // Schedule the next run
-      startTimer(data, car_chart, chunk_size, chunk_nmb + 1);
-    }, 100);
+      if (live_simu) startTimer(data, car_chart, chunk_size, chunk_nmb + 1);
+    }, 20);
   }
 
   function live_simu_process_data(data: Uint8Array, car_chart: Icar_chart) {
@@ -78,9 +81,9 @@
       } else {
         untrack(() => {
           process_data(data, chart);
+          redraw_charts();
         });
       }
-      redraw_charts();
     }
   });
 
@@ -99,13 +102,21 @@
   // svelte-ignore state_referenced_locally
   const syncKey = uPlot.sync("zoom_group" + chart_index);
   let yn_arr = $state.raw(car_chart.get_chart_data());
+  let yn_arr_version = $state(0);
   let x_arr = $state.raw([]);
-  function redraw_charts() {
+  let x_arr_version = $state(0);
+
+  function redraw_charts(x: number[] = undefined) {
     car_chart = car_chart;
     nmbGraphs = car_chart.get_nmb_of_graphs();
     yn_arr = car_chart.get_chart_data();
-    x_arr = yn_arr[0].map((_, i) => i);
-    console.log("redraw_charts: yn_arr.len", yn_arr[0].length);
+    ++yn_arr_version;
+    const arr = x ?? yn_arr[0].map((_, i) => i);
+    if (x_arr.length !== arr.length || x_arr[0] !== arr[0]) {
+      ++x_arr_version;
+      x_arr = arr;
+    }
+    // console.log("arr_versions:", x_arr_version, yn_arr_version);
   }
 
   let yn_show = $state(
@@ -160,6 +171,8 @@
       {#if chart_index === chart_index_viewed}
         <DropFile onDataLoaded={(data_array) => (diag_data = data_array)} mode="button" />
       {/if}
+
+      <label><input type="checkbox" bind:checked={live_simu} />Live-Simulation</label>
     </div>
     <div class="flex flex-col">
       <div>
@@ -207,15 +220,35 @@
           <div class="text-left">
             <div class="text-center" style="display:{yn_show[i] ? 'block' : 'none'};touch-action: pan-y; width: 100%;">
               {#if yn_show_as_bits[i]}
-                <MyBitsPlot chartData={[x_arr, yn_arr[i]]} labels={[x_labels, car_chart.get_label(i)]} {syncKey} {width} {height} } />
-                <MyBitsPlot chartData={[x_arr, yn_arr[i + 1]]} labels={[x_labels, car_chart.get_label(i + 1)]} {syncKey} {width} {height} } />
+                <MyBitsPlot
+                  chartData={[x_arr, yn_arr[i]]}
+                  chartDataVersions={[x_arr_version, yn_arr_version]}
+                  labels={[x_labels, car_chart.get_label(i)]}
+                  {syncKey}
+                  {width}
+                  {height}
+                  is_live={live_simu}
+                  }
+                />
+                <MyBitsPlot
+                  chartData={[x_arr, yn_arr[i + 1]]}
+                  chartDataVersions={[x_arr_version, yn_arr_version]}
+                  labels={[x_labels, car_chart.get_label(i + 1)]}
+                  {syncKey}
+                  {width}
+                  {height}
+                  is_live={live_simu}
+                  }
+                />
               {:else}
                 <MyPlot
                   chartData={[x_arr, yn_arr[i], yn_arr[i + 1]]}
+                  chartDataVersions={[x_arr_version, yn_arr_version, yn_arr_version]}
                   labels={[x_labels, car_chart.get_label(i), car_chart.get_label(i + 1)]}
                   {syncKey}
                   {width}
                   {height}
+                  is_live={live_simu}
                   }
                 />
               {/if}
