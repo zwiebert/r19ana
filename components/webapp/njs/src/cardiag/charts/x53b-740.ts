@@ -13,7 +13,7 @@ const order = [
 
   e.ignition_advance,
   e.unknown_x,
-  
+
   e.o2_sensor,
   e.fuel_pump_relay,
 
@@ -28,7 +28,7 @@ const order = [
 
   e.richness_regulation,
   e.unknown_xx,
-  
+
   e.richness_adaption_idle2low,
   e.richness_adaption_avg2high,
 
@@ -48,51 +48,50 @@ const order = [
   e.status7,
 ];
 
-
 const labels = new Array<ILabel>(order.length);
 for (let i = 0; i < order.length; ++i) {
   const table_entry = t[order[i]];
-  labels[i] = { series_label: table_entry.short_name, axis_label: table_entry.unit, range:table_entry.range };
+  labels[i] = { series_label: table_entry.short_name, axis_label: table_entry.unit, range: table_entry.range };
 }
 
 export class x53b_740_chart implements Icar_chart {
   private yn_arr: (number | boolean)[][] = Array.from({ length: order.length }, () => []);
   public nmbGraphs: number = order.length;
 
-  get_info () {
+  get_info() {
     return { name: "X53B_740", description: "this is the R19-F3N740 (54kW, TBI, manual)" };
   }
 
-  clear_chart_data () {
-    this.yn_arr.forEach(subArray => subArray.length = 0);
+  clear_chart_data() {
+    this.yn_arr = Array.from({ length: order.length }, () => []);
+    //this.yn_arr.forEach(subArray => subArray.length = 0);
   }
 
-  get_chart_data () {
+  get_chart_data() {
     return this.yn_arr;
   }
-  get_labels () {
+  get_labels() {
     return labels;
   }
-  get_label (n:number) {
+  get_label(n: number) {
     return labels[n];
   }
-  get_nmb_of_graphs () {
+  get_nmb_of_graphs() {
     return order.length;
   }
 
-  process_data_packet (arr: Uint8Array, ct: number) {
+  process_data_packet(arr: Uint8Array, ct: number) {
     console.assert(this.yn_arr.length === order.length);
     const m = new x53b_740_parser(arr);
-    let idx =  0;
+    let idx = 0;
     for (const i of order) {
-      console.assert(this.yn_arr[idx]!== undefined);
+      console.assert(this.yn_arr[idx] !== undefined);
       this.yn_arr[idx++].push(t[i].parse.call(m));
     }
     //this.yn_arr = this.yn_arr;
   }
-};
-
+}
 
 export function x53b_740_chart_factory() {
-return new x53b_740_chart() as Icar_chart;
+  return new x53b_740_chart() as Icar_chart;
 }

@@ -33,8 +33,8 @@
   let input_data_live_end = $state(0);
   const input_data = $derived(!live_simu ? diag_data : diag_data.subarray(input_data_live_begin, input_data_live_end));
   const input_data_len = $derived(input_data.length);
-  const yn_arr_version = $derived({ cc: car_chart_version, len: yn_arr.length, len2: yn_arr[0].length, id: chart_data.id }); //  version of y data
-  const x_arr_version = $derived({ cc: car_chart_version, len: x_arr_len }); //  version of x data
+  const yn_arr_version = $derived({ cc: car_chart_version, len: yn_arr.length, len2: yn_arr[0].length, id: chart_data.id, ls: live_simu }); //  version of y data
+  const x_arr_version = $derived({ cc: car_chart_version, len: x_arr_len, x_arr }); //  version of x data
 
   const yn_arr = $derived(chart_data?.yn_arr ?? [[]]);
   const x_arr = $derived((!live_simu ? chart_data?.x_arr : x_arr_live) ?? []);
@@ -63,7 +63,7 @@
   let win_innerWidth = $state(typeof window !== "undefined" ? window.innerWidth : 1000);
 
   const chart_data: IchartData = $derived.by(() => {
-    console.log("create chart_data");
+    //console.log("create chart_data");
     const data = input_data;
     const chart = car_chart;
     const trigger = processData_trigger;
@@ -75,7 +75,7 @@
       process_data(data, chart, live_simu);
     });
     const x_arr = chart.get_chart_data()[0].map((_, i) => i);
-    console.log(chart.get_info(), chart.get_chart_data()[1].length);
+    //console.log(chart.get_info(), chart.get_chart_data()[1].length);
 
     return {
       car_chart: chart, //
@@ -90,6 +90,10 @@
     console.log("simu effect");
     const trigger = live_simu;
     live_simu_process_data();
+  });
+
+  $effect(() => {
+    //car_chart.clear_chart_data();
   });
 
   // svelte-ignore state_referenced_locally
@@ -270,8 +274,12 @@
                 />
               {:else}
                 <MyPlot
-                  chartData={[x_arr, yn_arr[i], yn_arr[i + 1]]}
-                  chartDataVersions={[x_arr_version, yn_arr_version, yn_arr_version]}
+                  xData={x_arr}
+                  xDataVer={x_arr_version}
+                  yData={yn_arr[i]}
+                  yDataVer={yn_arr_version}
+                  y2Data={yn_arr[i + 1]}
+                  y2DataVer={yn_arr_version}
                   labels={[x_labels, car_chart.get_label(i), car_chart.get_label(i + 1)]}
                   {syncKey}
                   {width}

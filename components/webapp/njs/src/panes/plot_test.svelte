@@ -6,30 +6,32 @@
   import { touchZoomPanPlugin } from "../plotting/uplot/zoom_plugin";
 
   interface Iprops {
-    chartData: number[][];
-    chartDataVersions: objects[];
+    xData: number[],
+    yData: number[],
+    y2Data: number[],
+    xDataVer: {},
+    yDataVer: {},
+    y2DataVer: {},
     labels: ILabel[3];
-    syncKey: objectst;
+    syncKey: {};
     width: number;
     height: number;
     is_live: boolean;
   }
   // Props or state
-  const { chartData, chartDataVersions, labels = [{}, {}, {}], syncKey = null, width = 1600, height = 30, is_live = false }: Iprops = $props();
+  const { xData, xDataVer, yData, yDataVer, y2Data, y2DataVer, labels = [{}, {}, {}], syncKey = null, width = 1600, height = 30, is_live = false }: Iprops = $props();
+
 
   let chart;
   let chartContainer;
-  const x_arr_version = $derived(chartDataVersions[0]);
-  const y_arr_version = $derived(chartDataVersions[1]);
-  const y2_arr_version = $derived(chartDataVersions[2]);
-  const create_trigger = $derived(is_live ? {} : x_arr_version);
-  const setData_trigger = $derived({ y: y_arr_version, y2: y2_arr_version });
-  const setScaleX_trigger = $derived(is_live ? x_arr_version : {});
+  const create_trigger = $derived(is_live ? {} : xDataVer);
+  const setData_trigger = $derived({ yDataVer, y2DataVer });
+  const setScaleX_trigger = $derived(is_live ? xDataVer : {});
 
   let options = $derived({
     width: width,
     height: height,
-    // plugins: [touchZoomPanPlugin(chartData[0].length)],
+    // plugins: [touchZoomPanPlugin(xData.length)],
     scales: {
       x: { time: false },
       y:
@@ -89,7 +91,7 @@
     chart?.destroy();
     chart = new uPlot(
       options,
-      untrack(() => chartData),
+      untrack(() => [xData, yData, y2Data]),
       chartContainer,
     );
     // Cleanup
@@ -102,7 +104,7 @@
     //console.log("setData");
     if (is_live) {
       const trigger = setData_trigger;
-      chart?.setData(chartData, false);
+      chart?.setData(untrack(() => [xData, yData, y2Data]), false);
       requestAnimationFrame(() => {
         chart?.redraw(true);
       });
@@ -115,7 +117,7 @@
       if (is_live) {
         // 1. Calculate how much the data moved (e.g., how many seconds/indices)
         // Assuming your X-array is sorted, compare the new first element to the old one
-        const newDataStart = chartData[0][0];
+        const newDataStart = xData[0];
         const oldDataStart = chart.data[0][0];
         const delta = newDataStart - oldDataStart;
 

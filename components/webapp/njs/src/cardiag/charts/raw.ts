@@ -15,7 +15,8 @@ export class raw_chart implements Icar_chart {
     return { name: "Raw", description: "shows all bytes of the frame as graphs." };
   }
   clear_chart_data() {
-    this.yn_arr.forEach((subArray) => (subArray.length = 0));
+    this.yn_arr = Array.from({ length: 64 }, () => []);
+    //this.yn_arr.forEach((subArray) => (subArray.length = 0));
   }
 
   get_chart_data() {
