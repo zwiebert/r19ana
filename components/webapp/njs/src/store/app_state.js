@@ -13,3 +13,5 @@ export const Verbose = PersistentValStore("AppVerbose", 1);
 export const GuiAcc = writable();
 
 export const EnableGitHubSamples = PersistentValStore("EnGhSmpls", 1);
+
+export const stickChartControls = writable(false);

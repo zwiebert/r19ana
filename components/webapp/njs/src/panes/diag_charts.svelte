@@ -1,6 +1,8 @@
 <script lang="ts">
   /* eslint-disable svelte/require-each-key */
+  import tippy from "sveltejs-tippy";
   import uPlot from "uplot";
+  import { stickChartControls } from "../store/app_state";
   import "uplot/dist/uPlot.min.css";
   import { untrack } from "svelte";
   import MyPlot from "./plot_test.svelte";
@@ -26,6 +28,8 @@
     yn_arr_modified: boolean;
     id: number;
   }
+  let diag_data: Uint8Array = $state.raw(new Uint8Array(0));
+  let diag_data_name = $state("");
   let force_all_version = $state(0);
   let input_data_version = $state(0); // version counter for input data changes
   let car_chart_version = $state(0); // index of  current parser/chart generator
@@ -36,6 +40,9 @@
   const yn_arr_version = $derived({ cc: car_chart_version, len: yn_arr.length, len2: yn_arr[0].length, id: chart_data.id, ls: live_simu }); //  version of y data
   const x_arr_version = $derived({ cc: car_chart_version, len: x_arr_len, x_arr }); //  version of x data
 
+  const n1 = 0;
+  const n2 = 200000;
+  let x_arr_live = $state(Array.from({ length: n2 - n1 + 1 }, (_, i) => n1 + i));
   const yn_arr = $derived(chart_data?.yn_arr ?? [[]]);
   const x_arr = $derived((!live_simu ? chart_data?.x_arr : x_arr_live) ?? []);
   const x_arr_len = $derived(x_arr.length);
@@ -45,7 +52,6 @@
   let car_charts: Icar_chart[] = [x53b_740_chart_factory(), raw_chart_factory()];
   let car_chart: Icar_chart = $derived(car_charts[car_chart_version]);
   const processData_trigger = $derived({ ver: car_chart_version, len: input_data_len, ipd: input_data_version, fa: force_all_version });
-  let diag_data: Uint8Array = $state.raw(new Uint8Array(0));
 
   let yn_show = $state(
     Array(64)
@@ -115,6 +121,7 @@
       // 3. Use the lowercase 'response' variable here
       buffer = await response.arrayBuffer();
       diag_data = new Uint8Array(buffer);
+      diag_data_name = url.split("\\").pop().split("/").pop();
 
       error = false;
     } catch (e) {
@@ -125,9 +132,16 @@
 
   let timeoutId = 0;
 
-  const n1 = 0;
-  const n2 = 10000;
-  let x_arr_live = Array.from({ length: n2 - n1 + 1 }, (_, i) => n1 + i);
+  function generate_live_x_arr(count: number, step: number = 0.015): Float64Array {
+    const start = Date.now() / 1000;
+    const x = new Float64Array(count);
+    console.log("start xarray");
+    for (let i = 0; i < count; i++) {
+      x[i] = start + i * step;
+    }
+    console.log("end xarray");
+    return x;
+  }
 
   function startTimer(chunk_size: number, chunk_nmb: number) {
     timeoutId = setTimeout(() => {
@@ -149,8 +163,11 @@
 
   function live_simu_process_data() {
     clearTimeout(timeoutId);
-    car_chart.clear_chart_data();
-    if (live_simu) startTimer(100, 0);
+    if (live_simu) {
+      car_chart.clear_chart_data();
+      x_arr_live = generate_live_x_arr(n2);
+      startTimer(100, 0);
+    }
   }
   //startTimer();
 
@@ -165,88 +182,105 @@
     if (!append) car_chart.clear_chart_data();
     unstuffing.process_chunk(data);
   }
+
+  const diag_charts = {
+    tt: {
+      h3: "Hotkeys: 1,2,3,4,Tab: Change chart page." + "c: make chart controls visible when scrolling",
+    },
+  };
 </script>
 
+{#snippet header()}
+  <h3 class="w-screen mx-0 pointer-events-auto" use:tippy={{ content: diag_charts.tt.h3 }}>{chart_index + 1} : {diag_data_name}</h3>
+{/snippet}
+
 <svelte:window bind:innerWidth={win_innerWidth} onresize={() => (width = window.innerWidth - 10)} />
-
-<h3>{chart_index + 1}</h3>
-
-<div class="w-fit mx-auto">
-  <div class="flex flex-row items-center">
-    <div class="flex flex-col">
-      <label><input type="checkbox" bind:checked={$EnableGitHubSamples} />Allow Samples from GitHub</label>
-      {#if $EnableGitHubSamples}
-        {#await getGithubSamples()}
-          <p>Loading samples URLs...</p>
-        {:then list: {url:string, name:string}[]}
-          <select
-            size={6}
-            onchange={(event) => {
-              let url = event.target.value as string;
-              if (url) fetchBinaryData(url);
-            }}
-          >
-            {#each list as sample}
-              <option value={sample.url}>{sample.name}</option>
-            {/each}
-          </select>
-        {/await}
-      {/if}
-
-      {#if import.meta.env.MODE === "mcu"}
-        <button
-          onclick={() => {
-            fetchBinaryData("/f/mnt/sdcard/xr25.bin");
-          }}>Fetch Data File From MCU</button
-        >
-      {/if}
-      {#if chart_index === chart_index_viewed}
-        <DropFile onDataLoaded={(data_array) => (diag_data = data_array)} mode="button" />
-      {/if}
-
-      <label><input type="checkbox" bind:checked={live_simu} />Live-Simulation</label>
-    </div>
-    <div class="flex flex-col">
-      <div>
-        <p>Type</p>
-        <select bind:value={car_chart_version} size={3}>
-          {#each car_charts as cc, i}
-            <option value={i}>{cc.get_info().name}</option>
-          {/each}
-        </select>
-      </div>
-      <label>Width: <input type="number" bind:value={width} min={400} max={5000} step={100} /></label>
-      <label>Height: <input type="number" bind:value={height} min={100} max={1000} step={25} /></label>
-      <button
-        onclick={() => {
-          ++force_all_version;
-        }}>re-plot</button
-      >
-    </div>
-    <div class="flex flex-col text-left">
-      {#each Array.from({ length: Math.floor(nmbGraphs / 2) }, (_, index) => index * 2) as i}
-        <div>
-          <label><input type="checkbox" bind:checked={yn_show[i]} />{car_chart.get_label(i)?.series_label}, {car_chart.get_label(i + 1)?.series_label}</label>
-          {#if car_chart.get_label(i)?.axis_label === "bits" || car_chart.get_label(i)?.axis_label === "raw"}
-            <label><input type="checkbox" bind:checked={yn_show_as_bits[i]} />bits</label>
-          {/if}
-        </div>
-      {/each}
-    </div>
-  </div>
-</div>
-
-{#if error}
-  <p style="color: red;">Error: {error}</p>
-{:else if diag_data.length > 0}
-  <p>...{diag_data.length} bytes</p>
-{/if}
-
-<div class="w-full text-center">
-  <div class="w-fit mx-auto">
+<div class="min-w-full text-center">
+  <div class="min-w-full mx-auto">
     <!-- 2. The Wide Container (The "Giant Canvas") -->
     <!-- 'w-max' tells it to grow with the charts. 'min-w-full' keeps it at least screen-wide. -->
     <div class="block w-max min-w-full text-left p-4">
+      {#if !$stickChartControls}
+        <div class="sticky top-0 left-0 z-60 w-screen">
+          {@render header()}
+        </div>
+      {/if}
+
+      <div class="sticky left-0 z-50 w-screen pointer-events-none text-center" class:top-0={$stickChartControls}>
+        {#if $stickChartControls}
+          {@render header()}
+        {/if}
+        <div class="mx-auto w-fit pointer-events-auto bg-amber-50 p-2" class:shadow-xl={$stickChartControls}>
+          <div class="flex flex-row items-center">
+            <div class="flex flex-col">
+              <label><input type="checkbox" bind:checked={$EnableGitHubSamples} />Allow Samples from GitHub</label>
+              {#if $EnableGitHubSamples}
+                {#await getGithubSamples()}
+                  <p>Loading samples URLs...</p>
+                {:then list: {url:string, name:string}[]}
+                  <select
+                    size={6}
+                    onchange={(event) => {
+                      let url = event.target.value as string;
+                      if (url) fetchBinaryData(url);
+                    }}
+                  >
+                    {#each list as sample}
+                      <option value={sample.url}>{sample.name}</option>
+                    {/each}
+                  </select>
+                {/await}
+              {/if}
+
+              {#if import.meta.env.MODE === "mcu"}
+                <button
+                  onclick={() => {
+                    fetchBinaryData("/f/mnt/sdcard/xr25.bin");
+                  }}>Fetch Data File From MCU</button
+                >
+              {/if}
+              {#if chart_index === chart_index_viewed}
+                <DropFile onDataLoaded={(data_array) => (diag_data = data_array)} mode="button" />
+              {/if}
+
+              <label><input type="checkbox" bind:checked={live_simu} />Live-Simulation</label>
+            </div>
+            <div class="flex flex-col">
+              <div>
+                <p>Type</p>
+                <select bind:value={car_chart_version} size={3}>
+                  {#each car_charts as cc, i}
+                    <option value={i}>{cc.get_info().name}</option>
+                  {/each}
+                </select>
+              </div>
+              <label>Width: <input type="number" bind:value={width} min={400} max={5000} step={100} /></label>
+              <label>Height: <input type="number" bind:value={height} min={100} max={1000} step={25} /></label>
+              <button
+                onclick={() => {
+                  ++force_all_version;
+                }}>re-plot</button
+              >
+            </div>
+            <div class="flex flex-col text-left">
+              {#each Array.from({ length: Math.floor(nmbGraphs / 2) }, (_, index) => index * 2) as i}
+                <div>
+                  <label
+                    ><input type="checkbox" bind:checked={yn_show[i]} />{car_chart.get_label(i)?.series_label}, {car_chart.get_label(i + 1)
+                      ?.series_label}</label
+                  >
+                  {#if car_chart.get_label(i)?.axis_label === "bits" || car_chart.get_label(i)?.axis_label === "raw"}
+                    <label><input type="checkbox" bind:checked={yn_show_as_bits[i]} />bits</label>
+                  {/if}
+                </div>
+              {/each}
+            </div>
+          </div>
+          {#if error}
+            <p style="color: red;">Error: {error}</p>
+          {/if}
+        </div>
+      </div>
       {#if x_arr.length > 0}
         {#each Array.from({ length: Math.floor(nmbGraphs / 2) }, (_, index) => index * 2) as i}
           <div class="text-left">

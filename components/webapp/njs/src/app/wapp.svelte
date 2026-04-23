@@ -6,20 +6,47 @@
   import PaneMcuSettings from "../panes/mcu_settings.svelte";
   import PaneFirmwareEsp32 from "../panes/firmware_esp32.svelte";
   import DiagCharts from "../panes/diag_charts.svelte";
-  import { TabIdx } from "../store/app_state.js";
+  import { TabIdx, stickChartControls } from "../store/app_state";
 
   let tabIdxMain = $derived($TabIdx["main"] ?? 0);
-  let tabIdxCfg = $derived($TabIdx["cfg"] ??  0);
+  let tabIdxCfg = $derived($TabIdx["cfg"] ?? 0);
   let tabIdxFw = $derived($TabIdx["fw"] ?? 0);
   let tabIdxSettings = $derived($TabIdx["settings"] ?? 0);
   let tabIdxCharts = $derived($TabIdx["charts"] ?? 0);
+
+  if (import.meta.env.MODE === "github") {
+    tabIdxMain = 1;
+  }
 </script>
+
+<svelte:window
+  onkeydown={(e) => {
+    // Only trigger if not typing in an input
+    if (e.target.tagName === "INPUT") return;
+
+    if (e.key >= "1" && e.key <= "4") {
+      tabIdxCharts = parseInt(e.key) - 1;
+    }
+
+    if (e.key === "Tab") {
+      e.preventDefault(); // Stop focus jumping
+      tabIdxCharts = (tabIdxCharts + 1) % 4;
+    }
+    if (e.key === "c") {
+      e.preventDefault(); // Stop focus jumping
+      $stickChartControls = !$stickChartControls;
+    }
+  }}
+/>
 
 <div class="text-center">
   <div class="mx-auto">
     <div id="navTabs" class="flex flex-col items-center px-1 border-none">
       <div class="navtab-main">
-        <NavTabs nav_tabs={[...(import.meta.env.MODE === "mcu" ? [{ name: $_("MCU"), idx: 0 }] : []), { name: $_("Charts"), idx: 1 }]} name="main" />
+        <NavTabs
+          nav_tabs={[...(import.meta.env.MODE === "mcu" ? [{ name: $_("MCU"), idx: 0 }] : []), { name: $_("Charts"), idx: 1 }, { name: $_("Help"), idx: 2 }]}
+          name="main"
+        />
       </div>
     </div>
 
@@ -58,7 +85,7 @@
       </div>
 
       <div style="display: {!tabIdxCharts ? 'block' : 'none'}">
-        <DiagCharts chart_index={0} chart_index_viewed={tabIdxCharts}/>
+        <DiagCharts chart_index={0} chart_index_viewed={tabIdxCharts} />
       </div>
       <div style="display: {tabIdxCharts === 1 ? 'block' : 'none'}">
         <DiagCharts chart_index={1} chart_index_viewed={tabIdxCharts} />
@@ -69,6 +96,6 @@
       <div style="display: {tabIdxCharts === 3 ? 'block' : 'none'}">
         <DiagCharts chart_index={3} chart_index_viewed={tabIdxCharts} />
       </div>
-    {/if}
+    {:else if tabIdxMain === 2 || import.meta.env.MODE === "github"}{/if}
   </div>
 </div>

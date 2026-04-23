@@ -1,6 +1,7 @@
 <script lang="ts">
   "use strict";
-  import { TabIdx } from "../store/app_state.js";
+  import { TabIdx } from "../store/app_state";
+  import { onMount } from "svelte";
 
   interface Inav_tabs {
     name: string;
@@ -13,6 +14,22 @@
     obj[name] = idx;
     TabIdx.update(obj);
   }
+
+  function isIdxInTabs(idx) {
+    for (const t of nav_tabs) if (t.idx === idx) return true;
+    return false;
+  }
+
+  function fixMissingIdx() {
+    const idx = $TabIdx[name] as number;
+    if (isIdxInTabs(idx)) return;
+    for (const t of nav_tabs) {
+      setTabIdx(t.idx);
+      return;
+    }
+  }
+
+  onMount(fixMissingIdx);
 </script>
 
 <div id="tabBar" class="overflow-hidden">

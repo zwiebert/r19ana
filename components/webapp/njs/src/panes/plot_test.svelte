@@ -6,12 +6,12 @@
   import { touchZoomPanPlugin } from "../plotting/uplot/zoom_plugin";
 
   interface Iprops {
-    xData: number[],
-    yData: number[],
-    y2Data: number[],
-    xDataVer: {},
-    yDataVer: {},
-    y2DataVer: {},
+    xData: number[];
+    yData: number[];
+    y2Data: number[];
+    xDataVer: {};
+    yDataVer: {};
+    y2DataVer: {};
     labels: ILabel[3];
     syncKey: {};
     width: number;
@@ -19,8 +19,19 @@
     is_live: boolean;
   }
   // Props or state
-  const { xData, xDataVer, yData, yDataVer, y2Data, y2DataVer, labels = [{}, {}, {}], syncKey = null, width = 1600, height = 30, is_live = false }: Iprops = $props();
-
+  const {
+    xData,
+    xDataVer,
+    yData,
+    yDataVer,
+    y2Data,
+    y2DataVer,
+    labels = [{}, {}, {}],
+    syncKey = null,
+    width = 1600,
+    height = 30,
+    is_live = false,
+  }: Iprops = $props();
 
   let chart;
   let chartContainer;
@@ -33,7 +44,7 @@
     height: height,
     // plugins: [touchZoomPanPlugin(xData.length)],
     scales: {
-      x: { time: false },
+      x: { time: is_live },
       y:
         labels[1]?.axis_label == "boolean"
           ? { auto: false, range: (u, min, max) => [-3.6, 2.5] }
@@ -48,16 +59,55 @@
             : {}, // Default right scale
     },
     series: [
-      { label: labels[0]?.series_label ?? "x" }, // X-axis
+      {
+        label: labels[0]?.series_label ?? "x",
+
+        value: !is_live
+          ? undefined
+          : (u, v) => {
+              if (v == null) return "-";
+              const d = new Date(v * 1000);
+              const timeStr = d.toLocaleTimeString("en-GB", { hour12: false });
+              const ms = d.getMilliseconds().toString().padStart(3, "0");
+              return `${timeStr}.${ms}`;
+            },
+      }, // X-axis
       {
         label: labels[1]?.series_label ?? "y",
         stroke: "red",
         scale: "y", // Uses default left scale
+
+        // 1. POINTS.SHOW
+        // Set to false to stop uPlot from drawing 200k circles
+        points: { show: false },
+
+        // 2. PATHBUILDER
+        // Usually left alone, but you can provide custom line logic here.
+        // For performance, uPlot's default is already highly optimized.
+        // pathBuilder: uPlot.paths.stepped({align: 1}),
+
+        // 3. PXALIGN
+        // 1 (default) = align to physical screen pixels (crisp but slower)
+        // 0 = no alignment (much faster for zooming 200k points)
+        pxAlign: 0,
       },
       {
         label: labels[2]?.series_label ?? "y2",
         stroke: "blue",
         scale: "y2", // Uses independent right scale
+        // 1. POINTS.SHOW
+        // Set to false to stop uPlot from drawing 200k circles
+        points: { show: false },
+
+        // 2. PATHBUILDER
+        // Usually left alone, but you can provide custom line logic here.
+        // For performance, uPlot's default is already highly optimized.
+        // pathBuilder: uPlot.paths.stepped({align: 1}),
+
+        // 3. PXALIGN
+        // 1 (default) = align to physical screen pixels (crisp but slower)
+        // 0 = no alignment (much faster for zooming 200k points)
+        pxAlign: 0,
       },
     ],
     axes: [
@@ -81,7 +131,7 @@
             setSeries: true, // Optional: syncs series toggling/highlighting
             setScale: [true, false], // Syncs X scale (index 0), ignores Y scale (index 1)
           }
-        : {},
+        : undefined,
     },
   });
 
@@ -104,7 +154,10 @@
     //console.log("setData");
     if (is_live) {
       const trigger = setData_trigger;
-      chart?.setData(untrack(() => [xData, yData, y2Data]), false);
+      chart?.setData(
+        untrack(() => [xData, yData, y2Data]),
+        false,
+      );
       requestAnimationFrame(() => {
         chart?.redraw(true);
       });
