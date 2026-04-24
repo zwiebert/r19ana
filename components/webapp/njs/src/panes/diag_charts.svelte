@@ -49,8 +49,9 @@
   const nmbGraphs = $derived(chart_data.nmbGraphs);
 
   let error = $state(null);
-  let car_charts: Icar_chart[] = [x53b_740_chart_factory(), raw_chart_factory()];
+  let car_charts: Icar_chart[] = $state([x53b_740_chart_factory(), raw_chart_factory()]);
   let car_chart: Icar_chart = $derived(car_charts[car_chart_version]);
+  const car_metrics = $derived(car_chart.get_car_metrics());
   const processData_trigger = $derived({ ver: car_chart_version, len: input_data_len, ipd: input_data_version, fa: force_all_version });
 
   let yn_show = $state(
@@ -188,6 +189,10 @@
       h3: "Hotkeys: 1,2,3,4,Tab: Change chart page." + "c: make chart controls visible when scrolling",
     },
   };
+
+  let showChartEditor = $state(true);
+  let selectOrderIdx = $state(0);
+  let selectUnusedMetricsIdx = $state(0);
 </script>
 
 {#snippet header()}
@@ -195,6 +200,46 @@
 {/snippet}
 
 <svelte:window bind:innerWidth={win_innerWidth} onresize={() => (width = window.innerWidth - 10)} />
+
+<!-- begin of experimental -->
+<label><input type="checkbox" bind:checked={showChartEditor} />Show Chart Editor</label>
+{#if showChartEditor}
+  <div class="flex flex-row mx-auto w-fit">
+    <select size={car_metrics.length} bind:value={selectOrderIdx}>
+      {#each car_charts[0].order as cmi, i}
+        <option value={i}>
+          {cmi}
+          {car_metrics[cmi].name}
+        </option>
+      {/each}
+    </select>
+    <div class="flex flex-col mx-auto w-fit">
+      <button
+        class=""
+        onclick={() => {
+          if (selectOrderIdx === 0) return;
+          [car_charts[0].order[selectOrderIdx], car_charts[0].order[selectOrderIdx - 1]] = [car_charts[0].order[selectOrderIdx - 1], car_charts[0].order[selectOrderIdx]];
+          console.log("car_charts[0].order", car_charts[0].order);
+        }}>move up</button
+      >
+      <button class="">move down</button>
+      <button class="">add</button>
+      <button class="">remove</button>
+    </div>
+    <select size={car_metrics.length} bind:value={selectUnusedMetricsIdx}>
+      {#each car_metrics as cm, i}
+        {#if !car_charts[0].order.includes(i)}
+          <option value={cm}>
+            {i}
+            {cm.name}
+          </option>
+        {/if}
+      {/each}
+    </select>
+  </div>
+{/if}
+<!-- end of experimental -->
+
 <div class="min-w-full text-center">
   <div class="min-w-full mx-auto">
     <!-- 2. The Wide Container (The "Giant Canvas") -->
