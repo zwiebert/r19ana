@@ -5,7 +5,7 @@
 
 #include "XR25Frame.hh"
 #include "models/settings.hh"
-#include "models/x53b_740/frame.hh"
+#include "models/x53b_740/packet_parser.hh"
 
 /// @brief
 class ExpFrame : public X53b740Frame {
@@ -33,7 +33,7 @@ class ExpFrame : public X53b740Frame {
 
 
  public:
-  ExpFrame(const XR25Frame::voc_t& frame) : X53b740Frame(frame) {
+  ExpFrame(const XR25Frame::voc_t& voc) : X53b740Frame(voc) {
   };
   ExpFrame() = default;
 };

@@ -260,11 +260,11 @@ class DataLogfileEsp32 final : public DataLogFileStdio, public IMountable {
     }
     return DataLogFileStdio::feed_bytes(src, src_len);
   }
-  bool write(const XR25Frame::voc_t& frame) override {
+  bool write(const XR25Frame::voc_t& voc) override {
     if (m_file_owner_task != xTaskGetCurrentTaskHandle()) {
       return false;
     }
-    return DataLogFileStdio::write(frame);
+    return DataLogFileStdio::write(voc);
   }
   bool open_file() override {
     if (!DataLogFileStdio::open_file()) {

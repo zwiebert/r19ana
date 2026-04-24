@@ -33,14 +33,14 @@ class DataLogFileStdio : public IFileLogger {
     return fwrite(src, sizeof *src, src_len, m_file);
   }
 
-  virtual bool write(const XR25Frame::voc_t& frame) override {
+  virtual bool write(const XR25Frame::voc_t& voc) override {
     if (!m_file) return -1;
 
     if (putc('\xff', m_file) == EOF) return false;
     if (putc('\x00', m_file) == EOF) return false;
 
-    for (unsigned i = 0; i < frame.frame_len; ++i) {
-      auto db = frame.frame[i];
+    for (unsigned i = 0; i < voc.packet_len; ++i) {
+      auto db = voc.packet[i];
       if (putc(db, m_file) == EOF) return false;
       if (db == 0xff)
         if (putc(db, m_file) == EOF) return false;

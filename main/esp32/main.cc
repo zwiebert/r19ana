@@ -72,10 +72,10 @@ extern "C" int app_main() {
 void lean_app_main() {
   main_init();
 
-  // processor calls back when it has completed a frame from the chunks of bytes
+  // processor calls back when it has completed a packet from the chunks of bytes
   // it got from x25_transport. processor has a dedicated thread for doing the
   // callback. its ok to block it.
-  FrameProcessor processor([](const XR25Frame::voc_t& frame) {
+  FrameProcessor processor([](const XR25Frame::voc_t& voc) {
     if (data_logfile &&
         data_logfile->is_ready()) {  // XXX: is_ready will prevent remounting
                                      // with current implementation
@@ -91,16 +91,16 @@ void lean_app_main() {
 
       if (v.is_mounted()) {
         // write object to log  file
-        if (frame.frame_len) {
+        if (voc.packet_len) {
           empty_count = 0;
           if (!l.is_open()) {
             l.open_file();
             ESP_LOGE(TAG, "logfile: open file just before before writing");
           }
-          if (!l.write(frame)) {
+          if (!l.write(voc)) {
             v.umount_fs();  // card may have been removed
             // try again
-            if (!(v.mount_fs() && l.write(frame))) {
+            if (!(v.mount_fs() && l.write(voc))) {
             }
           }
           is_dirty = true;
@@ -129,8 +129,8 @@ void lean_app_main() {
       }
     }
 
-    if (frame.frame_len && print_car_diag) {
-      print_car_diag->push_frame(frame);
+    if (voc.packet_len && print_car_diag) {
+      print_car_diag->push_packet(voc);
 #ifdef CONFIG_BT_ENABLED
       if (!spp_is_connected()) return;
 #endif

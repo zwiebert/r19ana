@@ -127,7 +127,7 @@ int main(int argc, char** argv) {
     if (!hex2voc(voc, cline)) continue;
 
     ++voc.counter;
-    print_car_diag->push_frame(voc);
+    print_car_diag->push_packet(voc);
 
     char* dst = 0;
     if (auto dst_len = r19_alloc_and_print(dst, *print_car_diag, Mask);

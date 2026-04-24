@@ -15,8 +15,8 @@ class X53b740Frame : public CarModelBase {
 
  public:
 #define OLD_FORMULAS 0
-  static constexpr int FRAME_SIZE = 30;
-  using frame_data_t = std::array<uint8_t, FRAME_SIZE>;
+  static constexpr int PACKET_SIZE = 30;
+  using packet_data_t = std::array<uint8_t, PACKET_SIZE>;
 
  public:
   enum idx_t : uint8_t {
@@ -172,16 +172,16 @@ class X53b740Frame : public CarModelBase {
   bool is_fuel_pump_on() const { return getbit(X(idx_t::status6), 4); }
 
  public:
-  const frame_data_t& get_frame() const { return data; }
+  const packet_data_t& get_frame() const { return data; }
 
  private:
-  frame_data_t data = {};  ///<  XR25 frame without header ff,00
+  packet_data_t data = {};  ///<  destuffed XR25 packet 
   int FrameNumber = 0;
 
  public:
-  X53b740Frame(const XR25Frame::voc_t& frame) : FrameNumber(frame.counter) {
-    for (int i = 0; i < FRAME_SIZE; ++i) {
-      data[i] = frame.frame[i];
+  X53b740Frame(const XR25Frame::voc_t& voc) : FrameNumber(voc.counter) {
+    for (int i = 0; i < PACKET_SIZE; ++i) {
+      data[i] = voc.packet[i];
     }
   };
   X53b740Frame() = default;

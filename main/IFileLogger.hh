@@ -11,7 +11,7 @@ class IFileLogger {
   virtual bool close_file() = 0;
   virtual bool flush() = 0;
   virtual int feed_bytes(const uint8_t* src, unsigned src_len) = 0;
-  virtual bool write(const XR25Frame::voc_t& frame) = 0;
+  virtual bool write(const XR25Frame::voc_t& voc) = 0;
 
   virtual bool is_open() const = 0;
   virtual bool set_full_path(const char* file_name) = 0;

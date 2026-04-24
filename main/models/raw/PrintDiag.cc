@@ -4,11 +4,11 @@
 
 #include <bitset>
 
-#include "frame.hh"
+#include "packet_parser.hh"
 #include "i18n.hh"
 #include "main.hh"
 
-using OurFrame = RawFrame;
+using OurPacket = RawPacket;
 
 #define diag_printf(fmt, ...)                              \
   do {                                                     \
@@ -19,10 +19,10 @@ using OurFrame = RawFrame;
     }                                                      \
   } while (0)
 
-static char frame_hex[OurFrame::FRAME_SIZE * 3];
-static void frame_hex_fill(const OurFrame& frame, const char* sep = ",") {
-  bin2hex(&frame.get_frame()[0], frame.get_frame_length(), frame_hex,
-          sizeof frame_hex, sep);
+static char packet_as_hex[OurPacket::PACKET_SIZE * 3];
+static void frame_hex_fill(const OurPacket& packet, const char* sep = ",") {
+  bin2hex(&packet.get_frame()[0], packet.get_frame_length(), packet_as_hex,
+          sizeof packet_as_hex, sep);
 }
 
 /// @brief Conditional print members of X53b740Frame object
@@ -33,7 +33,7 @@ static void frame_hex_fill(const OurFrame& frame, const char* sep = ",") {
 /// printed.
 /// @return  bytes written or if greater than dst_siz, the required buffer size
 /// (man 3 snprintf)
-static int frame_print(char* dst, size_t dst_siz, const OurFrame& d,
+static int frame_print(char* dst, size_t dst_siz, const OurPacket& d,
                        const PrintCarDiag::line_view_mask_t& view_mask) {
   ssize_t dst_size = ssize_t(dst_siz);
   int ct = 0;
@@ -44,11 +44,11 @@ static int frame_print(char* dst, size_t dst_siz, const OurFrame& d,
 
     ///////////////////////////////////////////////
     frame_hex_fill(d, "");
-    diag_printf("%s\n", frame_hex);
+    diag_printf("%s\n", packet_as_hex);
     ///////////////////////////////////////////////
 
-    diag_printf("%6d %s\n", d.get_frame_count(), _("Frame-Count"));
-    diag_printf("%6u bytes %s\n", d.get_frame_length(), _("Frame-Length"));
+    diag_printf("%6d %s\n", d.get_frame_count(), _("Packet-Count"));
+    diag_printf("%6u bytes %s\n", d.get_frame_length(), _("Packet-Length"));
 
     {
       static struct timeval tv0;

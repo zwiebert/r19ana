@@ -201,8 +201,8 @@ static CliCmd cmds[] = {
          "Select car-model. Currently available are:\n"
          "x53b-740 - Renault 19 54kW, TBI, manual transmission (aliases: "
          "73PS)\n"
-         "raw - Just prints the frame data (hex-string) and frame counter\n"
-         "exp - experimental frame to figure out meaning of data and formulas "
+         "raw - Just prints the packet data (hex-string) and packet counter\n"
+         "exp - experimental packet to figure out meaning of data and formulas "
          "on my x53b-740\n",
      .handler = [](CliCmd& cmd) -> bool {
        for (char *str = cmd.args, *save_ptr = nullptr, *tok;

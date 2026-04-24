@@ -23,27 +23,27 @@ FrameProcessor::~FrameProcessor() {
 }
 
 void FrameProcessor::update_thread_fun() {
-  XR25Frame::voc_t frame;
+  XR25Frame::voc_t voc;
   for (; m_update_thread_keep_running;) {
     {
       std::unique_lock<std::mutex> lock(m_update_thread_mutex);
       if (!(m_nmb_frames_waiting = xr25.get_buffered_frame_count()))
         m_update_thread_cv.wait_for(
-            lock, std::chrono::milliseconds(m_upd_pulse), [frame, this]() {
+            lock, std::chrono::milliseconds(m_upd_pulse), [voc, this]() {
               return m_nmb_frames_waiting || !m_update_thread_keep_running;
             });
-      // make copies of frame data and counter while feeder thread is locked by
+      // make copies of packet data and counter while feeder thread is locked by
       // mutex
-      if (!m_nmb_frames_waiting || !xr25.pull_voc(frame)) {
-        // no frame is available, so mark our copy as empty.
-        frame.frame_len = 0;
+      if (!m_nmb_frames_waiting || !xr25.pull_voc(voc)) {
+        // no packet is available, so mark our copy as empty.
+        voc.packet_len = 0;
       }
     }
-    if (frame.frame_len) {
+    if (voc.packet_len) {
       m_update_thread_cv2.notify_one();
     }
 
-    if (callback) callback(frame);
+    if (callback) callback(voc);
   }
 }
 

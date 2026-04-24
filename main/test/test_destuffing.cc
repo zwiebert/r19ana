@@ -7,8 +7,8 @@
 #include "XR25Frame.hh"
 
 const unsigned FRAME_CT = 80;
-const unsigned FRAME_LEN = 30;
-const size_t size = FRAME_LEN * FRAME_CT + 14;
+const unsigned PACKET_SIZE = 30;
+const size_t size = PACKET_SIZE * FRAME_CT + 14;
 uint8_t random_bytes[size];
 uint8_t stuffed_bytes[size * 2];
 unsigned sb_len = 0;
@@ -18,7 +18,7 @@ unsigned dsb_len = 0;
 unsigned destuffed_frames_ct = 0;
 
 void stuff(uint8_t* dst, size_t dst_size, uint8_t* src, size_t src_len,
-           unsigned frame_len = FRAME_LEN) {
+           unsigned frame_len = PACKET_SIZE) {
   unsigned sb = 0;
   unsigned frame_ct = 0;
   for (unsigned df = 0; df + frame_len < src_len; df += frame_len) {
@@ -48,8 +48,8 @@ void destuff(uint8_t* dst, size_t dst_size, uint8_t* src, size_t src_len,
     while (xr25.get_buffered_frame_count()) {
       XR25Frame::voc_t voc;
       if (xr25.pull_voc(voc)) {
-        memcpy(dst + db, &voc.frame[0], voc.frame_len);
-        db += voc.frame_len;
+        memcpy(dst + db, &voc.packet[0], voc.packet_len);
+        db += voc.packet_len;
         ++frame_ct;
       }
     }
@@ -58,8 +58,8 @@ void destuff(uint8_t* dst, size_t dst_size, uint8_t* src, size_t src_len,
   while (xr25.get_buffered_frame_count()) {
     XR25Frame::voc_t voc;
     if (xr25.pull_voc(voc)) {
-      memcpy(dst + db, &voc.frame[0], voc.frame_len);
-      db += voc.frame_len;
+      memcpy(dst + db, &voc.packet[0], voc.packet_len);
+      db += voc.packet_len;
       ++frame_ct;
     }
   }

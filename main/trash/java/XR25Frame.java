@@ -10,7 +10,7 @@ public class XR25Frame {
     private byte[] buffer;
     private byte[] dampbuf;
     static final int BUF_SIZE = 500;
-    static final int FRAME_SIZE = 32;
+    static final int PACKET_SIZE = 32;
     static final byte[] FRAME_START_ID = {(byte) 0xff, (byte) 0x00, (byte) 0x10, (byte) 0x77};
     int tail = 0;
     int head = BUF_SIZE - 2;
@@ -19,11 +19,11 @@ public class XR25Frame {
 
     public XR25Frame() {
         buffer = new byte[BUF_SIZE];
-        dampbuf = new byte[FRAME_SIZE];
+        dampbuf = new byte[PACKET_SIZE];
     }
 
     void dampbufFill() {
-        for (int i = 0; i < FRAME_SIZE; ++i) {
+        for (int i = 0; i < PACKET_SIZE; ++i) {
             int b = getIntByIndex(i);
             int d = dampbuf[i] & 0xff;
             if (b == d) {
@@ -36,9 +36,9 @@ public class XR25Frame {
     }
 
     public String dampbufAsString() {
-        StringBuilder sb = new StringBuilder(FRAME_SIZE * 3);
+        StringBuilder sb = new StringBuilder(PACKET_SIZE * 3);
 
-        for (int i = 0; i < FRAME_SIZE; ++i) {
+        for (int i = 0; i < PACKET_SIZE; ++i) {
             byte c = dampbuf[i];
             sb.append(Character.forDigit((c >> 4) & 0xF, 16));
             sb.append(Character.forDigit((c & 0xF), 16));
@@ -70,9 +70,9 @@ public class XR25Frame {
         int last_good_head = -1;
         int frames_found = 0;
 
-        while (distance() > FRAME_SIZE) {
+        while (distance() > PACKET_SIZE) {
             int pos = find(FRAME_START_ID);
-            if ((distance() - pos) < FRAME_SIZE) { //found beginning of a frame, but frame incomplete
+            if ((distance() - pos) < PACKET_SIZE) { //found beginning of a frame, but frame incomplete
                 break;
             }
             if (pos == 0) {  // we have a valid frame at current position
@@ -145,9 +145,9 @@ public class XR25Frame {
     }
 
     public String toString() {
-        StringBuilder sb = new StringBuilder(FRAME_SIZE * 3);
+        StringBuilder sb = new StringBuilder(PACKET_SIZE * 3);
 
-        for (int i = 0; i < FRAME_SIZE; ++i) {
+        for (int i = 0; i < PACKET_SIZE; ++i) {
             byte c = getByteByIndex(i);
             sb.append(Character.forDigit((c >> 4) & 0xF, 16));
             sb.append(Character.forDigit((c & 0xF), 16));

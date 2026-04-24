@@ -9,7 +9,7 @@ inline int hex_nibble(char c) {
   return -1;
 }
 inline bool hex2voc(XR25Frame::voc_t& voc, const char* src) {
-  voc.frame_len = 0;
+  voc.packet_len = 0;
   if (!src) return false;
 
   unsigned dst_idx = 0;
@@ -19,7 +19,7 @@ inline bool hex2voc(XR25Frame::voc_t& voc, const char* src) {
     int val = hex_nibble(*p);
     if (val < 0) {
       // invalid char, abort and reset
-      voc.frame_len = 0;
+      voc.packet_len = 0;
       return false;
     }
     if (high_nibble < 0) {
@@ -27,14 +27,14 @@ inline bool hex2voc(XR25Frame::voc_t& voc, const char* src) {
       continue;
     }
     // complete byte
-    if (dst_idx >= XR25Frame::FRAME_MAX_SIZE) {
+    if (dst_idx >= XR25Frame::PACKET_MAX_SIZE) {
       break;
     }
-    voc.frame[dst_idx++] = static_cast<uint8_t>((high_nibble << 4) | val);
+    voc.packet[dst_idx++] = static_cast<uint8_t>((high_nibble << 4) | val);
     high_nibble = -1;
   }
 
   // ignore final nibble if odd length
-  voc.frame_len = dst_idx >= XR25Frame::FRAME_MIN_SIZE ? dst_idx : 0;
-  return voc.frame_len > 0;
+  voc.packet_len = dst_idx >= XR25Frame::PACKET_MIN_SIZE ? dst_idx : 0;
+  return voc.packet_len > 0;
 }

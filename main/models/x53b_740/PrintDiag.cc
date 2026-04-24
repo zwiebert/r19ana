@@ -2,11 +2,11 @@
 
 #include <bitset>
 
-#include "frame.hh"
+#include "packet_parser.hh"
 #include "i18n.hh"
 #include "main.hh"
 
-using OurFrame = X53b740Frame;
+using OurPacket = X53b740Frame;
 
 #define diag_printf(fmt, ...)                              \
   do {                                                     \
@@ -17,16 +17,16 @@ using OurFrame = X53b740Frame;
     }                                                      \
   } while (0)
 
-static char frame_hex[OurFrame::FRAME_SIZE * 3];
-static void frame_hex_fill(const OurFrame::frame_data_t& frame,
+static char packet_as_hex[OurPacket::PACKET_SIZE * 3];
+static void frame_hex_fill(const OurPacket::packet_data_t& packet,
                            const char* sep = ",") {
-  bin2hex(&frame[0], frame.size(), frame_hex, sizeof frame_hex, sep);
+  bin2hex(&packet[0], packet.size(), packet_as_hex, sizeof packet_as_hex, sep);
 }
 
 int PrintDiagX53b740::snprint_diag(char* dst, size_t dst_siz,
                                    const line_view_mask_t& view_mask) const {
-  const OurFrame& d = m_frame;
-  using idx_t = OurFrame::idx_t;
+  const OurPacket& d = m_frame;
+  using idx_t = OurPacket::idx_t;
 
   ssize_t dst_size = ssize_t(dst_siz);
   int ct = 0;
@@ -37,11 +37,11 @@ int PrintDiagX53b740::snprint_diag(char* dst, size_t dst_siz,
 
     ///////////////////////////////////////////////
     frame_hex_fill(d.get_frame(), "");
-    diag_printf("%s\n", frame_hex);
+    diag_printf("%s\n", packet_as_hex);
     ///////////////////////////////////////////////
 
     // analog-values
-    diag_printf("%6d N    xx  \"Frame-Count\"\n", d.get_frame_count());
+    diag_printf("%6d N    xx  \"Packet-Count\"\n", d.get_frame_count());
     diag_printf("%6d mBar #01 \"%s\"\n",
                 d.get_manifold_absolute_pressure_mBar(), _("Manifold"));
     diag_printf("%6d °C   #02 \"%s\"\n",

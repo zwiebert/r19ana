@@ -117,8 +117,8 @@ int main(int argc, char** argv) {
     std::cout.rdbuf(os->rdbuf());
   }
 
-  FrameProcessor processor([](const XR25Frame::voc_t& frame) {
-    print_car_diag->push_frame(frame);
+  FrameProcessor processor([](const XR25Frame::voc_t& voc) {
+    print_car_diag->push_packet(voc);
     char* dst = 0;
     if (auto dst_len = r19_alloc_and_print(dst, *print_car_diag, Mask);
         dst_len > 0) {

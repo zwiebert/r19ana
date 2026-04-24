@@ -2,11 +2,11 @@
 
 #include <bitset>
 
-#include "frame.hh"
+#include "packet_parser.hh"
 #include "i18n.hh"
 #include "main.hh"
 
-using OurFrame = class ExpFrame;
+using OurPacket = class ExpFrame;
 
 #define diag_printf(fmt, ...)                              \
   do {                                                     \
@@ -17,18 +17,18 @@ using OurFrame = class ExpFrame;
     }                                                      \
   } while (0)
 
-static char frame_hex[OurFrame::FRAME_SIZE * 3];
-static void frame_hex_fill(const OurFrame::frame_data_t& frame,
+static char packet_as_hex[OurPacket::PACKET_SIZE * 3];
+static void frame_hex_fill(const OurPacket::packet_data_t& packet,
                            const char* sep = ",") {
-  bin2hex(&frame[0], frame.size(), frame_hex, sizeof frame_hex, sep);
+  bin2hex(&packet[0], packet.size(), packet_as_hex, sizeof packet_as_hex, sep);
 }
 
 inline const char* btoa(bool v) { return v ? "X" : " "; }
 
 int PrintDiagExp::snprint_diag(char* dst, size_t dst_siz,
                                const line_view_mask_t& view_mask) const {
-  const OurFrame& d = m_frame;
-  using idx_t = OurFrame::idx_t;
+  const OurPacket& d = m_frame;
+  using idx_t = OurPacket::idx_t;
 
   ssize_t dst_size = ssize_t(dst_siz);
   int ct = 0;
@@ -37,9 +37,9 @@ int PrintDiagExp::snprint_diag(char* dst, size_t dst_siz,
     unsigned bit = 0;
     auto dst_max = dst + dst_size - 1;
 
-    // line 1 always is the complete hex-string of the data-frame
+    // line 1 always is the complete hex-string of the data-packet
     frame_hex_fill(d.get_frame(), "");
-    diag_printf("%s\n", frame_hex);
+    diag_printf("%s\n", packet_as_hex);
 
     // print every byte, line numbers should match byte-indexes to avoid
     // confusion

@@ -29,12 +29,12 @@ int main() {
     data_logfile->set_full_path("xr25-log.bin");
     data_logfile->open_file();
   }
-  FrameProcessor processor([](const XR25Frame::voc_t& frame) {
+  FrameProcessor processor([](const XR25Frame::voc_t& voc) {
     if (data_logfile) {
-      data_logfile->write(frame);
+      data_logfile->write(voc);
     }
     if (print_car_diag) {
-      print_car_diag->push_frame(frame);
+      print_car_diag->push_packet(voc);
       char* dst = 0;
       if (auto dst_len = r19_alloc_and_print(dst, *print_car_diag, Mask);
           dst_len > 0) {

@@ -130,8 +130,8 @@ int main(int argc, char** argv) {
     ++voc.counter;
 
     os->put('\xff');
-    for (int i = 0; i < voc.frame_len; ++i) {
-      auto c = voc.frame[i];
+    for (int i = 0; i < voc.packet_len; ++i) {
+      auto c = voc.packet[i];
       os->put(char(c));
       if (c == 0xff) {
         os->put(char(c));

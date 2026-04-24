@@ -11,15 +11,15 @@
 
 class XR25Frame {
  public:
-  static constexpr int FRAME_MAX_SIZE = 64;  // cannot store larger frames
-  static constexpr int FRAME_MIN_SIZE = 29;  // reject smaller frames
+  static constexpr int PACKET_MAX_SIZE = 64;  // cannot store larger frames
+  static constexpr int PACKET_MIN_SIZE = 29;  // reject smaller frames
   static constexpr int RINGBUFFER_LENGTH =
       32;  // can buffer this number of frames
-  using frame_data_t = std::array<uint8_t, FRAME_MAX_SIZE>;
+  using packet_data_t = std::array<uint8_t, PACKET_MAX_SIZE>;
 
   struct voc_t {
-    frame_data_t frame;
-    unsigned frame_len;
+    packet_data_t packet;
+    unsigned packet_len;
     unsigned counter;
   };
 
@@ -37,30 +37,25 @@ class XR25Frame {
   int getFrameCounter() const { return m_frame_counter; }
 
   bool test();
-
   int get_frame_counter() const { return m_frame_counter - 1; }
-  size_t get_frame_length() const { return m_complete_frame_length; }
 
  private:
   void destuffer_callback(const uint8_t* packet, size_t packet_len) {
-    if (packet_len < FRAME_MIN_SIZE || FRAME_MAX_SIZE < packet_len) return;
+    if (packet_len < PACKET_MIN_SIZE || PACKET_MAX_SIZE < packet_len) return;
     voc_t voc;
-    memcpy(&voc.frame[0], packet, packet_len);
-    voc.frame_len = packet_len;
+    memcpy(&voc.packet[0], packet, packet_len);
+    voc.packet_len = packet_len;
     voc.counter = m_frame_counter;
     m_frames_rb.write(voc);
     ++m_frame_counter;
   }
-
- private:
-  size_t m_complete_frame_length = 0;  ///< actual data frame length
  private:
   unsigned m_frame_counter = 0;
   RenixDestuffer m_destuffer =
       RenixDestuffer(std::bind(&XR25Frame::destuffer_callback, this,
                                std::placeholders::_1, std::placeholders::_2));
   ringbuffer<voc_t> m_frames_rb;
-  frame_data_t m_frame;
+  packet_data_t m_frame;
   unsigned m_invalid_frame_ct = 0;
 };
 

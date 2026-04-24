@@ -80,7 +80,7 @@ EOD
 # Data Record (line numbers are part of the data)
 #
 # 01 1077103ED3B89E004296600807030097FF1140000A380200A8587C01FC
-# 02   1490 N    xx  "Frame-Count"
+# 02   1490 N    xx  "Packet-Count"
 # 03    248 mBar #01 "Ansaugkrümmer"
 # 04     91 °C   #02 "Kühlwasser"
 # 05     75 °C   #03 "Ansaugluft"
