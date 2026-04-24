@@ -63,7 +63,14 @@
         label: labels[0]?.series_label ?? "x",
 
         value: !is_live
-          ? undefined
+          ? (u, v) => {
+              if (v == null) return "-";
+              const s = v * 0.015;
+              const min = Math.floor(s / 60).toString().padStart(2, "0");
+              const sec = Math.floor(s % 60).toString().padStart(2, "0");
+              const ms = Math.floor((s % 1) * 1000).toString().padStart(3, "0");
+              return `${v}, T: ${min}:${sec}.${ms}`;
+            }
           : (u, v) => {
               if (v == null) return "-";
               const d = new Date(v * 1000);
@@ -128,7 +135,7 @@
       sync: syncKey
         ? {
             key: syncKey.key,
-            setSeries: true, // Optional: syncs series toggling/highlighting
+            setSeries: false, // Optional: syncs series toggling/highlighting
             setScale: [true, false], // Syncs X scale (index 0), ignores Y scale (index 1)
           }
         : undefined,
