@@ -3,15 +3,21 @@ export interface ILabel {
   axis_label: string;
   range: number[];
 }
-export interface IModelInfo { name:string; description:string; };
+export interface IModelInfo {
+  name: string;
+  description: string;
+}
 export interface Icar_chart {
   nmbGraphs: number;
-  get_info: () => IModelInfo;
-  clear_chart_data: () => void;
-  get_chart_data: () => (number | boolean)[][];
+  get_info(): IModelInfo;
+  clear_chart_data(): void;
+  get_chart_data(): (number | boolean)[][];
   get_labels: () => ILabel[];
-  get_label: (n: number) => ILabel;
-  get_nmb_of_graphs: () => number;
+  get_label(n: number): ILabel;
+  get_nmb_of_graphs(): number;
+  get_car_metrics(): Array<CarMetrics>;
+  get_order(): number[];
+  set_order(order: number[]): void;
 
   /**
    *

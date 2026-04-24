@@ -116,6 +116,16 @@ export class x53b_740_parser {
   get_unknown_xx() {
     return int(this.X(idx_t.unknown_xx));
   }
+  get_engine_speed_target_RPM() {
+    const num = (this.X(idx_t.unknown_xx) << 8);
+    return num == 0 ? 0 : int(30000000 / num);
+    //return int(this.X(idx_t.unknown_xx)) << 8;
+  }
+
+  get_engine_speed_deviation_RPM() {
+    return int(this.X(idx_t.unknown_xx)) -  128;
+   //return this.get_engine_speed_RPM() - this.get_engine_speed_target_RPM();
+  }
 
   get_idle_period() {
     return this.X(22);
@@ -188,6 +198,8 @@ export enum x53b_740_metrics_table_pos {
   full_load_switch,
   unknown_x,
   unknown_xx,
+  engine_speed_target,
+  engine_speed_deviation,
   status0,
   status1,
   status2,
@@ -228,7 +240,7 @@ export const x53b_740_metrics_table: Array<CarMetrics> = [
     range: [-100, 100],
     short_name: "LTFT-Idle",
   },
-  { k: 35, parse: P.get_richness_regulation, name: "", unit: "%", range: [-100, 100], short_name: "STFT" },
+  { k: 35, parse: P.get_richness_regulation, name: "Richness Regulation", unit: "%", range: [-100, 100], short_name: "STFT" },
   { k: 50, parse: P.get_injection_duration_ms, name: "Injection Duration", unit: "ms", range: [0, 66], short_name: "InjDur" },
   { k: 51, parse: P.get_ignition_advance_deg, name: "Ignition Advance", unit: "°BTDC", range: [0, 55], short_name: "Adv" },
   { k: 0, parse: P.is_fuel_pump_on, name: "Fuel Pump Relay", unit: "boolean", range: [0, 1], short_name: "FuelPump" },
@@ -236,6 +248,8 @@ export const x53b_740_metrics_table: Array<CarMetrics> = [
   { k: 0, parse: P.is_throttle_fully_open, name: "Full Load Switch", unit: "boolean", range: [0, 1], short_name: "WOT-Sw" },
   { k: 0, parse: P.get_unknown_x, name: "unknown byte x", unit: "???", range: [0, 255], short_name: "?byteX" },
   { k: 0, parse: P.get_unknown_xx, name: "unknown byte xx", unit: "???", range: [0, 255], short_name: "?byteXx" },
+  { k: 0, parse: P.get_engine_speed_target_RPM, name: "Target Engine Speed", unit: "RPM", range: [0, 2550], short_name: "?TgtRPM" },
+  { k: 0, parse: P.get_engine_speed_deviation_RPM, name: "Engine Speed Deviation", unit: "RPM", range: [-128, 128], short_name: "?DevRPM" },
   { k: 0, parse: P.get_status0, name: "status byte 0: input switches", unit: "bits", range: [0, 255], short_name: "sb0" },
   { k: 0, parse: P.get_status1, name: "status byte 1: input switches", unit: "bits", range: [0, 255], short_name: "sb1" },
   { k: 0, parse: P.get_status2, name: "status byte 2: input switches", unit: "bits", range: [0, 255], short_name: "sb2" },
