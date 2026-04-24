@@ -25,7 +25,7 @@ if("${PRESET_NAME}" STREQUAL "host-test" OR ${BUILD_HOST_TESTS} STREQUAL "ON")
 
 set(TARGET_PLATFORM_FILTER "host/.*")
 
-project(r19anal-tests)
+project(r19ana-tests)
 
 # delete this folder in build, or a second configure will break the build (XXX)
 execute_process(COMMAND bash -c "rm -r ${PROJECT_BINARY_DIR}/comp")
@@ -70,7 +70,7 @@ if("${PRESET_NAME}" STREQUAL "")
 endif()
 
 
-set(PROJECT_NAME "rv-netmcu")
+set(PROJECT_NAME "r19ana")
 
 option(LINKER_DEMANGLE "set linker option --demangle" ON)
 
@@ -107,7 +107,7 @@ function(component_compile_features)
 endfunction()
 
 
-project("r19anal-esp32")
+project("r19ana-esp32")
 #set_target_properties(__idf_stm32 PROPERTIES LINK_INTERFACE_MULTIPLICITY 3)
 
 ##########################################################################

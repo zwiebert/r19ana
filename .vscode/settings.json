@@ -13,7 +13,7 @@
   "clangd.arguments": [
     "--background-index",
     "--query-driver=**",
-    "--compile-commands-dir=/home/bertw/proj/mcu/r19anal/build/projconf/esp32-debug"
+    "--compile-commands-dir=/home/bertw/proj/mcu/r19ana/build/projconf/esp32-nonet"
   ],
   "idf.flashType": "UART",
   "idf.monitorPort": "/dev/ttyUSB0"
