@@ -49,7 +49,32 @@
     height: height,
     plugins: [touchZoomPanPlugin(bitChartData[0].length)],
     series: [
-      { label: labels[0]?.series_label ?? "x" }, // X-axis
+      {
+        label: labels[0]?.series_label ?? "x",
+
+        value: !is_live
+          ? (u, v) => {
+              if (v == null) return "-";
+              const s = v * 0.015;
+              const min = Math.floor(s / 60)
+                .toString()
+                .padStart(2, "0");
+              const sec = Math.floor(s % 60)
+                .toString()
+                .padStart(2, "0");
+              const ms = Math.floor((s % 1) * 1000)
+                .toString()
+                .padStart(3, "0");
+              return `${v}, T: ${min}:${sec}.${ms}`;
+            }
+          : (u, v) => {
+              if (v == null) return "-";
+              const d = new Date(v * 1000);
+              const timeStr = d.toLocaleTimeString("en-GB", { hour12: false });
+              const ms = d.getMilliseconds().toString().padStart(3, "0");
+              return `${timeStr}.${ms}`;
+            },
+      }, // X-axis
       {
         label: "Bit 0",
         stroke: "red",
@@ -61,6 +86,8 @@
           // For Bit 0, n=0. If v > 0, it's HIGH.
           return v > 0 ? bool_val_1 : bool_val_0;
         },
+        points: { show: false },
+        pxAlign: 0,
       },
       {
         label: "Bit 1",
@@ -70,6 +97,8 @@
           if (v == null) return "--";
           return v > 1 ? bool_val_1 : bool_val_0;
         },
+        points: { show: false },
+        pxAlign: 0,
       },
 
       {
@@ -80,6 +109,8 @@
           if (v == null) return "--";
           return v > 2 ? bool_val_1 : bool_val_0;
         },
+        points: { show: false },
+        pxAlign: 0,
       },
       {
         label: "Bit 3",
@@ -89,6 +120,8 @@
           if (v == null) return "--";
           return v > 3 ? bool_val_1 : bool_val_0;
         },
+        points: { show: false },
+        pxAlign: 0,
       },
       {
         label: "Bit 4",
@@ -98,6 +131,8 @@
           if (v == null) return "--";
           return v > 4 ? bool_val_1 : bool_val_0;
         },
+        points: { show: false },
+        pxAlign: 0,
       },
       {
         label: "Bit 5",
@@ -107,6 +142,8 @@
           if (v == null) return "--";
           return v > 5 ? bool_val_1 : bool_val_0;
         },
+        points: { show: false },
+        pxAlign: 0,
       },
       {
         label: "Bit 6",
@@ -116,6 +153,8 @@
           if (v == null) return "--";
           return v > 6 ? bool_val_1 : bool_val_0;
         },
+        points: { show: false },
+        pxAlign: 0,
       },
       {
         label: "Bit 7",
@@ -125,10 +164,12 @@
           if (v == null) return "--";
           return v > 7 ? bool_val_1 : bool_val_0;
         },
+        points: { show: false },
+        pxAlign: 0,
       },
     ],
     scales: {
-      x: { time: false },
+      x: { time: is_live },
       bits: {
         auto: true,
         range: [-0.5, 7.5], // Adjust based on your offsets

@@ -4,7 +4,7 @@ export type { Icar_chart, ILabel };
 
 const labels: ILabel[] = [];
 for (let g = 0; g <= 64; ++g) {
-  labels.push({ series_label: `Byte-${g}`,  axis_label: "raw", range:[0, 255] });
+  labels.push({ series_label: `B${g}`,  axis_label: "raw", range:[0, 255] });
 }
 
 export class raw_chart implements Icar_chart {
