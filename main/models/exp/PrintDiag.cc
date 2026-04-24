@@ -47,12 +47,12 @@ int PrintDiagExp::snprint_diag(char* dst, size_t dst_siz,
 
     // print every bit from the status bits on a separate line
     for (uint8_t i = 0; i < 8; ++i)
-      diag_printf("%6d bool flags=%u,bit=%u\n", getbit(d.R(idx_t::flags0), i),
+      diag_printf("%6d bool flags=%u,bit=%u\n", getbit(d.R(idx_t::status0), i),
                   0, i);
 
-    for (idx_t flags = idx_t::flags1; flags <= idx_t::flags7;
+    for (idx_t flags = idx_t::status1; flags <= idx_t::status7;
          flags = idx_t(flags + 1)) {
-      uint8_t flag_mnb = 1 + flags - idx_t::flags1;
+      uint8_t flag_mnb = 1 + flags - idx_t::status1;
       for (uint8_t i = 0; i < 8; ++i)
         diag_printf("%6d bool flags=%u,bit=%u\n", getbit(d.R(flags), i),
                     flag_mnb, i);

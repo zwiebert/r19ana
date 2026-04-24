@@ -130,7 +130,6 @@ int main(int argc, char** argv) {
     ++voc.counter;
 
     os->put('\xff');
-    os->put('\x00');
     for (int i = 0; i < voc.frame_len; ++i) {
       auto c = voc.frame[i];
       os->put(char(c));
