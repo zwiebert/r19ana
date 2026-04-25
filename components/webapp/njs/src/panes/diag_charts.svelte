@@ -8,8 +8,8 @@
   import MyPlot from "./plot_test.svelte";
   import MyBitsPlot from "./plot_status_bits.svelte";
   import DropFile from "../components/request-or-drop-file.svelte";
-  import { x53b_740_chart_factory } from "../cardiag/charts/x53b-740";
-  import { raw_chart_factory } from "../cardiag/charts/raw";
+  import { x53b_740_chart_factory } from "../cardiag/charts/x53b-740.svelte";
+  import { raw_chart_factory } from "../cardiag/charts/raw.svelte";
   import type { Icar_chart, ILabel } from "../cardiag/charts/iface";
   //import { byte_unstuffing } from "../cardiag/byte_unstuffing";
   import { RenixDestuffer } from "../cardiag/renix_destuffer";
@@ -205,37 +205,77 @@
 <label><input type="checkbox" bind:checked={showChartEditor} />Show Chart Editor</label>
 {#if showChartEditor}
   <div class="flex flex-row mx-auto w-fit">
-    <select size={car_metrics.length} bind:value={selectOrderIdx}>
-      {#each car_charts[0].order as cmi, i}
-        <option value={i}>
-          {cmi}
-          {car_metrics[cmi].name}
-        </option>
-      {/each}
-    </select>
+    <div>
+      <h5 class="p-0 m-0">Unused Metrics</h5>
+      <select size={car_metrics.length} bind:value={selectUnusedMetricsIdx}>
+        {#each car_metrics as cm, i}
+          {#if !car_charts[0].order.includes(i)}
+            <option value={i}>
+              {i}
+              {cm.name}
+            </option>
+          {/if}
+        {/each}
+      </select>
+    </div>
     <div class="flex flex-col mx-auto w-fit">
       <button
         class=""
         onclick={() => {
           if (selectOrderIdx === 0) return;
-          [car_charts[0].order[selectOrderIdx], car_charts[0].order[selectOrderIdx - 1]] = [car_charts[0].order[selectOrderIdx - 1], car_charts[0].order[selectOrderIdx]];
+          [car_charts[0].order[selectOrderIdx], car_charts[0].order[selectOrderIdx - 1]] = [
+            car_charts[0].order[selectOrderIdx - 1],
+            car_charts[0].order[selectOrderIdx],
+          ];
+          --selectOrderIdx;
           console.log("car_charts[0].order", car_charts[0].order);
         }}>move up</button
       >
-      <button class="">move down</button>
-      <button class="">add</button>
-      <button class="">remove</button>
+      <button
+        class=""
+        onclick={() => {
+          if (selectOrderIdx + 1 >= car_chart.order.length) return;
+          [car_charts[0].order[selectOrderIdx], car_charts[0].order[selectOrderIdx + 1]] = [
+            car_charts[0].order[selectOrderIdx + 1],
+            car_charts[0].order[selectOrderIdx],
+          ];
+          ++selectOrderIdx;
+          console.log("car_charts[0].order", car_charts[0].order);
+        }}>move down</button
+      >
+      <button
+        class=""
+        onclick={() => {
+          console.log("push:", selectUnusedMetricsIdx);
+          car_chart.order.push(selectUnusedMetricsIdx);
+        }}>use this</button
+      >
+      <button
+        class=""
+        onclick={() => {
+          const remIdx = selectOrderIdx;
+          car_chart.order.splice(remIdx, 1);
+          if (selectOrderIdx >= car_chart.order.length) selectOrderIdx = car_chart.order.length - 1;
+        }}>not use this</button
+      >
+      <button
+        class=""
+        onclick={() => {
+          car_chart.order.length = 0;
+        }}>use none</button
+      >
     </div>
-    <select size={car_metrics.length} bind:value={selectUnusedMetricsIdx}>
-      {#each car_metrics as cm, i}
-        {#if !car_charts[0].order.includes(i)}
-          <option value={cm}>
-            {i}
-            {cm.name}
+    <div>
+      <h5 class="p-0 m-0">Used Metrics</h5>
+      <select size={car_metrics.length} bind:value={selectOrderIdx}>
+        {#each car_charts[0].order as cmi, i}
+          <option value={i}>
+            {cmi}
+            {car_metrics[cmi].name}
           </option>
-        {/if}
-      {/each}
-    </select>
+        {/each}
+      </select>
+    </div>
   </div>
 {/if}
 <!-- end of experimental -->
@@ -310,11 +350,8 @@
             <div class="flex flex-col text-left">
               {#each Array.from({ length: Math.floor(nmbGraphs / 2) }, (_, index) => index * 2) as i}
                 <div>
-                  <label
-                    ><input type="checkbox" bind:checked={yn_show[i]} />{car_chart.get_label(i)?.series_label}, {car_chart.get_label(i + 1)
-                      ?.series_label}</label
-                  >
-                  {#if car_chart.get_label(i)?.axis_label === "bits" || car_chart.get_label(i)?.axis_label === "raw"}
+                  <label><input type="checkbox" bind:checked={yn_show[i]} />{car_chart.labels[i]?.series_label}, {car_chart.labels[i + 1]?.series_label}</label>
+                  {#if car_chart.labels[i]?.axis_label === "bits" || car_chart.labels[i]?.axis_label === "raw"}
                     <label><input type="checkbox" bind:checked={yn_show_as_bits[i]} />bits</label>
                   {/if}
                 </div>
@@ -330,11 +367,11 @@
         {#each Array.from({ length: Math.floor(nmbGraphs / 2) }, (_, index) => index * 2) as i}
           <div class="text-left">
             <div class="text-center" style="display:{yn_show[i] ? 'block' : 'none'};touch-action: pan-y; width: 100%;">
-              {#if yn_show_as_bits[i] && (car_chart.get_label(i)?.axis_label === "bits" || car_chart.get_label(i)?.axis_label === "raw")}
+              {#if yn_show_as_bits[i] && (car_chart.labels[i]?.axis_label === "bits" || car_chart.labels[i]?.axis_label === "raw")}
                 <MyBitsPlot
                   chartData={[x_arr, yn_arr[i]]}
                   chartDataVersions={[x_arr_version, yn_arr_version]}
-                  labels={[x_labels, car_chart.get_label(i)]}
+                  labels={[x_labels, car_chart.labels[i]]}
                   {syncKey}
                   {width}
                   {height}
@@ -344,7 +381,7 @@
                 <MyBitsPlot
                   chartData={[x_arr, yn_arr[i + 1]]}
                   chartDataVersions={[x_arr_version, yn_arr_version]}
-                  labels={[x_labels, car_chart.get_label(i + 1)]}
+                  labels={[x_labels, car_chart.labels[i + 1]]}
                   {syncKey}
                   {width}
                   {height}
@@ -359,7 +396,7 @@
                   yDataVer={yn_arr_version}
                   y2Data={yn_arr[i + 1]}
                   y2DataVer={yn_arr_version}
-                  labels={[x_labels, car_chart.get_label(i), car_chart.get_label(i + 1)]}
+                  labels={[x_labels, car_chart.labels[i], car_chart.labels[i + 1]]}
                   {syncKey}
                   {width}
                   {height}

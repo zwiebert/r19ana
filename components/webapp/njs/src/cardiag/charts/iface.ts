@@ -9,6 +9,8 @@ export interface IModelInfo {
 }
 export interface Icar_chart {
   nmbGraphs: number;
+  order: number[];
+  labels: ILabel[];
   get_info(): IModelInfo;
   clear_chart_data(): void;
   get_chart_data(): (number | boolean)[][];

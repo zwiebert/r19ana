@@ -66,9 +66,15 @@
           ? (u, v) => {
               if (v == null) return "-";
               const s = v * 0.015;
-              const min = Math.floor(s / 60).toString().padStart(2, "0");
-              const sec = Math.floor(s % 60).toString().padStart(2, "0");
-              const ms = Math.floor((s % 1) * 1000).toString().padStart(3, "0");
+              const min = Math.floor(s / 60)
+                .toString()
+                .padStart(2, "0");
+              const sec = Math.floor(s % 60)
+                .toString()
+                .padStart(2, "0");
+              const ms = Math.floor((s % 1) * 1000)
+                .toString()
+                .padStart(3, "0");
               return `${v}, T: ${min}:${sec}.${ms}`;
             }
           : (u, v) => {

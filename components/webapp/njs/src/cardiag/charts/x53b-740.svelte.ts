@@ -48,17 +48,20 @@ const default_order = [
   e.status7,
 ];
 
-const default_labels = new Array<ILabel>(default_order.length);
-for (let i = 0; i < default_order.length; ++i) {
-  const table_entry = t[default_order[i]];
-  default_labels[i] = { series_label: table_entry.short_name, axis_label: table_entry.unit, range: table_entry.range };
-}
-
 export class x53b_740_chart implements Icar_chart {
   private yn_arr: (number | boolean)[][] = Array.from({ length: default_order.length }, () => []);
   public nmbGraphs: number = default_order.length;
-  public order = [...default_order];
-  private labels = [...default_labels];
+  public order = $state(default_order);
+  public xxlabels = $derived(default_labels);
+  public labels = $derived.by(() => {
+    const len = this.order.length;
+    const labels: Array<ILabel> = new Array<ILabel>(len);
+    for (let i = 0; i < len; ++i) {
+      const te = t[this.order[i]];
+      labels[i] = { series_label: te.short_name, axis_label: te.unit, range: te.range };
+    }
+    return labels;
+  }) as ILabel[];
 
   get_info() {
     return { name: "X53B_740", description: "this is the R19-F3N740 (54kW, TBI, manual)" };
