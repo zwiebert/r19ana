@@ -59,8 +59,6 @@ export class x53b_740_chart implements Icar_chart, Icar_chart_static {
     for(let i=0; i < this.order.length; ++i) {
       arr[i] = this.yn_all_arr[this.order[i]];
     }
-    console.log("yn_all_arr", this.yn_all_arr);
-    console.log("yn_arr", arr);
     return arr;
   });
 

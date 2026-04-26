@@ -167,10 +167,7 @@
     //console.log("setData");
     if (is_live) {
       const trigger = setData_trigger;
-      chart?.setData(
-        untrack(() => [xData, yData, y2Data]),
-        false,
-      );
+      chart?.setData([xData, yData, y2Data], false);
       requestAnimationFrame(() => {
         chart?.redraw(true);
       });

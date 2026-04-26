@@ -19,15 +19,7 @@
 
   let { chart_index = 0, chart_index_viewed = 0 } = $props();
 
-  interface IchartData {
-    car_chart: Icar_chart; //
-    nmbGraphs: number;
-    yn_arr: number[][];
-    x_arr: number[];
-    x_arr_modifed: boolean;
-    yn_arr_modified: boolean;
-    id: number;
-  }
+  let live_simu = $state(false);
   let diag_data: Uint8Array = $state.raw(new Uint8Array(0));
   let diag_data_name = $state("");
   let force_all_version = $state(0);
@@ -35,16 +27,33 @@
   let car_chart_version = $state(0); // index of  current parser/chart generator
   let input_data_live_begin = $state(0);
   let input_data_live_end = $state(0);
-  const input_data = $derived(!live_simu ? diag_data : diag_data.subarray(input_data_live_begin, input_data_live_end));
+  const input_data = $derived.by(() => {
+    //$inspect.trace("input-data");
+    console.log("input_data-derived");
+    return !live_simu ? diag_data : diag_data.subarray(input_data_live_begin, input_data_live_end);
+  });
   const input_data_len = $derived(input_data.length);
-  const yn_arr_version = $derived({ cc: car_chart_version, len: yn_arr.length, len2: yn_arr[0].length, ls: live_simu }); //  version of y data
+  const yn_arr_version_counter = $state(0);
+  const yn_arr_version = $derived({  yn_arr_version_counter, ls: live_simu }); //  version of y data
   const x_arr_version = $derived({ cc: car_chart_version, len: x_arr_len, x_arr }); //  version of x data
-
   const n1 = 0;
   const n2 = 200000;
   let x_arr_live = $state(Array.from({ length: n2 - n1 + 1 }, (_, i) => n1 + i));
-  const yn_arr = $derived(car_chart.get_chart_data() ?? [[]]);
-  const x_arr = $derived((!live_simu ? car_chart?.get_chart_data()[0].map((_, i) => i): x_arr_live) ?? []);
+  const yn_arr = $derived.by(() => {
+    //$inspect.trace("input-data");
+    console.log("yn_arr-derived");
+    if (!car_chart) return [[]];
+    const trigger = processData_trigger;
+    input_data;
+    untrack(() => {
+      process_data(input_data, car_chart, live_simu);
+    });
+    return car_chart.get_chart_data();
+  });
+
+ $effect(()=>{yn_arr;});
+
+  const x_arr = $derived((!live_simu ? car_chart?.get_chart_data()[0].map((_, i) => i) : x_arr_live) ?? []);
   const x_arr_len = $derived(x_arr.length);
   const nmbGraphs = $derived(car_chart.nmbGraphs);
 
@@ -52,12 +61,6 @@
   let car_charts = [x53b_740_chart, raw_chart];
   let car_chart: Icar_chart = $derived.by(() => {
     const chart = new car_charts[car_chart_version]();
-    const data = input_data;
-    const trigger = processData_trigger;
-    untrack(() => {
-      process_data(data, chart, live_simu);
-    });
-    //console.log(chart.get_info(), chart.get_chart_data()[1].length);
     return chart;
   });
   const car_metrics = $derived(car_chart.get_car_metrics());
@@ -78,7 +81,6 @@
   let height = $state(300);
   let win_innerWidth = $state(typeof window !== "undefined" ? window.innerWidth : 1000);
 
-
   $effect(() => {
     console.log("simu effect");
     const trigger = live_simu;
@@ -91,8 +93,6 @@
 
   // svelte-ignore state_referenced_locally
   const syncKey = uPlot.sync("zoom_group" + chart_index);
-
-  let live_simu = $state(false);
 
   async function fetchBinaryData(url: string) {
     // 1. Declare variables at the top of the function scope
@@ -117,8 +117,6 @@
     }
   }
 
-  let timeoutId = 0;
-
   function generate_live_x_arr(count: number, step: number = 0.015): Float64Array {
     const start = Date.now() / 1000;
     const x = new Float64Array(count);
@@ -130,8 +128,11 @@
     return x;
   }
 
+  let timeoutId = 0;
+  let live_simu_running = false;
   function startTimer(chunk_size: number, chunk_nmb: number) {
     timeoutId = setTimeout(() => {
+      live_simu_running = true;
       const data = diag_data;
       const start = chunk_size * chunk_nmb;
       const end = start + chunk_size;
@@ -139,20 +140,24 @@
 
       input_data_live_end = end;
       input_data_live_begin = start;
-      ++input_data_version; //trigger processing
+      // ++input_data_version; //trigger processing
 
-      //console.log("live simu tick", start, end, input_data.length);
+      console.log("live simu tick", start, end, input_data.length);
 
       // Schedule the next run
       if (live_simu) startTimer(chunk_size, chunk_nmb + 1);
-    }, 20);
+      else {
+        live_simu_running = false;
+        timeoutId = 0;
+      }
+    }, 250);
   }
 
   function live_simu_process_data() {
-    clearTimeout(timeoutId);
-    if (live_simu) {
+    if (live_simu && !live_simu_running) {
       car_chart.clear_chart_data();
       x_arr_live = generate_live_x_arr(n2);
+      live_simu_running = true;
       startTimer(100, 0);
     }
   }
@@ -209,10 +214,7 @@
         class=""
         onclick={() => {
           if (selectOrderIdx === 0) return;
-          [car_chart.order[selectOrderIdx], car_chart.order[selectOrderIdx - 1]] = [
-            car_chart.order[selectOrderIdx - 1],
-            car_chart.order[selectOrderIdx],
-          ];
+          [car_chart.order[selectOrderIdx], car_chart.order[selectOrderIdx - 1]] = [car_chart.order[selectOrderIdx - 1], car_chart.order[selectOrderIdx]];
           --selectOrderIdx;
           console.log("car_chart.order", car_chart.order);
         }}>move up</button
@@ -221,10 +223,7 @@
         class=""
         onclick={() => {
           if (selectOrderIdx + 1 >= car_chart.order.length) return;
-          [car_chart.order[selectOrderIdx], car_chart.order[selectOrderIdx + 1]] = [
-            car_chart.order[selectOrderIdx + 1],
-            car_chart.order[selectOrderIdx],
-          ];
+          [car_chart.order[selectOrderIdx], car_chart.order[selectOrderIdx + 1]] = [car_chart.order[selectOrderIdx + 1], car_chart.order[selectOrderIdx]];
           ++selectOrderIdx;
           console.log("car_chart.order", car_chart.order);
         }}>move down</button
