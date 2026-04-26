@@ -8,9 +8,9 @@
   import MyPlot from "./plot_test.svelte";
   import MyBitsPlot from "./plot_status_bits.svelte";
   import DropFile from "../components/request-or-drop-file.svelte";
-  import { x53b_740_chart_factory } from "../cardiag/charts/x53b-740.svelte";
-  import { raw_chart_factory } from "../cardiag/charts/raw.svelte";
-  import type { Icar_chart, ILabel } from "../cardiag/charts/iface";
+  import { x53b_740_chart } from "../cardiag/charts/x53b-740.svelte";
+  import { raw_chart } from "../cardiag/charts/raw.svelte";
+  import type { Icar_chart, Icar_chart_static, ILabel } from "../cardiag/charts/iface";
   //import { byte_unstuffing } from "../cardiag/byte_unstuffing";
   import { RenixDestuffer } from "../cardiag/renix_destuffer";
   import { EnableGitHubSamples } from "../store/app_state";
@@ -37,20 +37,29 @@
   let input_data_live_end = $state(0);
   const input_data = $derived(!live_simu ? diag_data : diag_data.subarray(input_data_live_begin, input_data_live_end));
   const input_data_len = $derived(input_data.length);
-  const yn_arr_version = $derived({ cc: car_chart_version, len: yn_arr.length, len2: yn_arr[0].length, id: chart_data.id, ls: live_simu }); //  version of y data
+  const yn_arr_version = $derived({ cc: car_chart_version, len: yn_arr.length, len2: yn_arr[0].length, ls: live_simu }); //  version of y data
   const x_arr_version = $derived({ cc: car_chart_version, len: x_arr_len, x_arr }); //  version of x data
 
   const n1 = 0;
   const n2 = 200000;
   let x_arr_live = $state(Array.from({ length: n2 - n1 + 1 }, (_, i) => n1 + i));
-  const yn_arr = $derived(chart_data?.yn_arr ?? [[]]);
-  const x_arr = $derived((!live_simu ? chart_data?.x_arr : x_arr_live) ?? []);
+  const yn_arr = $derived(car_chart.get_chart_data() ?? [[]]);
+  const x_arr = $derived((!live_simu ? car_chart?.get_chart_data()[0].map((_, i) => i): x_arr_live) ?? []);
   const x_arr_len = $derived(x_arr.length);
-  const nmbGraphs = $derived(chart_data.nmbGraphs);
+  const nmbGraphs = $derived(car_chart.nmbGraphs);
 
   let error = $state(null);
-  let car_charts: Icar_chart[] = $state([x53b_740_chart_factory(), raw_chart_factory()]);
-  let car_chart: Icar_chart = $derived(car_charts[car_chart_version]);
+  let car_charts = [x53b_740_chart, raw_chart];
+  let car_chart: Icar_chart = $derived.by(() => {
+    const chart = new car_charts[car_chart_version]();
+    const data = input_data;
+    const trigger = processData_trigger;
+    untrack(() => {
+      process_data(data, chart, live_simu);
+    });
+    //console.log(chart.get_info(), chart.get_chart_data()[1].length);
+    return chart;
+  });
   const car_metrics = $derived(car_chart.get_car_metrics());
   const processData_trigger = $derived({ ver: car_chart_version, len: input_data_len, ipd: input_data_version, fa: force_all_version });
 
@@ -69,29 +78,6 @@
   let height = $state(300);
   let win_innerWidth = $state(typeof window !== "undefined" ? window.innerWidth : 1000);
 
-  const chart_data: IchartData = $derived.by(() => {
-    //console.log("create chart_data");
-    const data = input_data;
-    const chart = car_chart;
-    const trigger = processData_trigger;
-    const getID = (() => {
-      let id = 0; // This acts as your 'static' variable
-      return () => ++id;
-    })();
-    untrack(() => {
-      process_data(data, chart, live_simu);
-    });
-    const x_arr = chart.get_chart_data()[0].map((_, i) => i);
-    //console.log(chart.get_info(), chart.get_chart_data()[1].length);
-
-    return {
-      car_chart: chart, //
-      nmbGraphs: chart.get_nmb_of_graphs(),
-      yn_arr: chart.get_chart_data(),
-      x_arr: x_arr,
-      id: getID(),
-    };
-  });
 
   $effect(() => {
     console.log("simu effect");
@@ -190,7 +176,7 @@
     },
   };
 
-  let showChartEditor = $state(true);
+  let showChartEditor = $state(false);
   let selectOrderIdx = $state(0);
   let selectUnusedMetricsIdx = $state(0);
 </script>
@@ -209,7 +195,7 @@
       <h5 class="p-0 m-0">Unused Metrics</h5>
       <select size={car_metrics.length} bind:value={selectUnusedMetricsIdx}>
         {#each car_metrics as cm, i}
-          {#if !car_charts[0].order.includes(i)}
+          {#if !car_chart.order.includes(i)}
             <option value={i}>
               {i}
               {cm.name}
@@ -223,24 +209,24 @@
         class=""
         onclick={() => {
           if (selectOrderIdx === 0) return;
-          [car_charts[0].order[selectOrderIdx], car_charts[0].order[selectOrderIdx - 1]] = [
-            car_charts[0].order[selectOrderIdx - 1],
-            car_charts[0].order[selectOrderIdx],
+          [car_chart.order[selectOrderIdx], car_chart.order[selectOrderIdx - 1]] = [
+            car_chart.order[selectOrderIdx - 1],
+            car_chart.order[selectOrderIdx],
           ];
           --selectOrderIdx;
-          console.log("car_charts[0].order", car_charts[0].order);
+          console.log("car_chart.order", car_chart.order);
         }}>move up</button
       >
       <button
         class=""
         onclick={() => {
           if (selectOrderIdx + 1 >= car_chart.order.length) return;
-          [car_charts[0].order[selectOrderIdx], car_charts[0].order[selectOrderIdx + 1]] = [
-            car_charts[0].order[selectOrderIdx + 1],
-            car_charts[0].order[selectOrderIdx],
+          [car_chart.order[selectOrderIdx], car_chart.order[selectOrderIdx + 1]] = [
+            car_chart.order[selectOrderIdx + 1],
+            car_chart.order[selectOrderIdx],
           ];
           ++selectOrderIdx;
-          console.log("car_charts[0].order", car_charts[0].order);
+          console.log("car_chart.order", car_chart.order);
         }}>move down</button
       >
       <button
@@ -268,7 +254,7 @@
     <div>
       <h5 class="p-0 m-0">Used Metrics</h5>
       <select size={car_metrics.length} bind:value={selectOrderIdx}>
-        {#each car_charts[0].order as cmi, i}
+        {#each car_chart.order as cmi, i}
           <option value={i}>
             {cmi}
             {car_metrics[cmi].name}

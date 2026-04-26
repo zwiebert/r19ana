@@ -1,5 +1,5 @@
 import { x53b_740_parser, x53b_740_metrics_table, x53b_740_metrics_table_pos } from "../parser/x53b-740";
-import type { CarMetrics, Icar_chart, ILabel } from "./iface";
+import type { CarMetrics, Icar_chart_static, Icar_chart, ILabel } from "./iface";
 export type { Icar_chart, ILabel };
 
 const t = x53b_740_metrics_table;
@@ -48,11 +48,22 @@ const default_order = [
   e.status7,
 ];
 
-export class x53b_740_chart implements Icar_chart {
-  private yn_arr: (number | boolean)[][] = Array.from({ length: default_order.length }, () => []);
+export class x53b_740_chart implements Icar_chart, Icar_chart_static {
+  private yn_all_arr: (number | boolean)[][] = $state.raw(Array.from({ length: t.length }, () => []));
   public nmbGraphs: number = default_order.length;
   public order = $state(default_order);
-  public xxlabels = $derived(default_labels);
+  private yn_version = $state(0);
+  private yn_arr = $derived.by(() => {
+    const trigger = this.yn_version;
+    let arr: (number | boolean)[][] = Array.from({ length: this.order.length }, () => []);
+    for(let i=0; i < this.order.length; ++i) {
+      arr[i] = this.yn_all_arr[this.order[i]];
+    }
+    console.log("yn_all_arr", this.yn_all_arr);
+    console.log("yn_arr", arr);
+    return arr;
+  });
+
   public labels = $derived.by(() => {
     const len = this.order.length;
     const labels: Array<ILabel> = new Array<ILabel>(len);
@@ -63,13 +74,15 @@ export class x53b_740_chart implements Icar_chart {
     return labels;
   }) as ILabel[];
 
-  get_info() {
+  static get_info() {
     return { name: "X53B_740", description: "this is the R19-F3N740 (54kW, TBI, manual)" };
   }
 
   clear_chart_data() {
-    this.yn_arr = Array.from({ length: this.order.length }, () => []);
-    //this.yn_arr.forEach(subArray => subArray.length = 0);
+    console.log("clear chart data");
+    this.yn_all_arr = Array.from({ length: t.length }, () => []);
+    this.yn_version++;
+    //this.yn_all_arr.forEach(subArray => subArray.length = 0);
   }
 
   get_chart_data() {
@@ -97,14 +110,11 @@ export class x53b_740_chart implements Icar_chart {
   }
 
   process_data_packet(arr: Uint8Array, ct: number) {
-    console.assert(this.yn_arr.length === this.order.length);
     const m = new x53b_740_parser(arr);
     let idx = 0;
-    for (const i of this.order) {
-      console.assert(this.yn_arr[idx] !== undefined);
-      this.yn_arr[idx++].push(t[i].parse.call(m));
+    for (let i = 0; i < t.length; ++i) {
+      this.yn_all_arr[i].push(t[i].parse.call(m));
     }
-    //this.yn_arr = this.yn_arr;
   }
 }
 
