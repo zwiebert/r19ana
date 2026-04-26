@@ -13,20 +13,27 @@
     width: number;
     height: number;
     is_live: boolean;
+    use_time: boolean;
   }
   // Props or state
-  const { chartData, chartDataVersions, labels = [{}, {}, {}], syncKey = null, width = 1600, height = 30, is_live = false }: Iprops = $props();
+  const {
+    chartData,
+    chartDataVersions,
+    labels = [{}, {}, {}],
+    syncKey = null,
+    width = 1600,
+    height = 30,
+    is_live = false,
+    use_time = false,
+  }: Iprops = $props();
 
   let chart;
 
   let chartContainer;
   const bool_val_0 = "0";
   const bool_val_1 = "1";
-  const x_arr_version = $derived(chartDataVersions[0]);
-  const y_arr_version = $derived(chartDataVersions[1]);
-  const create_trigger = $derived(is_live ? {} : x_arr_version);
-  const setData_trigger = $derived(y_arr_version);
-  const setScaleX_trigger = $derived(is_live ? x_arr_version : {});
+  const setData_trigger = $derived(chartDataVersions[1]);
+  const setScaleX_trigger = $derived(chartDataVersions[0]);
 
   const getbit = (n: number, pos: number) => (n >>> pos) & 1;
 
@@ -52,7 +59,7 @@
       {
         label: labels[0]?.series_label ?? "x",
 
-        value: !is_live
+        value: !use_time
           ? (u, v) => {
               if (v == null) return "-";
               const s = v * 0.015;
@@ -169,7 +176,7 @@
       },
     ],
     scales: {
-      x: { time: is_live },
+      x: { time: use_time },
       bits: {
         auto: true,
         range: [-0.5, 7.5], // Adjust based on your offsets
@@ -209,7 +216,6 @@
 
   $effect(() => {
     console.log("create new uplot chart");
-    const trigger = create_trigger;
     chart?.destroy();
     chart = new uPlot(
       options,
@@ -224,37 +230,33 @@
   });
   $effect(() => {
     //console.log("setData");
-    if (is_live) {
-      const trigger = setData_trigger;
-      chart?.setData(bitChartData, false);
-      requestAnimationFrame(() => {
-        chart?.redraw(true);
-      });
-    }
+    const trigger = setData_trigger;
+    chart?.setData(bitChartData, false);
+    requestAnimationFrame(() => {
+      chart?.redraw(true);
+    });
   });
 
   $effect(() => {
     console.log("setScale-x");
     const trigger = setScaleX_trigger;
-    if (is_live) {
-      // 1. Calculate how much the data moved (e.g., how many seconds/indices)
-      // Assuming your X-array is sorted, compare the new first element to the old one
-      const newDataStart = bitChartData[0][0];
-      const oldDataStart = chart.data[0][0];
-      const delta = newDataStart - oldDataStart;
+    // 1. Calculate how much the data moved (e.g., how many seconds/indices)
+    // Assuming your X-array is sorted, compare the new first element to the old one
+    const newDataStart = bitChartData[0][0];
+    const oldDataStart = chart.data[0][0];
+    const delta = newDataStart - oldDataStart;
 
-      requestAnimationFrame(() => {
-        if (chart) {
-          // 3. Shift the current view by the same delta
-          // This keeps the "zoom level" (the width) the same,
-          // but slides the "window" along with the data.
-          chart.setScale("x", {
-            min: chart.scales.x.min + delta,
-            max: chart.scales.x.max + delta,
-          });
-        }
-      });
-    }
+    requestAnimationFrame(() => {
+      if (chart) {
+        // 3. Shift the current view by the same delta
+        // This keeps the "zoom level" (the width) the same,
+        // but slides the "window" along with the data.
+        chart.setScale("x", {
+          min: chart.scales.x.min + delta,
+          max: chart.scales.x.max + delta,
+        });
+      }
+    });
   });
 
   $effect(() => {

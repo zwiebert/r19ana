@@ -34,7 +34,7 @@
 
   const n1 = 0;
   const n2 = 200000;
-  let x_arr_live = $state(Array.from({ length: n2 - n1 + 1 }, (_, i) => n1 + i));
+  let x_arr_live = $state(Float64Array.from({ length: n2 - n1 + 1 }, (_, i) => n1 + i));
 
   const yn_arr = $derived.by(() => {
     //$inspect.trace("input-data");
@@ -46,7 +46,11 @@
 
   //$effect(()=>{yn_arr;});
 
-  const x_arr = $derived((!live ? car_chart?.get_chart_data()[0].map((_, i) => i) : x_arr_live) ?? []);
+  const x_arr = $derived.by(() => {
+    x_arr_version_counter;
+    return (!live ? car_chart?.get_chart_data()[0].map((_, i) => i) : x_arr_live) ?? [];
+  });
+
   const x_arr_len = $derived(x_arr.length);
   const nmbGraphs = $derived(car_chart.nmbGraphs);
 
@@ -77,7 +81,7 @@
   const syncKey = uPlot.sync("zoom_group" + chart_index);
 
   function load_data(data: Uint8Array, name = "") {
-    live_simulation(false); 
+    live_simulation(false);
     diag_data = data;
     diag_data_name = name;
     process_data(data, car_chart, false);
@@ -85,7 +89,7 @@
     ++x_arr_version_counter;
   }
   function change_car_chart(car_chart_class: Icar_chart_static) {
-    live_simulation(false); 
+    live_simulation(false);
     car_chart = new car_chart_class();
     process_data(diag_data, car_chart, false);
     ++yn_arr_version_counter;
@@ -103,7 +107,7 @@
     }
 
     car_chart.clear_chart_data();
-    x_arr_live = generate_live_x_arr(n2);
+    //x_arr_live = generate_live_x_arr(n2);
     live_simu = true;
     live = true;
     live_simu_running = true;

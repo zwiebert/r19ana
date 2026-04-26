@@ -8,8 +8,8 @@ for (let g = 0; g <= 64; ++g) {
 }
 
 export class raw_chart implements Icar_chart,Icar_chart_static {
-  public nmbGraphs: number = 20;
-  public labels = labels;
+  public nmbGraphs: number = $state(20);
+  public labels = $derived(labels.splice(0, this.nmbGraphs));
 
   private yn_arr: (number | boolean)[][] = Array.from({ length: 64 }, () => []);
   static get_info() {
@@ -28,11 +28,11 @@ export class raw_chart implements Icar_chart,Icar_chart_static {
   }
 
   get_labels() {
-    return labels;
+    return this.labels;
   }
 
   get_label(n) {
-    return labels[n];
+    return this.labels[n];
   }
 
   process_data_packet(arr: Uint8Array, ct: number) {

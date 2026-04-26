@@ -17,6 +17,7 @@
     width: number;
     height: number;
     is_live: boolean;
+    use_time: boolean;
   }
   // Props or state
   const {
@@ -31,20 +32,20 @@
     width = 1600,
     height = 30,
     is_live = false,
+    use_time = false,
   }: Iprops = $props();
 
   let chart;
   let chartContainer;
-  const create_trigger = $derived(is_live ? {} : xDataVer);
   const setData_trigger = $derived({ yDataVer, y2DataVer });
-  const setScaleX_trigger = $derived(is_live ? xDataVer : {});
+  const setScaleX_trigger = $derived(is_live ? xDataVer : xDataVer);
 
   let options = $derived({
     width: width,
     height: height,
     // plugins: [touchZoomPanPlugin(xData.length)],
     scales: {
-      x: { time: is_live },
+      x: { time: use_time },
       y:
         labels[1]?.axis_label == "boolean"
           ? { auto: false, range: (u, min, max) => [-3.6, 2.5] }
@@ -62,7 +63,7 @@
       {
         label: labels[0]?.series_label ?? "x",
 
-        value: !is_live
+        value: !use_time
           ? (u, v) => {
               if (v == null) return "-";
               const s = v * 0.015;
@@ -150,7 +151,6 @@
 
   $effect(() => {
     console.log("create new uplot chart");
-    const trigger = create_trigger;
     chart?.destroy();
     chart = new uPlot(
       options,
@@ -165,37 +165,33 @@
   });
   $effect(() => {
     //console.log("setData");
-    if (is_live) {
-      const trigger = setData_trigger;
-      chart?.setData([xData, yData, y2Data], false);
-      requestAnimationFrame(() => {
-        chart?.redraw(true);
-      });
-    }
+    setData_trigger;
+    chart?.setData([xData, yData, y2Data], false);
+    requestAnimationFrame(() => {
+      chart?.redraw(true);
+    });
   });
   $effect(() => {
     console.log("setScale-x");
-    const trigger = setScaleX_trigger;
+    setScaleX_trigger;
     untrack(() => {
-      if (is_live) {
-        // 1. Calculate how much the data moved (e.g., how many seconds/indices)
-        // Assuming your X-array is sorted, compare the new first element to the old one
-        const newDataStart = xData[0];
-        const oldDataStart = chart.data[0][0];
-        const delta = newDataStart - oldDataStart;
+      // 1. Calculate how much the data moved (e.g., how many seconds/indices)
+      // Assuming your X-array is sorted, compare the new first element to the old one
+      const newDataStart = xData[0];
+      const oldDataStart = chart.data[0][0];
+      const delta = newDataStart - oldDataStart;
 
-        requestAnimationFrame(() => {
-          if (chart) {
-            // 3. Shift the current view by the same delta
-            // This keeps the "zoom level" (the width) the same,
-            // but slides the "window" along with the data.
-            chart.setScale("x", {
-              min: chart.scales.x.min + delta,
-              max: chart.scales.x.max + delta,
-            });
-          }
-        });
-      }
+      requestAnimationFrame(() => {
+        if (chart) {
+          // 3. Shift the current view by the same delta
+          // This keeps the "zoom level" (the width) the same,
+          // but slides the "window" along with the data.
+          chart.setScale("x", {
+            min: chart.scales.x.min + delta,
+            max: chart.scales.x.max + delta,
+          });
+        }
+      });
     });
   });
 
