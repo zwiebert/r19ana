@@ -9,6 +9,7 @@ for (let g = 0; g <= 64; ++g) {
 
 export class raw_chart implements Icar_chart,Icar_chart_static {
   public nmbGraphs: number = 20;
+  public labels = labels;
 
   private yn_arr: (number | boolean)[][] = Array.from({ length: 64 }, () => []);
   static get_info() {

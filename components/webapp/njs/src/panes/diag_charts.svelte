@@ -19,52 +19,40 @@
 
   let { chart_index = 0, chart_index_viewed = 0 } = $props();
 
-  let live_simu = $state(false);
-  let diag_data: Uint8Array = $state.raw(new Uint8Array(0));
+  let diag_data = new Uint8Array(0);
   let diag_data_name = $state("");
-  let force_all_version = $state(0);
-  let input_data_version = $state(0); // version counter for input data changes
-  let car_chart_version = $state(0); // index of  current parser/chart generator
-  let input_data_live_begin = $state(0);
-  let input_data_live_end = $state(0);
-  const input_data = $derived.by(() => {
-    //$inspect.trace("input-data");
-    console.log("input_data-derived");
-    return !live_simu ? diag_data : diag_data.subarray(input_data_live_begin, input_data_live_end);
-  });
-  const input_data_len = $derived(input_data.length);
-  const yn_arr_version_counter = $state(0);
-  const yn_arr_version = $derived({  yn_arr_version_counter, ls: live_simu }); //  version of y data
-  const x_arr_version = $derived({ cc: car_chart_version, len: x_arr_len, x_arr }); //  version of x data
+  let car_charts = [x53b_740_chart, raw_chart];
+  let car_chart_class = x53b_740_chart;
+  let car_chart: Icar_chart = $state(new car_chart_class());
+  let live_simu = $state(false);
+  let live = $state(false);
+
+  let yn_arr_version_counter = $state(0);
+  let x_arr_version_counter = $state(0);
+  const yn_arr_version = $derived({ yn_arr_version_counter }); //  version of y data
+  const x_arr_version = $derived({ x_arr_version_counter, len: x_arr_len, x_arr }); //  version of x data
+
   const n1 = 0;
   const n2 = 200000;
   let x_arr_live = $state(Array.from({ length: n2 - n1 + 1 }, (_, i) => n1 + i));
+
   const yn_arr = $derived.by(() => {
     //$inspect.trace("input-data");
-    console.log("yn_arr-derived");
+    //console.log("yn_arr-derived");
+    yn_arr_version_counter;
     if (!car_chart) return [[]];
-    const trigger = processData_trigger;
-    input_data;
-    untrack(() => {
-      process_data(input_data, car_chart, live_simu);
-    });
     return car_chart.get_chart_data();
   });
 
- $effect(()=>{yn_arr;});
+  //$effect(()=>{yn_arr;});
 
-  const x_arr = $derived((!live_simu ? car_chart?.get_chart_data()[0].map((_, i) => i) : x_arr_live) ?? []);
+  const x_arr = $derived((!live ? car_chart?.get_chart_data()[0].map((_, i) => i) : x_arr_live) ?? []);
   const x_arr_len = $derived(x_arr.length);
   const nmbGraphs = $derived(car_chart.nmbGraphs);
 
   let error = $state(null);
-  let car_charts = [x53b_740_chart, raw_chart];
-  let car_chart: Icar_chart = $derived.by(() => {
-    const chart = new car_charts[car_chart_version]();
-    return chart;
-  });
+
   const car_metrics = $derived(car_chart.get_car_metrics());
-  const processData_trigger = $derived({ ver: car_chart_version, len: input_data_len, ipd: input_data_version, fa: force_all_version });
 
   let yn_show = $state(
     Array(64)
@@ -82,17 +70,45 @@
   let win_innerWidth = $state(typeof window !== "undefined" ? window.innerWidth : 1000);
 
   $effect(() => {
-    console.log("simu effect");
-    const trigger = live_simu;
-    live_simu_process_data();
-  });
-
-  $effect(() => {
     //car_chart.clear_chart_data();
   });
 
   // svelte-ignore state_referenced_locally
   const syncKey = uPlot.sync("zoom_group" + chart_index);
+
+  function load_data(data: Uint8Array, name = "") {
+    live_simulation(false); 
+    diag_data = data;
+    diag_data_name = name;
+    process_data(data, car_chart, false);
+    ++yn_arr_version_counter;
+    ++x_arr_version_counter;
+  }
+  function change_car_chart(car_chart_class: Icar_chart_static) {
+    live_simulation(false); 
+    car_chart = new car_chart_class();
+    process_data(diag_data, car_chart, false);
+    ++yn_arr_version_counter;
+  }
+
+  function live_simulation(simu: boolean) {
+    if (!simu) {
+      live_simu = false;
+      live = false;
+      if (live_simu_running) {
+        clearTimeout(timeoutId);
+        live_simu_running = false;
+      }
+      return;
+    }
+
+    car_chart.clear_chart_data();
+    x_arr_live = generate_live_x_arr(n2);
+    live_simu = true;
+    live = true;
+    live_simu_running = true;
+    startTimer(100, 0);
+  }
 
   async function fetchBinaryData(url: string) {
     // 1. Declare variables at the top of the function scope
@@ -107,8 +123,7 @@
 
       // 3. Use the lowercase 'response' variable here
       buffer = await response.arrayBuffer();
-      diag_data = new Uint8Array(buffer);
-      diag_data_name = url.split("\\").pop().split("/").pop();
+      load_data(new Uint8Array(buffer), url.split("\\").pop().split("/").pop());
 
       error = false;
     } catch (e) {
@@ -133,16 +148,15 @@
   function startTimer(chunk_size: number, chunk_nmb: number) {
     timeoutId = setTimeout(() => {
       live_simu_running = true;
-      const data = diag_data;
       const start = chunk_size * chunk_nmb;
       const end = start + chunk_size;
-      if (end >= data.length) return;
-
-      input_data_live_end = end;
-      input_data_live_begin = start;
+      if (end >= diag_data.length) return;
+      const data = diag_data.subarray(start, end);
+      process_data(data, car_chart, true);
+      ++yn_arr_version_counter;
       // ++input_data_version; //trigger processing
 
-      console.log("live simu tick", start, end, input_data.length);
+      //console.log("live simu tick", start, end, data.length);
 
       // Schedule the next run
       if (live_simu) startTimer(chunk_size, chunk_nmb + 1);
@@ -150,17 +164,9 @@
         live_simu_running = false;
         timeoutId = 0;
       }
-    }, 250);
+    }, 25);
   }
 
-  function live_simu_process_data() {
-    if (live_simu && !live_simu_running) {
-      car_chart.clear_chart_data();
-      x_arr_live = generate_live_x_arr(n2);
-      live_simu_running = true;
-      startTimer(100, 0);
-    }
-  }
   //startTimer();
 
   /**
@@ -310,17 +316,31 @@
                 >
               {/if}
               {#if chart_index === chart_index_viewed}
-                <DropFile onDataLoaded={(data_array) => (diag_data = data_array)} mode="button" />
+                <DropFile onDataLoaded={load_data} mode="button" />
               {/if}
 
-              <label><input type="checkbox" bind:checked={live_simu} />Live-Simulation</label>
+              <label
+                ><input
+                  type="checkbox"
+                  bind:checked={live_simu}
+                  onclick={(e) => {
+                    live_simulation(e.target.value);
+                  }}
+                />Live-Simulation</label
+              >
             </div>
             <div class="flex flex-col">
               <div>
                 <p>Type</p>
-                <select bind:value={car_chart_version} size={3}>
-                  {#each car_charts as cc, i}
-                    <option value={i}>{cc.get_info().name}</option>
+                <select
+                  bind:value={car_chart_class}
+                  size={3}
+                  onchange={() => {
+                    change_car_chart(car_chart_class);
+                  }}
+                >
+                  {#each car_charts as cc}
+                    <option value={cc}>{cc.get_info().name}</option>
                   {/each}
                 </select>
               </div>
@@ -360,7 +380,7 @@
                   {syncKey}
                   {width}
                   {height}
-                  is_live={live_simu}
+                  is_live={live}
                   }
                 />
                 <MyBitsPlot
@@ -370,7 +390,7 @@
                   {syncKey}
                   {width}
                   {height}
-                  is_live={live_simu}
+                  is_live={live}
                   }
                 />
               {:else}
@@ -385,7 +405,7 @@
                   {syncKey}
                   {width}
                   {height}
-                  is_live={live_simu}
+                  is_live={live}
                   }
                 />
               {/if}

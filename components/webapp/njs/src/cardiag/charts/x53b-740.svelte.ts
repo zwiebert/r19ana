@@ -50,17 +50,8 @@ const default_order = [
 
 export class x53b_740_chart implements Icar_chart, Icar_chart_static {
   private yn_all_arr: (number | boolean)[][] = $state.raw(Array.from({ length: t.length }, () => []));
-  public nmbGraphs: number = default_order.length;
   public order = $state(default_order);
-  private yn_version = $state(0);
-  private yn_arr = $derived.by(() => {
-    const trigger = this.yn_version;
-    let arr: (number | boolean)[][] = Array.from({ length: this.order.length }, () => []);
-    for(let i=0; i < this.order.length; ++i) {
-      arr[i] = this.yn_all_arr[this.order[i]];
-    }
-    return arr;
-  });
+  public nmbGraphs: number = $derived(this.order.length);
 
   public labels = $derived.by(() => {
     const len = this.order.length;
@@ -79,12 +70,15 @@ export class x53b_740_chart implements Icar_chart, Icar_chart_static {
   clear_chart_data() {
     console.log("clear chart data");
     this.yn_all_arr = Array.from({ length: t.length }, () => []);
-    this.yn_version++;
     //this.yn_all_arr.forEach(subArray => subArray.length = 0);
   }
 
   get_chart_data() {
-    return this.yn_arr;
+    let arr: (number | boolean)[][] = Array.from({ length: this.order.length }, () => []);
+    for (let i = 0; i < this.order.length; ++i) {
+      arr[i] = this.yn_all_arr[this.order[i]];
+    }
+    return arr;
   }
   get_labels() {
     return this.labels;
