@@ -1,5 +1,5 @@
 import { raw_parser } from "../parser/raw";
-import type { Icar_chart, ILabel } from "./iface";
+import type { Icar_chart, Icar_chart_static, ILabel } from "./iface";
 export type { Icar_chart, ILabel };
 
 const labels: ILabel[] = [];
@@ -7,11 +7,12 @@ for (let g = 0; g <= 64; ++g) {
   labels.push({ series_label: `B${g}`,  axis_label: "raw", range:[0, 255] });
 }
 
-export class raw_chart implements Icar_chart {
-  public nmbGraphs: number = 20;
+export class raw_chart implements Icar_chart,Icar_chart_static {
+  public nmbGraphs: number = $state(20);
+  public labels = $derived(labels.splice(0, this.nmbGraphs));
 
   private yn_arr: (number | boolean)[][] = Array.from({ length: 64 }, () => []);
-  get_info() {
+  static get_info() {
     return { name: "Raw", description: "shows all bytes of the frame as graphs." };
   }
   clear_chart_data() {
@@ -27,11 +28,11 @@ export class raw_chart implements Icar_chart {
   }
 
   get_labels() {
-    return labels;
+    return this.labels;
   }
 
   get_label(n) {
-    return labels[n];
+    return this.labels[n];
   }
 
   process_data_packet(arr: Uint8Array, ct: number) {

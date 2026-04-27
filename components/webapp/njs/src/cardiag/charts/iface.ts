@@ -9,7 +9,8 @@ export interface IModelInfo {
 }
 export interface Icar_chart {
   nmbGraphs: number;
-  get_info(): IModelInfo;
+  order: number[];
+  labels: ILabel[];
   clear_chart_data(): void;
   get_chart_data(): (number | boolean)[][];
   get_labels: () => ILabel[];
@@ -26,6 +27,11 @@ export interface Icar_chart {
    * @param append append to previous data, even it ct==0 (XXX: ???)
    */
   process_data_packet: (arr: Uint8Array, ct: number, append: boolean) => void;
+}
+
+export interface Icar_chart_static {
+  new(): Icar_chart;
+  get_info(): IModelInfo;
 }
 
 export interface CarMetrics {
