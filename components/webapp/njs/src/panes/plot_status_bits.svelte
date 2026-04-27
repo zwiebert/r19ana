@@ -39,6 +39,8 @@
 
   // create stacked bit values
   let bitChartData = Array.from({ length: 9 }, () => []);
+  const xData = $derived(chartData[0]);
+
   $effect(() => {
     const trigger = setData_trigger;
     bitChartData = Array.from({ length: 9 }, () => []);
@@ -176,7 +178,7 @@
       },
     ],
     scales: {
-      x: { time: use_time },
+      x: { time: use_time, },
       bits: {
         auto: true,
         range: [-0.5, 7.5], // Adjust based on your offsets
@@ -242,7 +244,7 @@
     const trigger = setScaleX_trigger;
     // 1. Calculate how much the data moved (e.g., how many seconds/indices)
     // Assuming your X-array is sorted, compare the new first element to the old one
-    const newDataStart = bitChartData[0][0];
+    const newDataStart = xData[0];
     const oldDataStart = chart.data[0][0];
     const delta = newDataStart - oldDataStart;
 
@@ -257,6 +259,21 @@
         });
       }
     });
+  });
+
+  $effect(() => {
+    console.log("setScale-x-live");
+    if (is_live && chart) {
+      chart.setScale("x", {
+        min: 0,
+        max: 20000,
+      });
+    } else {
+      chart.setScale("x", {
+        min: 0,
+        max: xData.length,
+      });
+    }
   });
 
   $effect(() => {

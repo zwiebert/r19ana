@@ -15,7 +15,8 @@
   import { RenixDestuffer } from "../cardiag/renix_destuffer";
   import { EnableGitHubSamples } from "../store/app_state";
   import { getGithubSamples } from "../sample_data/github_samples";
-  //import { DiagDataBuffer } from "../store/diag-data.js";
+  //import { DiagDataBuffer } from "../store/diag-data";
+  import { fetchBinaryData } from "../download";
 
   let { chart_index = 0, chart_index_viewed = 0 } = $props();
 
@@ -39,7 +40,7 @@
   const yn_arr = $derived.by(() => {
     //$inspect.trace("input-data");
     //console.log("yn_arr-derived");
-    yn_arr_version_counter;
+    void yn_arr_version_counter;
     if (!car_chart) return [[]];
     return car_chart.get_chart_data();
   });
@@ -47,7 +48,7 @@
   //$effect(()=>{yn_arr;});
 
   const x_arr = $derived.by(() => {
-    x_arr_version_counter;
+    void x_arr_version_counter;
     return (!live ? car_chart?.get_chart_data()[0].map((_, i) => i) : x_arr_live) ?? [];
   });
 
@@ -68,7 +69,7 @@
       .fill()
       .map((e) => false),
   );
-  let x_labels: ILabel = $derived({ series_label: "Blk", axis_label: "x", vmin: 0, vmax: x_arr.length });
+  let x_labels: ILabel = $derived({ series_label: "Blk", axis_label: "x"  });
   let width = $state(typeof window !== "undefined" ? window.innerWidth - 10 : 1000);
   let height = $state(300);
   let win_innerWidth = $state(typeof window !== "undefined" ? window.innerWidth : 1000);
@@ -96,13 +97,19 @@
   }
 
   function live_simulation(simu: boolean) {
+    console.log("simu listener",simu);
     if (!simu) {
+      console.log("turn simu off");
       live_simu = false;
       live = false;
       if (live_simu_running) {
         clearTimeout(timeoutId);
         live_simu_running = false;
       }
+      car_chart.clear_chart_data();
+      process_data(diag_data, car_chart, false);
+      ++yn_arr_version_counter;
+      ++x_arr_version_counter;
       return;
     }
 
@@ -112,28 +119,6 @@
     live = true;
     live_simu_running = true;
     startTimer(100, 0);
-  }
-
-  async function fetchBinaryData(url: string) {
-    // 1. Declare variables at the top of the function scope
-    let response;
-    let buffer;
-
-    try {
-      // 2. Assign the result to your lowercase 'response' variable
-      response = await fetch(url);
-
-      if (!response.ok) throw new Error("Network response was not ok");
-
-      // 3. Use the lowercase 'response' variable here
-      buffer = await response.arrayBuffer();
-      load_data(new Uint8Array(buffer), url.split("\\").pop().split("/").pop());
-
-      error = false;
-    } catch (e) {
-      // Note: Do NOT try to access 'response' here if fetch failed
-      error = e.message;
-    }
   }
 
   function generate_live_x_arr(count: number, step: number = 0.015): Float64Array {
@@ -302,7 +287,10 @@
                     size={6}
                     onchange={(event) => {
                       let url = event.target.value as string;
-                      if (url) fetchBinaryData(url);
+                      if (url)
+                        void fetchBinaryData(url, load_data, (err: string) => {
+                          error = err;
+                        });
                     }}
                   >
                     {#each list as sample}
@@ -315,7 +303,9 @@
               {#if import.meta.env.MODE === "mcu"}
                 <button
                   onclick={() => {
-                    fetchBinaryData("/f/mnt/sdcard/xr25.bin");
+                    void fetchBinaryData("/f/mnt/sdcard/xr25.bin", load_data, (err: string) => {
+                      error = err;
+                    });
                   }}>Fetch Data File From MCU</button
                 >
               {/if}
@@ -327,8 +317,8 @@
                 ><input
                   type="checkbox"
                   bind:checked={live_simu}
-                  onclick={(e) => {
-                    live_simulation(e.target.value);
+                  onchange={() => {
+                    live_simulation(live_simu);
                   }}
                 />Live-Simulation</label
               >
@@ -352,7 +342,8 @@
               <label>Height: <input type="number" bind:value={height} min={100} max={1000} step={25} /></label>
               <button
                 onclick={() => {
-                  ++force_all_version;
+                  ++yn_arr_version_counter;
+                  ++x_arr_version_counter;
                 }}>re-plot</button
               >
             </div>

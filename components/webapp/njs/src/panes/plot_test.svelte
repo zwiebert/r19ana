@@ -40,113 +40,116 @@
   const setData_trigger = $derived({ yDataVer, y2DataVer });
   const setScaleX_trigger = $derived(is_live ? xDataVer : xDataVer);
 
-  let options = $derived({
-    width: width,
-    height: height,
-    // plugins: [touchZoomPanPlugin(xData.length)],
-    scales: {
-      x: { time: use_time },
-      y:
-        labels[1]?.axis_label == "boolean"
-          ? { auto: false, range: (u, min, max) => [-3.6, 2.5] }
-          : labels[1]?.range
-            ? { auto: false, range: (u, min, max) => labels[1].range }
-            : {}, // Default left scale
-      y2:
-        labels[2]?.axis_label == "boolean"
-          ? { auto: false, range: (u, min, max) => [-4.1, 2.1] }
-          : labels[2]?.range
-            ? { auto: false, range: (u, min, max) => labels[2].range }
-            : {}, // Default right scale
-    },
-    series: [
-      {
-        label: labels[0]?.series_label ?? "x",
+  let options = $derived.by(() => {
+    $inspect.trace("options");
+    return {
+      width: width,
+      height: height,
+      // plugins: [touchZoomPanPlugin(xData.length)],
+      scales: {
+        x: { time: use_time },
+        y:
+          labels[1]?.axis_label == "boolean"
+            ? { auto: false, range: (u, min, max) => [-3.6, 2.5] }
+            : labels[1]?.range
+              ? { auto: false, range: (u, min, max) => labels[1].range }
+              : {}, // Default left scale
+        y2:
+          labels[2]?.axis_label == "boolean"
+            ? { auto: false, range: (u, min, max) => [-4.1, 2.1] }
+            : labels[2]?.range
+              ? { auto: false, range: (u, min, max) => labels[2].range }
+              : {}, // Default right scale
+      },
+      series: [
+        {
+          label: labels[0]?.series_label ?? "x",
 
-        value: !use_time
-          ? (u, v) => {
-              if (v == null) return "-";
-              const s = v * 0.015;
-              const min = Math.floor(s / 60)
-                .toString()
-                .padStart(2, "0");
-              const sec = Math.floor(s % 60)
-                .toString()
-                .padStart(2, "0");
-              const ms = Math.floor((s % 1) * 1000)
-                .toString()
-                .padStart(3, "0");
-              return `${v}, T: ${min}:${sec}.${ms}`;
+          value: !use_time
+            ? (u, v) => {
+                if (v == null) return "-";
+                const s = v * 0.015;
+                const min = Math.floor(s / 60)
+                  .toString()
+                  .padStart(2, "0");
+                const sec = Math.floor(s % 60)
+                  .toString()
+                  .padStart(2, "0");
+                const ms = Math.floor((s % 1) * 1000)
+                  .toString()
+                  .padStart(3, "0");
+                return `${v}, T: ${min}:${sec}.${ms}`;
+              }
+            : (u, v) => {
+                if (v == null) return "-";
+                const d = new Date(v * 1000);
+                const timeStr = d.toLocaleTimeString("en-GB", { hour12: false });
+                const ms = d.getMilliseconds().toString().padStart(3, "0");
+                return `${timeStr}.${ms}`;
+              },
+        }, // X-axis
+        {
+          label: labels[1]?.series_label ?? "y",
+          stroke: "red",
+          scale: "y", // Uses default left scale
+
+          // 1. POINTS.SHOW
+          // Set to false to stop uPlot from drawing 200k circles
+          points: { show: false },
+
+          // 2. PATHBUILDER
+          // Usually left alone, but you can provide custom line logic here.
+          // For performance, uPlot's default is already highly optimized.
+          // pathBuilder: uPlot.paths.stepped({align: 1}),
+
+          // 3. PXALIGN
+          // 1 (default) = align to physical screen pixels (crisp but slower)
+          // 0 = no alignment (much faster for zooming 200k points)
+          pxAlign: 0,
+        },
+        {
+          label: labels[2]?.series_label ?? "y2",
+          stroke: "blue",
+          scale: "y2", // Uses independent right scale
+          // 1. POINTS.SHOW
+          // Set to false to stop uPlot from drawing 200k circles
+          points: { show: false },
+
+          // 2. PATHBUILDER
+          // Usually left alone, but you can provide custom line logic here.
+          // For performance, uPlot's default is already highly optimized.
+          // pathBuilder: uPlot.paths.stepped({align: 1}),
+
+          // 3. PXALIGN
+          // 1 (default) = align to physical screen pixels (crisp but slower)
+          // 0 = no alignment (much faster for zooming 200k points)
+          pxAlign: 0,
+        },
+      ],
+      axes: [
+        {}, // Bottom X-axis
+        {
+          scale: "y",
+          side: 3, // Left side (standard)
+          label: labels[1]?.axis_label ?? "",
+        },
+        {
+          scale: "y2",
+          side: 1, // Right side (standard for secondary axes)
+          label: labels[2]?.axis_label ?? "",
+          grid: { show: false }, // Optional: hide grid to avoid clutter
+        },
+      ],
+      cursor: {
+        sync: syncKey
+          ? {
+              key: syncKey.key,
+              setSeries: false, // Optional: syncs series toggling/highlighting
+              setScale: [true, false], // Syncs X scale (index 0), ignores Y scale (index 1)
             }
-          : (u, v) => {
-              if (v == null) return "-";
-              const d = new Date(v * 1000);
-              const timeStr = d.toLocaleTimeString("en-GB", { hour12: false });
-              const ms = d.getMilliseconds().toString().padStart(3, "0");
-              return `${timeStr}.${ms}`;
-            },
-      }, // X-axis
-      {
-        label: labels[1]?.series_label ?? "y",
-        stroke: "red",
-        scale: "y", // Uses default left scale
-
-        // 1. POINTS.SHOW
-        // Set to false to stop uPlot from drawing 200k circles
-        points: { show: false },
-
-        // 2. PATHBUILDER
-        // Usually left alone, but you can provide custom line logic here.
-        // For performance, uPlot's default is already highly optimized.
-        // pathBuilder: uPlot.paths.stepped({align: 1}),
-
-        // 3. PXALIGN
-        // 1 (default) = align to physical screen pixels (crisp but slower)
-        // 0 = no alignment (much faster for zooming 200k points)
-        pxAlign: 0,
+          : undefined,
       },
-      {
-        label: labels[2]?.series_label ?? "y2",
-        stroke: "blue",
-        scale: "y2", // Uses independent right scale
-        // 1. POINTS.SHOW
-        // Set to false to stop uPlot from drawing 200k circles
-        points: { show: false },
-
-        // 2. PATHBUILDER
-        // Usually left alone, but you can provide custom line logic here.
-        // For performance, uPlot's default is already highly optimized.
-        // pathBuilder: uPlot.paths.stepped({align: 1}),
-
-        // 3. PXALIGN
-        // 1 (default) = align to physical screen pixels (crisp but slower)
-        // 0 = no alignment (much faster for zooming 200k points)
-        pxAlign: 0,
-      },
-    ],
-    axes: [
-      {}, // Bottom X-axis
-      {
-        scale: "y",
-        side: 3, // Left side (standard)
-        label: labels[1]?.axis_label ?? "",
-      },
-      {
-        scale: "y2",
-        side: 1, // Right side (standard for secondary axes)
-        label: labels[2]?.axis_label ?? "",
-        grid: { show: false }, // Optional: hide grid to avoid clutter
-      },
-    ],
-    cursor: {
-      sync: syncKey
-        ? {
-            key: syncKey.key,
-            setSeries: false, // Optional: syncs series toggling/highlighting
-            setScale: [true, false], // Syncs X scale (index 0), ignores Y scale (index 1)
-          }
-        : undefined,
-    },
+    };
   });
 
   $effect(() => {
@@ -193,6 +196,21 @@
         }
       });
     });
+  });
+
+  $effect(() => {
+    console.log("setScale-x-live");
+    if (is_live && chart) {
+      chart.setScale("x", {
+        min: 0,
+        max: 20000,
+      });
+    } else {
+      chart.setScale("x", {
+        min: 0,
+        max: xData.length,
+      });
+    }
   });
 
   $effect(() => {
