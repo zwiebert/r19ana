@@ -41,7 +41,7 @@
   const setScaleX_trigger = $derived(is_live ? xDataVer : xDataVer);
 
   let options = $derived.by(() => {
-    $inspect.trace("options");
+    //$inspect.trace("options");
     return {
       width: width,
       height: height,

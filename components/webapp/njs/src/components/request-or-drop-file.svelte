@@ -39,7 +39,7 @@
       disabled={processing}
       class="bg-blue-600 text-white px-6 py-2 rounded shadow hover:bg-blue-700 disabled:bg-gray-400"
     >
-      {processing ? "Processing..." : "Open Log File"}
+      {processing ? "Processing..." : "Local Data Files"}
     </button>
   {/if}
 

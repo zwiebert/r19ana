@@ -69,7 +69,7 @@
       .fill()
       .map((e) => false),
   );
-  let x_labels: ILabel = $derived({ series_label: "Blk", axis_label: "x"  });
+  let x_labels: ILabel = $derived({ series_label: "Blk", axis_label: "x" });
   let width = $state(typeof window !== "undefined" ? window.innerWidth - 10 : 1000);
   let height = $state(300);
   let win_innerWidth = $state(typeof window !== "undefined" ? window.innerWidth : 1000);
@@ -97,8 +97,8 @@
   }
 
   function live_simulation(simu: boolean) {
-    console.log("simu listener",simu);
-    if (!simu) {
+    console.log("simu listener", simu);
+    if (!simu && live_simu_running) {
       console.log("turn simu off");
       live_simu = false;
       live = false;
@@ -113,12 +113,14 @@
       return;
     }
 
-    car_chart.clear_chart_data();
-    //x_arr_live = generate_live_x_arr(n2);
-    live_simu = true;
-    live = true;
-    live_simu_running = true;
-    startTimer(100, 0);
+    if (simu && !live_simu_running) {
+      car_chart.clear_chart_data();
+      //x_arr_live = generate_live_x_arr(n2);
+      live_simu = true;
+      live = true;
+      live_simu_running = true;
+      startTimer(100, 0);
+    }
   }
 
   function generate_live_x_arr(count: number, step: number = 0.015): Float64Array {
@@ -278,7 +280,8 @@
         <div class="mx-auto w-fit pointer-events-auto bg-amber-50 p-2" class:shadow-xl={$stickChartControls}>
           <div class="flex flex-row items-center">
             <div class="flex flex-col">
-              <label><input type="checkbox" bind:checked={$EnableGitHubSamples} />Allow Samples from GitHub</label>
+            <h5 class="m-0 p-0">Data Sources</h5>
+              <label><input type="checkbox" bind:checked={$EnableGitHubSamples} />GitHub Data Files</label>
               {#if $EnableGitHubSamples}
                 {#await getGithubSamples()}
                   <p>Loading samples URLs...</p>
@@ -306,7 +309,7 @@
                     void fetchBinaryData("/f/mnt/sdcard/xr25.bin", load_data, (err: string) => {
                       error = err;
                     });
-                  }}>Fetch Data File From MCU</button
+                  }}>MCU Data Files</button
                 >
               {/if}
               {#if chart_index === chart_index_viewed}
@@ -325,7 +328,7 @@
             </div>
             <div class="flex flex-col">
               <div>
-                <p>Type</p>
+                <h5 class="m-0 p-0">Parser</h5>
                 <select
                   bind:value={car_chart_class}
                   size={3}
@@ -338,14 +341,9 @@
                   {/each}
                 </select>
               </div>
-              <label>Width: <input type="number" bind:value={width} min={400} max={5000} step={100} /></label>
-              <label>Height: <input type="number" bind:value={height} min={100} max={1000} step={25} /></label>
-              <button
-                onclick={() => {
-                  ++yn_arr_version_counter;
-                  ++x_arr_version_counter;
-                }}>re-plot</button
-              >
+              <h5 class="mb-0 p-0">Chart-Size</h5>
+              <label>W<input type="number" bind:value={width} min={400} max={5000} step={100} /></label>
+              <label>H<input type="number" bind:value={height} min={100} max={1000} step={25} /></label>
             </div>
             <div class="flex flex-col text-left">
               {#each Array.from({ length: Math.floor(nmbGraphs / 2) }, (_, index) => index * 2) as i}
