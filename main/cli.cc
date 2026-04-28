@@ -1,6 +1,7 @@
 #include "cli.hh"
 
 #include <iterator>
+#include <functional>
 
 #include "pers_storage.hh"
 
@@ -111,6 +112,8 @@ static CliCmd cmds[] = {
            return false;
          } else if (strcmp(tok, "disable") == 0) {
            return false;
+         } else if (strcmp(tok, "ls") == 0) {
+           data_logfile->ls_files([cmd](const char* src) { return cmd.reply(src); });
          } else {
            return false;  // unknown argument
          }

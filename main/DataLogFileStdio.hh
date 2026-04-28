@@ -1,5 +1,6 @@
 #pragma once
 
+#include <dirent.h>
 #include <stdio.h>
 #include <string.h>
 
@@ -28,6 +29,27 @@ class DataLogFileStdio : public IFileLogger {
     return 0 == fflush(m_file);
   }
 
+  virtual bool ls_files(puts_cb_t puts_cb, bool json, const char* dirname,
+                        const char* suffix) override {
+    if (DIR* dir = opendir(dirname)) {
+      for (errno = 0; dirent* de = readdir(dir); errno = 0) {
+        char buf[256];
+        if (suffix &&
+            strcasecmp(de->d_name + strlen(de->d_name) - strlen(suffix),
+                       suffix) != 0)
+          continue;
+        if (sizeof buf > snprintf(buf, sizeof buf, "%s\n", de->d_name)) {
+          puts_cb(buf);
+        }
+      }
+      if (errno) {
+        // readdir error
+      }
+      closedir(dir);
+    }
+
+    return false;
+  }
   virtual int feed_bytes(const uint8_t* src, unsigned src_len) override {
     if (!m_file) return -1;
     return fwrite(src, sizeof *src, src_len, m_file);

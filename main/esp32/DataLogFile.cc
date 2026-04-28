@@ -61,6 +61,10 @@ pin_configuration_t config = {
 
 class DataLogfileEsp32 final : public DataLogFileStdio, public IMountable {
  public:
+  bool ls_files(puts_cb_t puts_cb, bool json, const char* dirname,
+                const char* suffix) override {
+    return DataLogFileStdio::ls_files(puts_cb, json, mount_point, suffix);
+  }
   bool mount_fs() override {
     constexpr unsigned try_mount_interval_ms = 5000;
 
@@ -229,20 +233,20 @@ class DataLogfileEsp32 final : public DataLogFileStdio, public IMountable {
   bool set_full_path(const char* file_name) override {
     if (!file_name) return false;
     if (strstr(file_name, "/")) {
-       ESP_LOGE(TAG, "Invalid file name (slash not allowed): <%s>", file_name);
+      ESP_LOGE(TAG, "Invalid file name (slash not allowed): <%s>", file_name);
       return false;
     }
     if (sizeof m_full_path <= snprintf(m_full_path, sizeof m_full_path, "%s/%s",
                                        mount_point, file_name)) {
-       ESP_LOGE(TAG, "Invalid file name (too long): <%s>", file_name);
+      ESP_LOGE(TAG, "Invalid file name (too long): <%s>", file_name);
       return false;
-                                       }
+    }
     m_full_path_valid = true;
 
     // additional check: try to open and close he file, if fs is already mounted
     if (is_mounted()) {
       if (!open_file()) {
-       ESP_LOGE(TAG, "Could not open file: <%s>", m_full_path);
+        ESP_LOGE(TAG, "Could not open file: <%s>", m_full_path);
         m_full_path_valid = false;
         return false;
       }
@@ -268,7 +272,8 @@ class DataLogfileEsp32 final : public DataLogFileStdio, public IMountable {
   }
   bool open_file() override {
     if (!DataLogFileStdio::open_file()) {
-       ESP_LOGE(TAG, "Could not open file: <%s>, %d (%s)", m_full_path, errno, strerror(errno));
+      ESP_LOGE(TAG, "Could not open file: <%s>, %d (%s)", m_full_path, errno,
+               strerror(errno));
       return false;
     }
     m_file_owner_task = xTaskGetCurrentTaskHandle();

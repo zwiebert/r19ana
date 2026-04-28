@@ -49,11 +49,14 @@ class XR25Frame {
     m_frames_rb.write(voc);
     ++m_frame_counter;
   }
+
  private:
   unsigned m_frame_counter = 0;
   RenixDestuffer m_destuffer =
-      RenixDestuffer(std::bind(&XR25Frame::destuffer_callback, this,
-                               std::placeholders::_1, std::placeholders::_2));
+      RenixDestuffer([this](const uint8_t* packet, size_t packet_len) {
+        destuffer_callback(packet, packet_len);
+      });
+
   ringbuffer<voc_t> m_frames_rb;
   packet_data_t m_frame;
   unsigned m_invalid_frame_ct = 0;
